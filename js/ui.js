@@ -561,9 +561,9 @@ export class GreatuncleUI {
             });
         }
 
-        // 2. Tag Filter Stage (Filter by #topics, etc)
-        if (this.app.currentTagFilter && this.app.currentTagFilter !== 'all') {
-            list = list.filter(c => c.tags && c.tags.includes(this.app.currentTagFilter));
+        // 2. Tag Filter Stage (Filter by #topics, etc) - OR Logic
+        if (this.app.currentTagFilters && this.app.currentTagFilters.length > 0) {
+            list = list.filter(c => c.tags && this.app.currentTagFilters.some(t => c.tags.includes(t)));
         }
 
         const query = (this.app.searchQuery || '').trim();
@@ -808,20 +808,20 @@ export class GreatuncleUI {
             }
         });
 
-        const activeTag = this.app.currentTagFilter;
-        const isAll = activeTag === 'all';
+        const activeTags = this.app.currentTagFilters || [];
+        const isAll = activeTags.length === 0;
 
         let tagsHtml = `
             <button class="circle-tab-btn ${isAll ? 'active' : ''}" data-tag="all">
                 <span class="radio-icon">${isAll ? '●' : '○'}</span> All
             </button>
-            <button class="circle-tab-btn ${activeTag === '&legacy' ? 'active' : ''}" data-tag="&legacy" style="margin-right: 15px;">
-                <span class="radio-icon">${activeTag === '&legacy' ? '●' : '○'}</span> &legacy
+            <button class="circle-tab-btn ${activeTags.includes('&legacy') ? 'active' : ''}" data-tag="&legacy" style="margin-right: 15px;">
+                <span class="radio-icon">${activeTags.includes('&legacy') ? '●' : '○'}</span> &legacy
             </button>
         `;
 
         tagsHtml += Array.from(allTags).sort().filter(t => t.startsWith('#')).map(tag => {
-            const isActive = activeTag === tag;
+            const isActive = activeTags.includes(tag);
             return `
                 <button class="circle-tab-btn ${isActive ? 'active' : ''}" data-tag="${tag}">
                     <span class="radio-icon">${isActive ? '●' : '○'}</span> ${tag}

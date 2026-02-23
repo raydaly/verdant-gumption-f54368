@@ -31,7 +31,7 @@ class GreatuncleApp {
             lastExportTimestamp: 0
         };
         this.searchQuery = '';
-        this.currentTagFilter = 'all';
+        this.currentTagFilters = [];
         this.currentLevelFilters = [];
         this.currentGroupFilters = [];
         this.currentSort = 'alpha';
@@ -748,14 +748,11 @@ class GreatuncleApp {
     }
 
     _syncFilterUI() {
-        // Un-highlight 'All People' tab if any level or group filter is active
-        const hasFilters = this.currentLevelFilters.length > 0 || this.currentGroupFilters.length > 0;
+        const isActive = this.currentTagFilters.length > 0 || this.currentLevelFilters.length > 0 || this.currentGroupFilters.length > 0;
 
-        if (this.currentTagFilter === 'all') {
-            document.querySelectorAll('.circle-tab-btn[data-tag="all"]').forEach(b => {
-                b.classList.toggle('active', !hasFilters);
-            });
-        }
+        document.querySelectorAll('.circle-tab-btn[data-tag="all"]').forEach(b => {
+            b.classList.toggle('active', !isActive);
+        });
     }
 
     getConnectionLayers() {
@@ -925,12 +922,16 @@ class GreatuncleApp {
             if (target.classList.contains('circle-tab-btn')) {
                 if (target.dataset.tag) {
                     const tag = target.dataset.tag;
-                    if (tag === 'all' || this.currentTagFilter === tag) {
-                        this.currentTagFilter = 'all';
+                    if (tag === 'all') {
+                        this.currentTagFilters = [];
                     } else {
-                        this.currentTagFilter = tag;
-                        this.currentLevelFilters = [];
-                        this.currentGroupFilters = [];
+                        // Toggle tag in array
+                        const index = this.currentTagFilters.indexOf(tag);
+                        if (index > -1) {
+                            this.currentTagFilters.splice(index, 1);
+                        } else {
+                            this.currentTagFilters.push(tag);
+                        }
                     }
                     this.ui.renderCircleListWithAnimation();
                 } else if (target.dataset.sort) {
@@ -938,22 +939,28 @@ class GreatuncleApp {
                     this.ui.renderCircleListWithAnimation();
                 } else if (target.dataset.level) {
                     const level = target.dataset.level;
-                    if (level === 'all' || this.currentLevelFilters.includes(level)) {
+                    if (level === 'all') {
                         this.currentLevelFilters = [];
                     } else {
-                        this.currentLevelFilters = [level];
-                        this.currentTagFilter = 'all';
-                        this.currentGroupFilters = [];
+                        const index = this.currentLevelFilters.indexOf(level);
+                        if (index > -1) {
+                            this.currentLevelFilters.splice(index, 1);
+                        } else {
+                            this.currentLevelFilters.push(level);
+                        }
                     }
                     this.ui.renderCircleListWithAnimation();
                 } else if (target.dataset.group) {
                     const group = target.dataset.group;
-                    if (group === 'all' || this.currentGroupFilters.includes(group)) {
+                    if (group === 'all') {
                         this.currentGroupFilters = [];
                     } else {
-                        this.currentGroupFilters = [group];
-                        this.currentTagFilter = 'all';
-                        this.currentLevelFilters = [];
+                        const index = this.currentGroupFilters.indexOf(group);
+                        if (index > -1) {
+                            this.currentGroupFilters.splice(index, 1);
+                        } else {
+                            this.currentGroupFilters.push(group);
+                        }
                     }
                     this.ui.renderCircleListWithAnimation();
                 }
