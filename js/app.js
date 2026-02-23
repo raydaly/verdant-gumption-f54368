@@ -801,14 +801,6 @@ class GreatuncleApp {
         this.setupFormListeners();
     }
 
-    handleSortChange() {
-        const select = document.getElementById('circle-sort');
-        if (select) {
-            this.currentSort = select.value;
-            this.ui.renderCircleList();
-        }
-    }
-
     setupActionListeners() {
         document.addEventListener('click', (e) => {
             const target = e.target.closest('button, [data-action]');
@@ -951,6 +943,11 @@ class GreatuncleApp {
                 this.ui.renderCircleList();
             }
 
+            if (target.classList.contains('sort-tab-btn')) {
+                this.currentSort = target.dataset.sort;
+                this.ui.renderCircleList();
+            }
+
             // Tab Switching (Onboarding, About/Settings, etc)
             if (target.classList.contains('tab-btn')) {
                 const targetTab = target.dataset.tab;
@@ -1054,11 +1051,6 @@ class GreatuncleApp {
 
         attachZipAutofill('contact-zip', 'contact-address');
         attachZipAutofill('edit-zip', 'edit-address');
-
-        const selectSort = document.getElementById('circle-sort');
-        if (selectSort) {
-            selectSort.addEventListener('change', () => this.handleSortChange());
-        }
 
         const form = document.getElementById('add-contact-form');
         if (form) {

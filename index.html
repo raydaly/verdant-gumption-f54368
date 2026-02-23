@@ -68,16 +68,8 @@
 
             <!-- Full Circle List -->
             <section id="full-circle" class="view-section hidden">
-                <header class="section-header"
-                    style="display: flex; justify-content: space-between; align-items: center;">
+                <header class="section-header">
                     <h2 class="subtitle-title">People</h2>
-                    <div class="header-actions">
-                        <select id="circle-sort" class="btn btn-secondary btn-sm"
-                            style="padding: 4px 8px; font-size: 0.8rem; width: auto;">
-                            <option value="alpha">Sort: Alpha</option>
-                            <option value="due">Sort: Overdue</option>
-                        </select>
-                    </div>
                 </header>
 
                 <div class="search-container">
@@ -106,6 +98,13 @@
                     <span class="level-label">Topics: </span>
                     <div id="tag-cloud" style="display: flex; flex-wrap: wrap; gap: 6px;">
                         <!-- Dynamic hashtags (#) injected here -->
+                    </div>
+                </div>
+
+                <div class="level-filter-row">
+                    <span class="level-label">Sort: </span>
+                    <div id="sort-controls" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <!-- Dynamic sort buttons injected here -->
                     </div>
                 </div>
 

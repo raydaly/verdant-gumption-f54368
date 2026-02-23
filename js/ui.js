@@ -653,10 +653,25 @@ export class GreatuncleUI {
             this.els.circleList.appendChild(fragment);
         }
 
-        // Render Tag Cloud and Group Filters
+        // Render Tag Cloud, Group Filters, and Sort Controls
         this.renderTagCloud();
         this.renderGroupFilters();
+        this.renderSortControls();
         this.renderShareGroupDropdown();
+    }
+
+    renderSortControls() {
+        const container = document.getElementById('sort-controls');
+        if (!container) return;
+
+        const options = [
+            { id: 'alpha', label: 'Alpha' },
+            { id: 'due', label: 'Overdue' }
+        ];
+
+        container.innerHTML = options.map(opt => `
+            <button class="circle-tab-btn sort-tab-btn ${this.app.currentSort === opt.id ? 'active' : ''}" data-sort="${opt.id}">${opt.label}</button>
+        `).join('');
     }
 
     renderShareGroupDropdown() {
