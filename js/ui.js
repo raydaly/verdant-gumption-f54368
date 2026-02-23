@@ -665,7 +665,7 @@ export class GreatuncleUI {
         if (!container) return;
 
         const options = [
-            { id: 'alpha', label: 'Alpha' },
+            { id: 'alpha', label: 'Name' },
             { id: 'due', label: 'Overdue' }
         ];
 
