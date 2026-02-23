@@ -34,6 +34,7 @@ class GreatuncleApp {
         this.currentTagFilter = 'all';
         this.currentLevelFilters = [];
         this.currentGroupFilters = [];
+        this.currentSort = 'alpha';
         this.currentCategory = 'lowStakes';
         this.dashboard = { anchors: [], outreach: [], foresight: [] };
         this.homeSuggestionsState = null;
@@ -800,6 +801,14 @@ class GreatuncleApp {
         this.setupFormListeners();
     }
 
+    handleSortChange() {
+        const select = document.getElementById('circle-sort');
+        if (select) {
+            this.currentSort = select.value;
+            this.ui.renderCircleList();
+        }
+    }
+
     setupActionListeners() {
         document.addEventListener('click', (e) => {
             const target = e.target.closest('button, [data-action]');
@@ -1045,6 +1054,11 @@ class GreatuncleApp {
 
         attachZipAutofill('contact-zip', 'contact-address');
         attachZipAutofill('edit-zip', 'edit-address');
+
+        const selectSort = document.getElementById('circle-sort');
+        if (selectSort) {
+            selectSort.addEventListener('change', () => this.handleSortChange());
+        }
 
         const form = document.getElementById('add-contact-form');
         if (form) {

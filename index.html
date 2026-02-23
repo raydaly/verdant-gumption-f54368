@@ -68,8 +68,16 @@
 
             <!-- Full Circle List -->
             <section id="full-circle" class="view-section hidden">
-                <header class="section-header">
+                <header class="section-header"
+                    style="display: flex; justify-content: space-between; align-items: center;">
                     <h2 class="subtitle-title">People</h2>
+                    <div class="header-actions">
+                        <select id="circle-sort" class="btn btn-secondary btn-sm"
+                            style="padding: 4px 8px; font-size: 0.8rem; width: auto;">
+                            <option value="alpha">Sort: Alpha</option>
+                            <option value="due">Sort: Overdue</option>
+                        </select>
+                    </div>
                 </header>
 
                 <div class="search-container">

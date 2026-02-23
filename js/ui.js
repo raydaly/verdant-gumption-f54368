@@ -571,7 +571,40 @@ export class GreatuncleUI {
             }
         });
 
-        const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+        // 3. Sort Stage
+        let sorted;
+        if (this.app.currentSort === 'alpha') {
+            sorted = [...filtered].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        } else if (this.app.currentSort === 'due') {
+            const INTERVALS = {
+                '&level5': 14,
+                '&level15': 30,
+                '&level50': 90,
+                '&level150': 365
+            };
+
+            const calculateScore = (contact) => {
+                let interval = 90;
+                if (contact.tags) {
+                    if (contact.tags.includes('&level5')) interval = INTERVALS['&level5'];
+                    else if (contact.tags.includes('&level15')) interval = INTERVALS['&level15'];
+                    else if (contact.tags.includes('&level50')) interval = INTERVALS['&level50'];
+                    else if (contact.tags.includes('&level150')) interval = INTERVALS['&level150'];
+                }
+
+                let daysSince;
+                if (contact.last_contacted === 0) {
+                    daysSince = interval * 1.1;
+                } else {
+                    daysSince = (Date.now() - contact.last_contacted) / (1000 * 60 * 60 * 24);
+                }
+                return daysSince / interval;
+            };
+
+            sorted = [...filtered].sort((a, b) => calculateScore(b) - calculateScore(a));
+        } else {
+            sorted = [...filtered].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        }
 
         const tmpl = document.getElementById('tmpl-contact-row');
         this.els.circleList.innerHTML = '';
