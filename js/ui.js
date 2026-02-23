@@ -529,6 +529,11 @@ export class GreatuncleUI {
     renderCircleList() {
         if (!this.els.circleList) return;
 
+        // Render Tag Cloud, Group Filters, and Sort Controls first so they always appear
+        this.renderTagCloud();
+        this.renderGroupFilters();
+        this.renderSortControls();
+
         if (this.app.contacts.length === 0) {
             this.els.circleList.innerHTML = '<p class="empty-list-note">Your circle is waiting to be filled.</p>';
             return;
@@ -653,10 +658,6 @@ export class GreatuncleUI {
             this.els.circleList.appendChild(fragment);
         }
 
-        // Render Tag Cloud, Group Filters, and Sort Controls
-        this.renderTagCloud();
-        this.renderGroupFilters();
-        this.renderSortControls();
         this.renderShareGroupDropdown();
     }
 

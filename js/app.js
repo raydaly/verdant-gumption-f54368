@@ -922,8 +922,7 @@ class GreatuncleApp {
             }
 
             // Circle View Tabs
-            // Circle View Tabs
-            if (target.classList.contains('circle-tab-btn')) {
+            if (target.classList.contains('circle-tab-btn') && !target.classList.contains('sort-tab-btn')) {
                 const tag = target.dataset.tag;
                 if (this.currentTagFilter === tag) {
                     this.currentTagFilter = 'all';
