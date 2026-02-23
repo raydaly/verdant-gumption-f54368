@@ -921,30 +921,42 @@ class GreatuncleApp {
                 this.ui.renderGatheringRules();
             }
 
-            // Circle View Tabs
-            if (target.classList.contains('circle-tab-btn') && !target.classList.contains('sort-tab-btn')) {
-                const tag = target.dataset.tag;
-                if (this.currentTagFilter === tag) {
-                    this.currentTagFilter = 'all';
-                } else {
-                    this.currentTagFilter = tag;
-
-                    // Reset Level/Group checkboxes when a specific tag tab is clicked
-                    const levelCheckboxes = document.querySelectorAll('input[name="circle-level"]');
-                    levelCheckboxes.forEach(cb => cb.checked = false);
-                    this.currentLevelFilters = [];
-
-                    const groupCheckboxes = document.querySelectorAll('input[name="circle-group"]');
-                    groupCheckboxes.forEach(cb => cb.checked = false);
-                    this.currentGroupFilters = [];
+            // Circle View Filters (Unified Pill Buttons)
+            if (target.classList.contains('circle-tab-btn')) {
+                if (target.dataset.tag) {
+                    const tag = target.dataset.tag;
+                    if (tag === 'all' || this.currentTagFilter === tag) {
+                        this.currentTagFilter = 'all';
+                    } else {
+                        this.currentTagFilter = tag;
+                        this.currentLevelFilters = [];
+                        this.currentGroupFilters = [];
+                    }
+                    this.ui.renderCircleListWithAnimation();
+                } else if (target.dataset.sort) {
+                    this.currentSort = target.dataset.sort;
+                    this.ui.renderCircleListWithAnimation();
+                } else if (target.dataset.level) {
+                    const level = target.dataset.level;
+                    if (level === 'all' || this.currentLevelFilters.includes(level)) {
+                        this.currentLevelFilters = [];
+                    } else {
+                        this.currentLevelFilters = [level];
+                        this.currentTagFilter = 'all';
+                        this.currentGroupFilters = [];
+                    }
+                    this.ui.renderCircleListWithAnimation();
+                } else if (target.dataset.group) {
+                    const group = target.dataset.group;
+                    if (group === 'all' || this.currentGroupFilters.includes(group)) {
+                        this.currentGroupFilters = [];
+                    } else {
+                        this.currentGroupFilters = [group];
+                        this.currentTagFilter = 'all';
+                        this.currentLevelFilters = [];
+                    }
+                    this.ui.renderCircleListWithAnimation();
                 }
-
-                this.ui.renderCircleList();
-            }
-
-            if (target.classList.contains('sort-tab-btn')) {
-                this.currentSort = target.dataset.sort;
-                this.ui.renderCircleListWithAnimation();
             }
 
             // Tab Switching (Onboarding, About/Settings, etc)

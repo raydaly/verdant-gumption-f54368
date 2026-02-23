@@ -529,9 +529,10 @@ export class GreatuncleUI {
     renderCircleList() {
         if (!this.els.circleList) return;
 
-        // Render Tag Cloud, Group Filters, and Sort Controls first so they always appear
+        // Render Tag Cloud, Group Filters, Level Filters, and Sort Controls first so they always appear
         this.renderTagCloud();
         this.renderGroupFilters();
+        this.renderLevelFilters();
         this.renderSortControls();
 
         if (this.app.contacts.length === 0) {
@@ -679,9 +680,43 @@ export class GreatuncleUI {
             { id: 'due', label: 'Overdue' }
         ];
 
-        container.innerHTML = options.map(opt => `
-            <button class="circle-tab-btn sort-tab-btn ${this.app.currentSort === opt.id ? 'active' : ''}" data-sort="${opt.id}">${opt.label}</button>
-        `).join('');
+        container.innerHTML = options.map(opt => {
+            const isActive = this.app.currentSort === opt.id;
+            return `
+                <button class="circle-tab-btn sort-tab-btn ${isActive ? 'active' : ''}" data-sort="${opt.id}">
+                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${opt.label}
+                </button>
+            `;
+        }).join('');
+    }
+
+    renderLevelFilters() {
+        const container = document.getElementById('level-filter-container');
+        if (!container) return;
+
+        const levels = [
+            { id: '&level5', label: '5' },
+            { id: '&level15', label: '10' },
+            { id: '&level50', label: '35' },
+            { id: '&level150', label: '100' }
+        ];
+
+        const isAll = this.app.currentLevelFilters.length === 0;
+        let html = `
+            <button class="circle-tab-btn level-tab-btn ${isAll ? 'active' : ''}" data-level="all">
+                <span class="radio-icon">${isAll ? '●' : '○'}</span> All
+            </button>
+        `;
+
+        html += levels.map(opt => {
+            const isActive = this.app.currentLevelFilters.includes(opt.id);
+            return `
+                <button class="circle-tab-btn level-tab-btn ${isActive ? 'active' : ''}" data-level="${opt.id}">
+                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${opt.label}
+                </button>
+            `;
+        }).join('');
+        container.innerHTML = html;
     }
 
     renderShareGroupDropdown() {
@@ -739,28 +774,23 @@ export class GreatuncleUI {
         });
 
         const sortedGroups = Array.from(allGroups).sort();
+        const isAll = this.app.currentGroupFilters.length === 0;
 
-        // To avoid flashing/loosing focus, let's only do it if the innerHTML would be different
-        let html = '';
+        let html = `
+            <button class="circle-tab-btn group-tab-btn ${isAll ? 'active' : ''}" data-group="all">
+                <span class="radio-icon">${isAll ? '●' : '○'}</span> All
+            </button>
+        `;
 
-        sortedGroups.forEach(group => {
-            const checked = this.app.currentGroupFilters.includes(group);
-            const label = group.substring(1); // Remove @ for label
-            html += `
-                <label class="level-checkbox">
-                    <input type="checkbox" name="circle-group" value="${group}" ${checked ? 'checked' : ''}> ${label}
-                </label>
+        html += sortedGroups.map(group => {
+            const isActive = this.app.currentGroupFilters.includes(group);
+            return `
+                <button class="circle-tab-btn group-tab-btn ${isActive ? 'active' : ''}" data-group="${group}">
+                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${group.substring(1)}
+                </button>
             `;
-        });
-
-        // Create a hash that includes both the list of groups AND their checked states
-        const currentHash = sortedGroups.join(',') + '|' + this.app.currentGroupFilters.join(',');
-
-        // Only update if changed to avoid issues with active checkbox focus
-        if (container.dataset.groupHash !== currentHash) {
-            container.innerHTML = html;
-            container.dataset.groupHash = currentHash;
-        }
+        }).join('');
+        container.innerHTML = html;
     }
 
     renderTagCloud() {
@@ -779,14 +809,27 @@ export class GreatuncleUI {
         });
 
         const activeTag = this.app.currentTagFilter;
-        let tagsHtml = `<button class="circle-tab-btn ${activeTag === '&legacy' ? 'active' : ''}" data-tag="&legacy" style="margin-right: 15px;">&legacy</button>`;
+        const isAll = activeTag === 'all';
 
-        tagsHtml += Array.from(allTags).sort().filter(t => t.startsWith('#')).map(tag => `
-            <button class="circle-tab-btn ${activeTag === tag ? 'active' : ''}" data-tag="${tag}">${tag}</button>
-        `).join('');
+        let tagsHtml = `
+            <button class="circle-tab-btn ${isAll ? 'active' : ''}" data-tag="all">
+                <span class="radio-icon">${isAll ? '●' : '○'}</span> All
+            </button>
+            <button class="circle-tab-btn ${activeTag === '&legacy' ? 'active' : ''}" data-tag="&legacy" style="margin-right: 15px;">
+                <span class="radio-icon">${activeTag === '&legacy' ? '●' : '○'}</span> &legacy
+            </button>
+        `;
+
+        tagsHtml += Array.from(allTags).sort().filter(t => t.startsWith('#')).map(tag => {
+            const isActive = activeTag === tag;
+            return `
+                <button class="circle-tab-btn ${isActive ? 'active' : ''}" data-tag="${tag}">
+                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${tag}
+                </button>
+            `;
+        }).join('');
 
         cloud.innerHTML = tagsHtml;
-
     }
 
     renderJournal() {
