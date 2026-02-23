@@ -702,12 +702,11 @@ export class GreatuncleUI {
         ];
 
         container.innerHTML = levels.map(opt => {
-            const checked = this.app.currentLevelFilters.includes(opt.id);
+            const isActive = this.app.currentLevelFilters.includes(opt.id);
             return `
-                <label class="level-checkbox">
-                    <input type="checkbox" name="circle-level" value="${opt.id}" ${checked ? 'checked' : ''}>
-                    ${opt.label}
-                </label>
+                <button class="circle-tab-btn level-tab-btn ${isActive ? 'active' : ''}" data-level="${opt.id}">
+                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${opt.label}
+                </button>
             `;
         }).join('');
     }
