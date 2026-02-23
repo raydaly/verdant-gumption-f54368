@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Greatuncle | Strength in Connection</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="A private, local-first PWA to help you maintain meaningful connections with up to 150 people.">
+    <meta name="theme-color" content="#F9F7F2">
+
+    <!-- Fonts: Playfair Display (Serif) and Inter (Sans-serif) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/images/icon-192.png">
+</head>
+
+<body>
+    <div id="main-app">
+        <header class="app-header">
+            <h1 class="brand">Greatuncle</h1>
+        </header>
+
+        <main id="main-content">
+            <!-- Dashboard: The Heart of the App -->
+            <section id="daily-suggestions" class="view-section">
+                <!-- Anchor Events (Today's Milestones) -->
+                <div id="anchor-events" class="dashboard-section hidden">
+                    <h3 class="section-label">Anchor Events</h3>
+                    <div id="anchor-cards" class="card-container"></div>
+                </div>
+
+                <!-- Gathering Mode (Triggered Hashtags) -->
+                <div id="gathering-events" class="dashboard-section hidden">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); padding-right: var(--space-sm);">
+                        <h3 class="section-label" style="margin-bottom: 0;">Gathering Mode: <span
+                                id="gathering-tag">#church</span></h3>
+                        <button class="btn-prep" id="plan-gathering" data-action="plan-gathering"
+                            style="font-size: 0.7rem; padding: 4px 10px;">📅 Plan Group</button>
+                    </div>
+                    <div id="gathering-cards" class="card-container"></div>
+                </div>
+
+                <!-- Daily Outreach (Standard Suggestions) -->
+                <div id="daily-outreach" class="dashboard-section">
+                    <div id="outreach-cards" class="card-container">
+                        <div class="loading-state">
+                            <p>Preparing your circle...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Milestones (Foresight Window) -->
+                <div id="upcoming-foresight" class="dashboard-section hidden">
+                    <h3 class="section-label">Upcoming Milestones</h3>
+                    <div id="foresight-cards" class="card-container"></div>
+                </div>
+            </section>
+
+            <!-- Full Circle List -->
+            <section id="full-circle" class="view-section hidden">
+                <header class="section-header">
+                    <h2 class="subtitle-title">People</h2>
+                </header>
+
+                <div class="search-container">
+                    <input type="text" id="circle-search" placeholder="Search names or type #tag, @group...">
+                </div>
+
+                <div class="level-filter-row">
+                    <span class="level-label">Level: </span>
+                    <label class="level-checkbox"><input type="checkbox" name="circle-level" value="&level5"> 5</label>
+                    <label class="level-checkbox"><input type="checkbox" name="circle-level" value="&level15">
+                        10</label>
+                    <label class="level-checkbox"><input type="checkbox" name="circle-level" value="&level50">
+                        35</label>
+                    <label class="level-checkbox"><input type="checkbox" name="circle-level" value="&level150">
+                        100</label>
+                </div>
+
+                <div class="level-filter-row">
+                    <span class="level-label">Groups: </span>
+                    <div id="group-filter-container" style="display: flex; flex-wrap: wrap; gap: var(--space-md);">
+                        <!-- Dynamic groups (@) injected here -->
+                    </div>
+                </div>
+
+                <div class="level-filter-row">
+                    <span class="level-label">Topics: </span>
+                    <div id="tag-cloud" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        <!-- Dynamic hashtags (#) injected here -->
+                    </div>
+                </div>
+
+                <div id="circle-list-container" class="circle-list">
+                    <!-- Alpha sorted list injected here -->
+                </div>
+
+                <div class="settings-group share-app-section"
+                    style="margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
+                    <h3>✨ Share Greatuncle.com</h3>
+                    <p class="setting-desc">Invite a friend to join Greatuncle. Include your contact info or a specific
+                        group's data.</p>
+
+                    <div class="form-group" style="text-align: left;">
+                        <label for="share-group-select">Optional: Include Group Data</label>
+                        <select id="share-group-select">
+                            <option value="none">None (App Link + Profile Only)</option>
+                            <!-- Groups will be injected here -->
+                        </select>
+                    </div>
+                    <div id="share-group-preview" class="hidden"
+                        style="margin-bottom: var(--space-md); font-size: 0.8rem; text-align: left; background: rgba(0,0,0,0.03); padding: 8px; border-radius: 8px;">
+                        <strong>Sharing:</strong> <span id="share-group-names"></span>
+                    </div>
+
+                    <button class="btn btn-secondary btn-block" data-action="share-app">Share via Email</button>
+                </div>
+            </section>
+
+            <!-- Settings View -->
+            <section id="settings-view" class="view-section hidden">
+                <header class="section-header">
+                    <h2 class="subtitle-title">About <span class="title-count">1.3</span></h2>
+                </header>
+
+                <div class="tab-control">
+                    <button class="tab-btn active" data-tab="about">The Vision</button>
+                    <button class="tab-btn" data-tab="settings">App Settings</button>
+                    <button class="tab-btn" data-tab="gardenshed">Garden Shed</button>
+                </div>
+
+                <!-- Vision Tab -->
+                <div id="about-tab" class="tab-content" data-tab="about">
+                    <div class="settings-group" style="text-align: left;">
+                        <h3 class="font-heading">Grounded Connection</h3>
+                        <p class="setting-desc">Greatuncle is a private, local-first tool designed to help you
+                            <strong>sustain</strong> meaningful connections. It is built for stability over
+                            noise—replacing
+                            the "viral" energy of social media with the steady, quiet work of staying rooted in your
+                            community.
+                        </p>
+
+                        <p class="setting-desc"><strong>Numbers and Friendships:</strong> Greatuncle separates your
+                            friendships into four categories based on how often you interact with them.
+                        </p>
+                        <ul class="setting-desc" style="padding-left: 24px; margin-top: -16px;">
+                            <li style="margin-bottom: 8px;"><strong>Inner:</strong> 5 people you interact with at least
+                                once a week.</li>
+                            <li style="margin-bottom: 8px;"><strong>Sympathy:</strong> 10 additional people with monthly
+                                interactions.</li>
+                            <li style="margin-bottom: 8px;"><strong>Acquaintances:</strong> 35 more people quarterly or
+                                semi-annually.</li>
+                            <li><strong>Active:</strong> 100 people you interact with less than once a year.</li>
+                        </ul>
+                        <p class="setting-desc">This gives you 150 people in your community.</p>
+
+                        <p class="setting-desc"><strong>Stability Over Signal:</strong> While social media thrives on
+                            "high-energy" spikes,
+                            grounded connection is about the slow, organic work of maintenance. Just as a tree needs
+                            deep roots,
+                            we need deep, sustained connections to stay resilient.
+                        </p>
+
+                        <p class="setting-desc"><strong>The Greatuncle Archetype:</strong> Inspired by the one who
+                            remembers
+                            every birthdate, knows the names of your neighbors, and checks in just to say hello. We
+                            ensure those
+                            who matter most never slip through the cracks of a busy life.
+                        </p>
+
+                        <p class="setting-desc" style="font-style: italic;">Stay rooted. Stay connected.</p>
+
+                        <div id="dunbar-layers-container" class="dunbar-layers-group">
+                            <!-- Dunbar layers injected here -->
+                        </div>
+
+                        <div class="dedication-area">
+                            <p id="easter-egg-trigger" class="dedication-text">Dedicated to Great Uncle Mike</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Garden Shed Tab (Backup/Export) -->
+                <div id="gardenshed-tab" class="tab-content hidden" data-tab="gardenshed">
+                    <div class="settings-group">
+                        <h3>Garden Shed</h3>
+                        <p class="setting-desc">Backup your data often because it is private to you - no cloud here-
+                            to ensure your connections are never lost.</p>
+
+                        <div id="backup-nudge" class="backup-info hidden"
+                            style="margin-bottom: var(--space-md); padding: 12px; background: rgba(212, 163, 115, 0.1); border-radius: 8px; font-size: 0.9rem; border-left: 4px solid var(--color-snooze-amber); text-align: left;">
+                            <!-- Nudge message injected here -->
+                        </div>
+
+                        <div class="backup-section" style="text-align: left;">
+                            <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
+                                Digital Seedling (Data)</h4>
+                            <p class="setting-desc">A copy of your data for digital storage or transfer.</p>
+
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <input type="checkbox" id="toggle-readable-json" style="width: auto;">
+                                <label for="toggle-readable-json" style="font-size: 0.8rem; cursor: pointer;">View as
+                                    Human-Readable JSON</label>
+                            </div>
+
+                            <textarea id="digital-seed-box" rows="5"
+                                placeholder="Your Digital Seedling will appear here..."
+                                style="width: 100%; font-family: monospace; font-size: 0.8rem; margin-bottom: var(--space-sm); border-radius: 8px; padding: 10px;"></textarea>
+                            <div class="form-row" style="flex-wrap: wrap; gap: 8px;">
+                                <button class="btn btn-secondary btn-sm" id="btn-export-json"
+                                    data-action="export-json">Generate & Copy</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-share-backup"
+                                    data-action="share-backup">Share Seedling</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-import-json"
+                                    data-action="import-json">Full Restore from Paste and Overwrite All</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-merge-json" data-action="merge-json"
+                                    style="flex: 1; min-width: 100%;">Merge People (Not History) from Paste</button>
+                            </div>
+                        </div>
+
+                        <div class="backup-section"
+                            style="text-align: left; margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
+                            <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
+                                Browser Storage Status</h4>
+                            <p class="setting-desc" id="storage-status-text" style="margin-bottom: 8px;">Checking
+                                logic...</p>
+                            <span id="storage-status-badge" class="tag-chip hidden"
+                                style="background: var(--color-connected-green); color: white; display: inline-block; margin-bottom: 12px;">Protected
+                                from auto-deletion</span>
+                            <button class="btn btn-secondary btn-block hidden" id="btn-persist-storage"
+                                data-action="persist-storage">Enable Persistent Storage</button>
+                        </div>
+
+                        <div class="backup-section"
+                            style="text-align: left; margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
+                            <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
+                                Physical Ledger (Paper)</h4>
+                            <p class="setting-desc">Generate a printable PDF with a QR code. Your data survives even if
+                                electronics fail.</p>
+                            <button class="btn btn-secondary btn-block" id="btn-print-ledger"
+                                data-action="print-ledger">Generate Paper Ledger</button>
+                        </div>
+
+                        <div class="backup-section"
+                            style="text-align: left; margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
+                            <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
+                                Maintenance</h4>
+                            <p class="setting-desc">If the app feels "stale" or doesn't show recent updates, use this to
+                                force a refresh. (This will not delete your data).</p>
+                            <button class="btn btn-secondary btn-block" data-action="bust-cache">Bust Cache & Force
+                                Update</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab (Existing content wrapped) -->
+                <div id="settings-tab" class="tab-content hidden" data-tab="settings">
+
+                    <div class="settings-group">
+                        <h3>User Profile</h3>
+                        <p class="setting-desc">Include yourself in the circle to celebrate your own milestones.</p>
+                        <div class="form-group" style="text-align: left;">
+                            <label for="user-name">Your Name</label>
+                            <input type="text" id="user-name" placeholder="Full Name">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="text-align: left;">
+                                <label for="user-birthday">Your Birthday</label>
+                                <input type="date" id="user-birthday">
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" id="user-birthday-unknown"> Year unknown
+                                </label>
+                            </div>
+                            <div class="form-group" style="text-align: left;">
+                                <label for="user-anniversary">Your Anniversary</label>
+                                <input type="date" id="user-anniversary">
+                                <label class="checkbox-inline">
+                                    <input type="checkbox" id="user-anniversary-unknown"> Year unknown
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="text-align: left;">
+                                <label for="user-phone">Your Phone</label>
+                                <input type="text" id="user-phone" placeholder="555-555-5555">
+                            </div>
+                            <div class="form-group" style="text-align: left;">
+                                <label for="user-email">Your Email</label>
+                                <input type="email" id="user-email" placeholder="email@example.com">
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm btn-block" id="save-settings-profile"
+                            data-action="save-settings-btn" style="margin-top: var(--space-md);">Save Profile
+                            Changes</button>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Appearance</h3>
+                        <p class="setting-desc">Choose your preferred color theme.</p>
+                        <div class="input-with-label">
+                            <select id="setting-theme" class="btn btn-secondary btn-sm"
+                                style="text-align: center; width: auto;">
+                                <option value="system">Follow System</option>
+                                <option value="light">Light Mode</option>
+                                <option value="dark">Dark Mode</option>
+                            </select>
+                            <span class="label">Color Theme</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Foresight Radar</h3>
+                        <p class="setting-desc">How many days in advance should "preview" contacts appear for birthdays
+                            and anniversaries?</p>
+                        <div class="input-with-label">
+                            <input type="number" id="setting-foresight-window" min="1" max="30" value="7">
+                            <span class="label">Days Preview</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Outreach Goal</h3>
+                        <p class="setting-desc">How many people would you like to connect with daily?</p>
+                        <div class="input-with-label">
+                            <input type="number" id="rotation-limit" min="1" max="150" value="3">
+                            <span class="label">Daily Goal</span>
+                        </div>
+                    </div>
+
+
+                    <div class="settings-group">
+                        <h3>Gathering Rules</h3>
+                        <p class="setting-desc">Prioritize specific hashtags on certain days (e.g., #church on Sunday).
+                        </p>
+                        <div id="gathering-rules-config">
+                            <!-- Dynamic rule inputs will be injected here -->
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="add-gathering-rule">+ Add Rule</button>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Prompt Defaults</h3>
+                        <p class="setting-desc">Personalize your standard conversation starters.</p>
+                        <div class="form-group">
+                            <label for="prompt-sms">SMS/Text</label>
+                            <textarea id="prompt-sms" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="prompt-phone">Phone Call</label>
+                            <textarea id="prompt-phone" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="prompt-email">Email</label>
+                            <textarea id="prompt-email" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="prompt-visit">Visit/In-Person</label>
+                            <textarea id="prompt-visit" rows="2"></textarea>
+                        </div>
+
+                    </div>
+
+
+
+                    <button class="btn btn-primary btn-block" id="save-settings">Save All Settings</button>
+
+                </div>
+            </section>
+
+            <!-- Journal View -->
+            <section id="journal-view" class="view-section hidden">
+                <header class="section-header">
+                    <h2 class="subtitle-title">Journal</h2>
+                    <p class="text-muted" id="journal-strapline">Sustaining your connections</p>
+                </header>
+
+                <div id="journal-stats" class="journal-stats-grid">
+                    <!-- Stats injected here -->
+                </div>
+
+                <div id="journal-container" class="journal-timeline">
+                    <!-- Logs injected here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Floating Action Button -->
+        <button id="fab-add" class="fab" data-action="add-initial" aria-label="Add Contact">
+            <span>+</span>
+        </button>
+
+        <!-- Your Community: Onboarding Overlay -->
+        <div id="onboarding-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <header>
+                    <h2 class="font-heading">Your Community</h2>
+                    <div class="tab-control">
+                        <button class="tab-btn active" data-tab="single">Single</button>
+                        <button class="tab-btn" data-tab="bulk">Bulk Add</button>
+                    </div>
+                </header>
+
+                <!-- Single Add Form -->
+                <form id="add-contact-form" class="tab-content" data-tab="single">
+                    <div class="form-group">
+                        <label for="contact-name">Name</label>
+                        <div class="input-with-button">
+                            <input type="text" id="contact-name" placeholder="Who matters?" required>
+                            <button type="button" id="btn-import-contact" class="btn-icon-field hidden"
+                                title="Import from device">👤+</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Level</label>
+                        <div class="level-selection">
+                            <label class="level-btn">
+                                <input type="radio" name="contact-level" value="&level5">
+                                <span>5</span>
+                            </label>
+                            <label class="level-btn">
+                                <input type="radio" name="contact-level" value="&level15">
+                                <span>10</span>
+                            </label>
+                            <label class="level-btn">
+                                <input type="radio" name="contact-level" value="&level50" checked>
+                                <span>35</span>
+                            </label>
+                            <label class="level-btn">
+                                <input type="radio" name="contact-level" value="&level150">
+                                <span>100</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-tags">Smart Hashtags (Space separated)</label>
+                        <input type="text" id="contact-tags" placeholder="#topic @group">
+                        <small class="text-muted">#Topic @Group !Action</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-phone">Phone Number</label>
+                        <input type="text" id="contact-phone" placeholder="555-555-5555">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-email">Email Address</label>
+                        <input type="email" id="contact-email" placeholder="email@example.com">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact-zip">Zip/Postal Code</label>
+                            <input type="text" id="contact-zip" placeholder="12345 or A1A 1A1">
+                        </div>
+                        <div class="form-group" style="flex: 2;">
+                            <label for="contact-address">Address</label>
+                            <input type="text" id="contact-address" placeholder="123 Main St, City">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact-birthday">Birthday <small class="text-muted">(e.g. July
+                                    4)</small></label>
+                            <input type="date" id="contact-birthday">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" id="contact-birthday-unknown"> Year unknown
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-anniversary">Anniversary <small class="text-muted">(e.g. May
+                                    5)</small></label>
+                            <input type="date" id="contact-anniversary">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" id="contact-anniversary-unknown"> Year unknown
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-legacy">Legacy Mode (For deceased elders)</label>
+                        <select id="contact-legacy">
+                            <option value="false">Living</option>
+                            <option value="true">Deceased</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Add to Circle</button>
+                </form>
+
+                <!-- Bulk Add Form -->
+                <form id="bulk-add-form" class="tab-content hidden" data-tab="bulk">
+                    <div class="form-group">
+                        <label for="bulk-names">Paste Names (One per line)</label>
+                        <textarea id="bulk-names" rows="8"
+                            placeholder="Bonnie Daly&#10;John Smith&#10;Mayor Walker"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Level</label>
+                        <div class="level-selection">
+                            <label class="level-btn">
+                                <input type="radio" name="bulk-level" value="&level5">
+                                <span>5</span>
+                            </label>
+                            <label class="level-btn">
+                                <input type="radio" name="bulk-level" value="&level15">
+                                <span>10</span>
+                            </label>
+                            <label class="level-btn">
+                                <input type="radio" name="bulk-level" value="&level50" checked>
+                                <span>35</span>
+                            </label>
+                            <label class="level-btn">
+                                <input type="radio" name="bulk-level" value="&level150">
+                                <span>100</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bulk-tags">Smart Hashtags (Space separated)</label>
+                        <input type="text" id="bulk-tags" placeholder="#topic @group">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Import All</button>
+                </form>
+
+                <button type="button" class="btn btn-link" id="close-onboarding">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Contact Detail Overlay -->
+        <div id="detail-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <header>
+                    <h2 class="font-heading" id="detail-name">Contact Name</h2>
+                    <p id="detail-meta">Relationship • Frequency</p>
+                    <div id="detail-contact-info" class="detail-contact-info">
+                        <p id="detail-phone"></p>
+                        <p id="detail-email"></p>
+                        <p id="detail-address"></p>
+                    </div>
+                    <div class="detail-actions"
+                        style="margin-top: var(--space-md); display: flex; flex-direction: column; gap: 12px; align-items: center;">
+                        <div class="direct-actions" id="detail-direct-actions"
+                            style="width: 100%; border-top: none; margin-top: 0;">
+                            <button class="btn-action-icon btn-sms" data-action="quick-sms" title="Text">📱</button>
+                            <button class="btn-action-icon btn-call" data-action="quick-call" title="Call">📞</button>
+                            <button class="btn-action-icon btn-email" data-action="quick-email"
+                                title="Email">✉️</button>
+                            <button class="btn-action-icon" data-action="pick-prompt" title="Other Methods">✨</button>
+                        </div>
+                        <div class="card-actions" id="detail-card-actions"
+                            style="width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 0;">
+                            <button class="btn-complete" data-action="complete">Connected</button>
+                            <button class="btn btn-secondary btn-full" id="open-edit-contact" data-action="edit-contact"
+                                style="margin-top: 0;">Edit Info</button>
+                        </div>
+                    </div>
+                </header>
+                <div class="detail-section">
+                    <h3>History</h3>
+                    <div id="detail-history" class="detail-history-list">
+                        <!-- History injected here -->
+                    </div>
+                </div>
+                <button type="button" class="btn btn-link" id="close-detail">Close</button>
+            </div>
+        </div>
+
+        <!-- Edit Contact Overlay -->
+        <div id="edit-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <h2 class="font-heading">Edit Contact</h2>
+                <form id="edit-contact-form" style="text-align: left;">
+                    <input type="hidden" id="edit-id">
+                    <div class="form-group">
+                        <label for="edit-name">Name</label>
+                        <input type="text" id="edit-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Level</label>
+                        <div class="level-selection">
+                            <label class="level-btn">
+                                <input type="radio" name="edit-contact-level" value="&level5">
+                                <span>5</span>
+                            </label>
+                            <label class="level-btn">
+                                <input type="radio" name="edit-contact-level" value="&level15">
+                                <span>10</span>
+                            </label>
+                            <label class="level-btn">
+                                <input type="radio" name="edit-contact-level" value="&level50">
+                                <span>35</span>
+                            </label>
+                            <label class="level-btn">
+                                <input type="radio" name="edit-contact-level" value="&level150">
+                                <span>100</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-tags">Smart Hashtags (Space separated)</label>
+                        <input type="text" id="edit-tags" placeholder="#topic @group">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-phone">Phone Number</label>
+                        <input type="text" id="edit-phone" placeholder="555-555-5555">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-email">Email Address</label>
+                        <input type="email" id="edit-email" placeholder="email@example.com">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-zip">Zip/Postal Code</label>
+                            <input type="text" id="edit-zip" placeholder="12345 or A1A 1A1">
+                        </div>
+                        <div class="form-group" style="flex: 2;">
+                            <label for="edit-address">Address</label>
+                            <input type="text" id="edit-address" placeholder="123 Main St, City">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-birthday">Birthday <small class="text-muted">(e.g. July 4)</small></label>
+                            <input type="date" id="edit-birthday">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" id="edit-birthday-unknown"> Year unknown
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-anniversary">Anniversary <small class="text-muted">(e.g. May
+                                    5)</small></label>
+                            <input type="date" id="edit-anniversary">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" id="edit-anniversary-unknown"> Year unknown
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-legacy">Legacy Mode</label>
+                        <select id="edit-legacy">
+                            <option value="false">Living</option>
+                            <option value="true">Deceased (&legacy)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+                    <button type="button" class="btn btn-link" id="delete-contact" data-action="delete-contact"
+                        style="color: #900; margin-top: 20px;">Delete Contact</button>
+                    <button type="button" class="btn btn-link" id="close-edit">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Log Connection Overlay -->
+        <div id="log-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <header>
+                    <h2 class="font-heading">Log Connection</h2>
+                    <p id="log-contact-name"></p>
+                </header>
+                <form id="log-connection-form">
+                    <div class="form-group">
+                        <label for="log-comment">Note (Optional)</label>
+                        <textarea id="log-comment" rows="4" placeholder="What did you talk about?"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Save to Journal</button>
+                    <button type="button" class="btn btn-secondary btn-block" id="skip-log">Connected (No Note)</button>
+                    <button type="button" class="btn btn-link" data-action="close-overlay">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Prompt Picker Overlay -->
+        <div id="prompt-picker-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <header>
+                    <h2 class="font-heading">Pick a Method</h2>
+                    <div class="tab-control intent-tabs">
+                        <button class="tab-btn active" data-intent="lowStakes">Low Stakes</button>
+                        <button class="tab-btn" data-intent="requestHelp">Help</button>
+                        <button class="tab-btn" data-intent="familyLegacy">Family</button>
+                    </div>
+                </header>
+
+                <div id="method-list" class="method-grid">
+                    <!-- Methods injected here -->
+                </div>
+
+                <div id="generated-prompt-display">
+                    <!-- Generated prompt injected here -->
+                </div>
+
+                <button type="button" class="btn btn-link" id="close-prompt-picker">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Digital Postcard Overlay -->
+        <div id="postcard-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <header>
+                    <h2 class="font-heading">Digital Postcard</h2>
+                    <p>Share a memory with <span id="postcard-contact-name">...</span></p>
+                </header>
+                <div class="postcard-editor">
+                    <div id="postcard-preview" class="postcard-frame">
+                        <div class="postcard-front">
+                            <div class="postcard-inner">
+                                <img id="postcard-image" src="" alt="Postcard" class="hidden">
+                                <div class="postcard-placeholder">Tap to add photo</div>
+                            </div>
+                            <div class="postcard-stamp">Great<br>Uncle</div>
+                        </div>
+                        <div class="postcard-message-preview handwritten" id="postcard-text-preview">Your message
+                            here...</div>
+                    </div>
+                    <input type="file" id="postcard-upload" accept="image/*" class="hidden">
+                </div>
+                <div class="form-group">
+                    <textarea id="postcard-message" rows="3" placeholder="Write your message..."></textarea>
+                </div>
+                <button id="send-postcard" class="btn btn-primary btn-block">Share Postcard</button>
+                <button type="button" class="btn btn-link" id="close-postcard">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Reflection Overlay -->
+        <div id="reflection-overlay" class="overlay hidden">
+            <div class="overlay-content is-legacy-card">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <h2 class="font-heading" id="reflection-contact-name">Reflect on [Name]</h2>
+                <div class="prompt-result" style="border: 1px dashed #D4A373; background: #FFF;">
+                    <p class="prompt-text" id="reflection-prompt-text">[Prompt]</p>
+                </div>
+                <div class="form-group">
+                    <textarea id="reflection-note" rows="4"
+                        placeholder="Record your memory or reflection here..."></textarea>
+                </div>
+                <div class="prompt-actions">
+                    <button class="btn btn-primary btn-block" id="save-reflection" style="background: #D4A373;">Save to
+                        Memory Lane</button>
+                    <button class="btn btn-link" id="close-reflection">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Planning Overlay -->
+        <div id="calendar-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <header>
+                    <h2 class="font-heading">Plan Connection</h2>
+                    <p id="calendar-contact-name">With [Name]</p>
+                </header>
+                <form id="calendar-form">
+                    <input type="hidden" id="calendar-contact-id">
+                    <div class="form-group">
+                        <label for="calendar-date">Date & Time</label>
+                        <input type="datetime-local" id="calendar-datetime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="calendar-activity">Activity</label>
+                        <select id="calendar-activity">
+                            <option value="Meet for Coffee">Meet for Coffee</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="Quick Call">Quick Call</option>
+                            <option value="Lunch">Lunch</option>
+                            <option value="Drop-in Visit">Drop-in Visit</option>
+                            <option value="Dinner">Dinner</option>
+                            <option value="Walk">Walk</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Download Calendar Invite</button>
+                    <button type="button" class="btn btn-link" data-action="close-overlay">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Share Review Overlay -->
+        <div id="share-review-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <header>
+                    <h2 class="font-heading">Review Shared People</h2>
+                    <p id="share-review-meta">The following people were shared with you. Review and add them to your
+                        circle.</p>
+                </header>
+
+                <div id="share-review-list" class="share-review-list">
+                    <!-- Pending contacts injected here -->
+                </div>
+
+                <div class="bulk-tag-actions"
+                    style="margin-top: var(--space-md); padding: 12px; background: rgba(212, 163, 115, 0.05); border-radius: 8px; border: 1px solid var(--color-border);">
+                    <label for="bulk-share-tag" style="font-size: 0.8rem; display: block; margin-bottom: 4px;">Set all
+                        group
+                        tags to:</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="bulk-share-tag" placeholder="@group"
+                            style="flex: 1; font-size: 0.9rem; padding: 6px;">
+                        <button class="btn btn-secondary btn-sm" onclick="app.ui.applyBulkTag()">Apply to All</button>
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-top: var(--space-lg);">
+                    <button class="btn btn-primary btn-block" id="bulk-import-shared">Import All Selected</button>
+                    <button class="btn btn-link" id="pause-review-btn" data-action="close-overlay">Pause Reviewing for
+                        Now</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Merge Conflict Overlay -->
+        <div id="merge-conflict-overlay" class="overlay hidden" style="z-index: 2000;">
+            <div class="overlay-content" style="max-width: 450px;">
+                <div class="overlay-header">
+                    <h2>Resolve Conflict</h2>
+                </div>
+                <div id="merge-conflict-body" style="margin: 20px 0;">
+                    <!-- Conflicts will be rendered here -->
+                </div>
+                <div class="overlay-footer">
+                    <button class="btn btn-secondary"
+                        onclick="document.getElementById('merge-conflict-overlay').classList.add('hidden')">Cancel</button>
+                    <button class="btn btn-primary" id="confirm-merge-btn">Apply Choices</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Missing Info Overlay -->
+        <div id="missing-info-overlay" class="overlay hidden">
+            <div class="overlay-content">
+                <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
+                <header>
+                    <h2 class="font-heading">Add Details</h2>
+                    <p id="missing-info-text">Please provide the missing details to proceed.</p>
+                </header>
+                <form id="missing-info-form">
+                    <input type="hidden" id="missing-info-id">
+                    <input type="hidden" id="missing-info-method">
+                    <div class="form-group hidden" id="group-missing-phone">
+                        <label for="missing-phone">Phone Number</label>
+                        <input type="text" id="missing-phone" placeholder="555-555-5555">
+                    </div>
+                    <div class="form-group hidden" id="group-missing-email">
+                        <label for="missing-email">Email Address</label>
+                        <input type="email" id="missing-email" placeholder="email@example.com">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Save & Continue</button>
+                    <button type="button" class="btn btn-link" data-action="close-overlay">Cancel</button>
+                </form>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <button id="nav-home" class="nav-item active" aria-label="Home">
+                <span class="icon">🏠</span>
+                <span class="label">Home</span>
+            </button>
+            <button id="nav-contacts" class="nav-item" aria-label="People">
+                <span class="icon">👥</span>
+                <span class="label">People</span>
+            </button>
+            <button id="nav-journal" class="nav-item" aria-label="Journal">
+                <span class="icon">📓</span>
+                <span class="label">Journal</span>
+            </button>
+            <button id="nav-settings" class="nav-item" aria-label="About">
+                <span class="icon">⚙️</span>
+                <span class="label">About</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Templates -->
+    <template id="tmpl-contact-row">
+        <div class="contact-row" data-action="view-detail" data-id="">
+            <div class="contact-row-info">
+                <h3 class="name-display"></h3>
+                <p class="tags-display"></p>
+            </div>
+            <div class="contact-row-actions">
+                <button class="contact-row-icon-btn action-complete" data-action="complete" data-id=""
+                    aria-label="Mark as Connected">
+                    ✅
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <template id="tmpl-snapshot-card">
+        <article class="snapshot-card card" data-id="" data-meta="">
+            <div class="milestone-badge-container"></div>
+            <div class="card-content">
+                <div class="tag-chips"></div>
+                <h2 class="contact-name"></h2>
+                <p class="contact-meta"></p>
+            </div>
+
+            <div class="celebration-ui hidden"></div>
+
+            <div class="prep-actions hidden">
+                <button class="btn-prep" data-action="prep-gift" data-id="">🎁 Gift</button>
+                <button class="btn-prep" data-action="prep-flowers" data-id="">💐 Flowers</button>
+                <button class="btn-prep" data-action="prep-donation" data-id="">🕊️ Donation</button>
+            </div>
+
+            <div class="direct-actions hidden">
+                <button class="btn-action-icon btn-sms" data-action="quick-sms" data-id="" title="Text">📱</button>
+                <button class="btn-action-icon btn-call" data-action="quick-call" data-id="" title="Call">📞</button>
+                <button class="btn-action-icon btn-email" data-action="quick-email" data-id="" title="Email">✉️</button>
+                <button class="btn-action-icon" data-action="export-calendar" data-id="" title="Plan">📅</button>
+                <button class="btn-action-icon" data-action="pick-prompt" data-id="" title="Other Methods">✨</button>
+            </div>
+
+            <div class="card-actions">
+                <button class="btn-reflect hidden" data-action="reflect" data-id="">
+                    Reflect & Honor
+                </button>
+                <button class="btn-secondary btn-full btn-view-memory hidden" data-action="view-detail" data-id="">
+                    View Memory Lane
+                </button>
+                <button class="btn-snooze hidden" data-action="snooze" data-id="" aria-label="Snooze">
+                    Snooze
+                </button>
+                <button class="btn-complete hidden" data-action="complete" data-id="" aria-label="Completed">
+                    Connected
+                </button>
+            </div>
+        </article>
+    </template>
+
+    <template id="tmpl-share-review-item">
+        <div class="share-review-item"
+            style="border-bottom: 1px solid var(--color-border); padding: 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div class="share-info" style="text-align: left; flex: 1; min-width: 200px;">
+                <strong style="display: flex; align-items: center; gap: 6px;">
+                    <span class="sr-name"></span>
+                    <span class="sr-duplicate-warning hidden" title="Potential duplicate in your circle"
+                        style="font-size: 0.9rem; cursor: help;">⚠️</span>
+                </strong>
+                <div class="share-details" style="font-size: 0.8rem; color: var(--text-muted);">
+                    <span class="sr-phone"></span>
+                    <span class="sr-email" style="margin-left:8px;"></span>
+                </div>
+                <div class="sr-duplicate-text hidden"
+                    style="font-size: 0.7rem; color: var(--color-snooze-amber); font-weight: 600;">Already in your
+                    circle</div>
+            </div>
+
+            <div class="share-review-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <input type="text" class="share-tag-input" value="" placeholder="@group"
+                    style="width: 100px; font-size: 0.8rem; padding: 4px;">
+
+                <button class="btn btn-secondary btn-sm sr-btn-add-new" title="Add as a new separate contact">Add as
+                    New</button>
+                <button class="btn btn-primary btn-sm sr-btn-merge hidden"
+                    title="Combine info with existing contact">Merge</button>
+                <button class="btn-remove-rule sr-btn-skip">Skip</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="tmpl-conflict-item">
+        <div class="conflict-item" style="padding: 12px; border-radius: 8px;">
+            <label class="conflict-field-label"></label>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label class="conflict-option-label">
+                    <input type="radio" value="original" checked>
+                    <span><span class="co-val-original"></span> <span class="conflict-meta">Keep existing in your
+                            circle</span></span>
+                </label>
+                <label class="conflict-option-label">
+                    <input type="radio" value="shared">
+                    <span><span class="co-val-shared"></span> <span class="conflict-meta">Use new shared
+                            version</span></span>
+                </label>
+            </div>
+        </div>
+    </template>
+
+    <template id="tmpl-journal-entry">
+        <div class="journal-entry">
+            <div class="journal-entry-meta">
+                <span class="journal-name"></span>
+                <span class="journal-date"></span>
+            </div>
+            <p class="journal-comment"></p>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script type="module" src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.error('Service Worker registration failed', err));
+            });
+        }
+    </script>
+</body>
+
+</html>

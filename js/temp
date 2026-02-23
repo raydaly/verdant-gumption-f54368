@@ -1,0 +1,167 @@
+{
+    "version": "1.1",
+    "timestamp": 1771075232243,
+    "settings": {
+        "rotationLimit": 3,
+        "userName": "",
+        "userBirthday": "",
+        "userAnniversary": "",
+        "userPhone": "",
+        "userEmail": "",
+        "prompts": {
+            "sms": "Thinking of you! Hope your week is going well.",
+            "phone": "Just wanted to give you a quick ring and say hello!",
+            "email": "It's been a while since we caught up. Hope you're doing great.",
+            "visit": "I'd love to drop by or meet for coffee soon!"
+        },
+        "gatheringRules": [
+            {
+                "day": "Sunday",
+                "tag": "#church"
+            },
+            {
+                "day": "Saturday",
+                "tag": "#morningwalkers"
+            }
+        ],
+        "theme": "system",
+        "foresightWindow": 7,
+        "lastExportTimestamp": 1771075223602
+    },
+    "contacts": [
+        {
+            "id": "c7ed97dc-f7db-4ad5-9381-8cfd6570d105",
+            "last_contacted": 0,
+            "snooze_until": null,
+            "logs": [],
+            "is_user": false,
+            "name": "Bonnie Gardner",
+            "phone": "3018739413",
+            "email": "bgardner@gmail.com",
+            "tags": [
+                "@gardner",
+                "@daly"
+            ],
+            "birthday": "1964-05-20",
+            "anniversary": "2014-05-05",
+            "date_of_passing": null
+        },
+        {
+            "id": "900c328e-46e5-4caa-94c3-bf2c9bd1f9ab",
+            "last_contacted": 0,
+            "snooze_until": null,
+            "logs": [],
+            "is_user": false,
+            "name": "Ray Daly",
+            "phone": "5714380007",
+            "email": "bgardner@gmail.com",
+            "tags": [
+                "@daly",
+                "#coder",
+                "@daly-siblings"
+            ],
+            "birthday": "2000-02-10",
+            "anniversary": "2010-02-14",
+            "date_of_passing": null
+        },
+        {
+            "id": "966ba724-3acf-4d3a-9e82-768df6e7c7f6",
+            "last_contacted": 0,
+            "snooze_until": null,
+            "logs": [],
+            "is_user": false,
+            "name": "Olivia Gardner",
+            "phone": "5714380007",
+            "email": "livgardner107@gmail.com",
+            "tags": [
+                "@daly",
+                "@gardner"
+            ],
+            "birthday": null,
+            "anniversary": null,
+            "date_of_passing": null
+        },
+        {
+            "id": "ea4597a4-b151-4e7b-a52c-585d66c787df",
+            "last_contacted": 0,
+            "snooze_until": null,
+            "logs": [],
+            "is_user": false,
+            "name": "Lee Daly",
+            "tags": [
+                "@daly",
+                "@daly-siblings",
+                "&level15"
+            ]
+        },
+        {
+            "id": "d1302a9b-ad76-4982-9d6d-18d275ffa916",
+            "last_contacted": 0,
+            "snooze_until": null,
+            "logs": [],
+            "is_user": false,
+            "name": "Pete Daly",
+            "tags": [
+                "@daly",
+                "@daly-siblings",
+                "&level15"
+            ]
+        },
+        {
+            "id": "c7c0cfe8-d9c9-4cc9-a16c-e7555abf8176",
+            "last_contacted": 0,
+            "snooze_until": null,
+            "logs": [],
+            "is_user": false,
+            "name": "Dawn Daly",
+            "tags": [
+                "@daly",
+                "@daly-siblings",
+                "&level15"
+            ]
+        },
+        {
+            "id": "f6f570e3-b507-4d9e-9e76-e336e6ac7f85",
+            "last_contacted": 0,
+            "snooze_until": null,
+            "logs": [],
+            "is_user": false,
+            "name": "Gail Daly",
+            "tags": [
+                "@daly",
+                "@daly-siblings",
+                "&level15"
+            ]
+        },
+        {
+            "id": "434c56d2-1c99-4b0d-b91f-c9298e57cfcb",
+            "last_contacted": 0,
+            "snooze_until": null,
+            "logs": [],
+            "is_user": false,
+            "name": "Alan Daly",
+            "tags": [
+                "@daly",
+                "@daly-siblings",
+                "&level15"
+            ]
+        },
+        {
+            "id": "2721db26-ef2b-4390-95b4-ef7a16fd43c7",
+            "last_contacted": 0,
+            "snooze_until": null,
+            "logs": [],
+            "is_user": false,
+            "name": "Nancy Daly",
+            "phone": "",
+            "email": "",
+            "tags": [
+                "@daly",
+                "&level50"
+            ],
+            "birthday": null,
+            "anniversary": null,
+            "date_of_passing": null
+        }
+    ]
+}
