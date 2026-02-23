@@ -610,12 +610,40 @@ export class GreatuncleUI {
         this.els.circleList.innerHTML = '';
         if (tmpl) {
             const fragment = document.createDocumentFragment();
+            const INTERVALS = {
+                '&level5': 14,
+                '&level15': 30,
+                '&level50': 90,
+                '&level150': 365
+            };
+
             sorted.forEach(person => {
                 const clone = tmpl.content.cloneNode(true);
                 const row = clone.querySelector('.contact-row');
                 row.dataset.id = person.id;
 
-                clone.querySelector('.name-display').textContent = person.name;
+                let nameSuffix = '';
+                if (this.app.currentSort === 'due') {
+                    let interval = 90;
+                    if (person.tags) {
+                        if (person.tags.includes('&level5')) interval = INTERVALS['&level5'];
+                        else if (person.tags.includes('&level15')) interval = INTERVALS['&level15'];
+                        else if (person.tags.includes('&level50')) interval = INTERVALS['&level50'];
+                        else if (person.tags.includes('&level150')) interval = INTERVALS['&level150'];
+                    }
+
+                    if (person.last_contacted !== 0) {
+                        const daysSince = (Date.now() - person.last_contacted) / (1000 * 60 * 60 * 24);
+                        if (daysSince > interval) {
+                            const overdue = Math.floor(daysSince - interval);
+                            nameSuffix = ` (${overdue} days)`;
+                        }
+                    } else {
+                        nameSuffix = ' (Never)';
+                    }
+                }
+
+                clone.querySelector('.name-display').innerHTML = `${person.name}${nameSuffix ? `<span class="name-date-suffix">${nameSuffix}</span>` : ''}`;
                 clone.querySelector('.tags-display').textContent = (person.tags || []).filter(t => t.startsWith('#') || t.startsWith('@')).join(' ');
 
                 clone.querySelector('.action-complete').dataset.id = person.id;
