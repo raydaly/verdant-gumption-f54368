@@ -661,6 +661,15 @@ export class GreatuncleUI {
         this.renderShareGroupDropdown();
     }
 
+    renderCircleListWithAnimation() {
+        if (!this.els.circleList) return;
+        this.els.circleList.classList.add('list-hidden');
+        setTimeout(() => {
+            this.renderCircleList();
+            this.els.circleList.classList.remove('list-hidden');
+        }, 200);
+    }
+
     renderSortControls() {
         const container = document.getElementById('sort-controls');
         if (!container) return;

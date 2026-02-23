@@ -1754,3 +1754,12 @@ textarea:focus {
 .dedication-text:active {
     transform: scale(0.95);
 }
+
+/* Animations */
+.list-fade {
+    transition: opacity 0.2s ease-in-out;
+}
+
+.list-hidden {
+    opacity: 0;
+}

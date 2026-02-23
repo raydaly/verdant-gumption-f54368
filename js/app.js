@@ -944,7 +944,7 @@ class GreatuncleApp {
 
             if (target.classList.contains('sort-tab-btn')) {
                 this.currentSort = target.dataset.sort;
-                this.ui.renderCircleList();
+                this.ui.renderCircleListWithAnimation();
             }
 
             // Tab Switching (Onboarding, About/Settings, etc)
