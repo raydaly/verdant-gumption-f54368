@@ -701,22 +701,15 @@ export class GreatuncleUI {
             { id: '&level150', label: '100' }
         ];
 
-        const isAll = this.app.currentLevelFilters.length === 0;
-        let html = `
-            <button class="circle-tab-btn level-tab-btn ${isAll ? 'active' : ''}" data-level="all">
-                <span class="radio-icon">${isAll ? '●' : '○'}</span> All
-            </button>
-        `;
-
-        html += levels.map(opt => {
-            const isActive = this.app.currentLevelFilters.includes(opt.id);
+        container.innerHTML = levels.map(opt => {
+            const checked = this.app.currentLevelFilters.includes(opt.id);
             return `
-                <button class="circle-tab-btn level-tab-btn ${isActive ? 'active' : ''}" data-level="${opt.id}">
-                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${opt.label}
-                </button>
+                <label class="level-checkbox">
+                    <input type="checkbox" name="circle-level" value="${opt.id}" ${checked ? 'checked' : ''}>
+                    ${opt.label}
+                </label>
             `;
         }).join('');
-        container.innerHTML = html;
     }
 
     renderShareGroupDropdown() {
@@ -774,15 +767,8 @@ export class GreatuncleUI {
         });
 
         const sortedGroups = Array.from(allGroups).sort();
-        const isAll = this.app.currentGroupFilters.length === 0;
 
-        let html = `
-            <button class="circle-tab-btn group-tab-btn ${isAll ? 'active' : ''}" data-group="all">
-                <span class="radio-icon">${isAll ? '●' : '○'}</span> All
-            </button>
-        `;
-
-        html += sortedGroups.map(group => {
+        let html = sortedGroups.map(group => {
             const isActive = this.app.currentGroupFilters.includes(group);
             return `
                 <button class="circle-tab-btn group-tab-btn ${isActive ? 'active' : ''}" data-group="${group}">
@@ -809,12 +795,8 @@ export class GreatuncleUI {
         });
 
         const activeTags = this.app.currentTagFilters || [];
-        const isAll = activeTags.length === 0;
 
         let tagsHtml = `
-            <button class="circle-tab-btn ${isAll ? 'active' : ''}" data-tag="all">
-                <span class="radio-icon">${isAll ? '●' : '○'}</span> All
-            </button>
             <button class="circle-tab-btn ${activeTags.includes('&legacy') ? 'active' : ''}" data-tag="&legacy" style="margin-right: 15px;">
                 <span class="radio-icon">${activeTags.includes('&legacy') ? '●' : '○'}</span> &legacy
             </button>

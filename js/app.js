@@ -736,7 +736,7 @@ class GreatuncleApp {
         this.currentLevelFilters = Array.from(checked).map(cb => cb.value);
 
         this._syncFilterUI();
-        this.ui.renderCircleList();
+        this.ui.renderCircleListWithAnimation();
     }
 
     handleGroupFilterChange() {
@@ -744,7 +744,7 @@ class GreatuncleApp {
         this.currentGroupFilters = Array.from(checked).map(cb => cb.value);
 
         this._syncFilterUI();
-        this.ui.renderCircleList();
+        this.ui.renderCircleListWithAnimation();
     }
 
     _syncFilterUI() {
@@ -936,19 +936,6 @@ class GreatuncleApp {
                     this.ui.renderCircleListWithAnimation();
                 } else if (target.dataset.sort) {
                     this.currentSort = target.dataset.sort;
-                    this.ui.renderCircleListWithAnimation();
-                } else if (target.dataset.level) {
-                    const level = target.dataset.level;
-                    if (level === 'all') {
-                        this.currentLevelFilters = [];
-                    } else {
-                        const index = this.currentLevelFilters.indexOf(level);
-                        if (index > -1) {
-                            this.currentLevelFilters.splice(index, 1);
-                        } else {
-                            this.currentLevelFilters.push(level);
-                        }
-                    }
                     this.ui.renderCircleListWithAnimation();
                 } else if (target.dataset.group) {
                     const group = target.dataset.group;
