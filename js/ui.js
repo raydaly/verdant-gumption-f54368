@@ -120,13 +120,9 @@ export class GreatuncleUI {
             this.els.navs.circle.classList.add('active');
         }
 
-        // Hide app header on Circles and Journal pages to tighten spacing
+        // Always show header so the settings gear is accessible
         if (this.els.header) {
-            if (['circle', 'journal'].includes(viewName)) {
-                this.els.header.classList.add('hidden');
-            } else {
-                this.els.header.classList.remove('hidden');
-            }
+            this.els.header.classList.remove('hidden');
         }
 
         if (viewName === 'circle') {
