@@ -25,14 +25,14 @@
 
 <body>
     <div id="main-app">
-        <header class="app-header" style="position: relative; display: flex; align-items: center; justify-content: center;">
-            <h1 class="brand" style="margin: 0;">Greatuncle</h1>
-            <button id="nav-header-settings" class="nav-item" aria-label="About" style="position: absolute; right: var(--space-lg); background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none;">⚙️</button>
+        <header class="app-header">
+            <h1 class="brand">Greatuncle</h1>
         </header>
 
         <main id="main-content">
             <!-- Dashboard: The Heart of the App -->
             <section id="daily-suggestions" class="view-section">
+                <header class="section-header" style="display: flex; justify-content: space-between; align-items: center; padding-top: var(--space-sm); padding-right: var(--space-md);"><h2 class="subtitle-title" style="visibility: hidden;">Home</h2><button class="nav-item nav-header-settings" class="nav-item" aria-label="About" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button></header>
                 <!-- Anchor Events (Today's Milestones) -->
                 <div id="anchor-events" class="dashboard-section hidden">
                     <h3 class="section-label">Anchor Events</h3>
@@ -70,7 +70,7 @@
             <!-- Full Circle List -->
             <section id="full-circle" class="view-section hidden">
                 <header class="section-header">
-                    <h2 class="subtitle-title">People</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><h2 class="subtitle-title" style="margin:0;">People</h2><button class="nav-item nav-header-settings" class="nav-item" aria-label="About" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button></div>
                 </header>
 
                 <div class="search-container">
@@ -323,7 +323,7 @@
             <!-- Backup View -->\n
                 <section id="backup-view" class="view-section hidden">
                 <header class="section-header">
-                    <h2 class="subtitle-title">Backup</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><h2 class="subtitle-title" style="margin:0;">Backup</h2><button class="nav-item nav-header-settings" class="nav-item" aria-label="About" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button></div>
                 </header>
                     <div class="settings-group">
                         <h3>Garden Shed</h3>
@@ -399,7 +399,7 @@
 \n            <!-- Journal View -->
             <section id="journal-view" class="view-section hidden">
                 <header class="section-header">
-                    <h2 class="subtitle-title">Journal</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><h2 class="subtitle-title" style="margin:0;">Journal</h2><button class="nav-item nav-header-settings" class="nav-item" aria-label="About" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button></div>
                     <p class="text-muted" id="journal-strapline">Sustaining your connections</p>
                 </header>
 
