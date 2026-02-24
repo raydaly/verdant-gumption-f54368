@@ -20,13 +20,15 @@ export class GreatuncleUI {
                 home: document.getElementById('daily-suggestions'),
                 circle: document.getElementById('full-circle'),
                 journal: document.getElementById('journal-view'),
-                settings: document.getElementById('settings-view')
+                settings: document.getElementById('settings-view'),
+                backup: document.getElementById('backup-view')
             },
             navs: {
                 home: document.getElementById('nav-home'),
                 circle: document.getElementById('nav-contacts'),
                 journal: document.getElementById('nav-journal'),
-                settings: document.getElementById('nav-settings')
+                settings: document.getElementById('nav-header-settings'),
+                backup: document.getElementById('nav-backup')
             },
             header: document.querySelector('.app-header')
         };

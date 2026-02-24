@@ -910,7 +910,8 @@ class GreatuncleApp {
             if (target.id === 'nav-home') this.ui.switchView('home');
             if (target.id === 'nav-contacts') this.ui.switchView('circle');
             if (target.id === 'nav-journal') this.ui.switchView('journal');
-            if (target.id === 'nav-settings') this.ui.switchView('settings');
+            if (target.id === 'nav-header-settings') this.ui.switchView('settings');
+            if (target.id === 'nav-backup') this.ui.switchView('backup');
 
             if (target.id === 'save-settings' || target.id === 'save-settings-profile' || action === 'save-settings-btn') {
                 console.log("Save button clicked:", action);
