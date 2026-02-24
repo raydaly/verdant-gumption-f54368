@@ -480,7 +480,7 @@ export class GreatuncleUI {
             metaEl.textContent = 'In Loving Memory';
         } else {
             const overdueDays = Math.floor((Date.now() - person.last_contacted) / (1000 * 60 * 60 * 24));
-            metaEl.textContent = `Last contacted: ${person.last_contacted === 0 ? 'Never' :
+            metaEl.textContent = `Last contacted: ${person.last_contacted === 0 ? 'Not Yet' :
                 overdueDays === 0 ? 'Today' :
                     overdueDays === 1 ? 'Yesterday' :
                         overdueDays + ' days ago'
@@ -649,7 +649,7 @@ export class GreatuncleUI {
                             nameSuffix = ` (${overdue} days)`;
                         }
                     } else {
-                        nameSuffix = ' (Never)';
+                        nameSuffix = ' (Not Yet)';
                     }
                 }
 
