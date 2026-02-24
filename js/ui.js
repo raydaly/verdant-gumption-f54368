@@ -159,6 +159,8 @@ export class GreatuncleUI {
 
         document.getElementById('user-phone').value = this.formatPhone(this.app.settings.userPhone || "");
         document.getElementById('user-email').value = this.app.settings.userEmail || "";
+        document.getElementById('user-address').value = this.app.settings.userAddress || "";
+        document.getElementById('user-postal-code').value = this.app.settings.userPostalCode || "";
 
         const themeEl = document.getElementById('setting-theme');
         if (themeEl) themeEl.value = this.app.settings.theme || 'system';

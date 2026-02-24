@@ -16,6 +16,8 @@ class GreatuncleApp {
             userAnniversary: "",
             userPhone: "",
             userEmail: "",
+            userAddress: "",
+            userPostalCode: "",
             prompts: {
                 sms: "Thinking of you! Hope your week is going well.",
                 phone: "Just wanted to give you a quick ring and say hello!",
@@ -1255,6 +1257,8 @@ class GreatuncleApp {
 
             const phoneEl = document.getElementById('user-phone');
             const emailEl = document.getElementById('user-email');
+            const addressEl = document.getElementById('user-address');
+            const postalCodeEl = document.getElementById('user-postal-code');
 
             // 1. Core Profile
             if (nameEl) this.settings.userName = nameEl.value.trim();
@@ -1262,6 +1266,8 @@ class GreatuncleApp {
             this.settings.userAnniversary = this._normalizeDateWithUnknown(anniv, annivUnknown);
             if (phoneEl) this.settings.userPhone = this._cleanPhone(phoneEl.value);
             if (emailEl) this.settings.userEmail = emailEl.value.trim();
+            if (addressEl) this.settings.userAddress = addressEl.value.trim();
+            if (postalCodeEl) this.settings.userPostalCode = postalCodeEl.value.trim();
 
             // 2. Preferences
             const themeEl = document.getElementById('setting-theme');
