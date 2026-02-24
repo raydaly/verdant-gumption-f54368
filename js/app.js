@@ -11,6 +11,7 @@ class GreatuncleApp {
         this.suggestions = [];
         this.settings = {
             rotationLimit: 3,
+            skipDays: 1,
             userName: "",
             userBirthday: "",
             userAnniversary: "",
@@ -588,7 +589,8 @@ class GreatuncleApp {
     snooze(id) {
         const index = this.contacts.findIndex(c => c.id === id);
         if (index !== -1) {
-            this.contacts[index].snooze_until = Date.now() + (24 * 60 * 60 * 1000);
+            const days = this.settings.skipDays || 1;
+            this.contacts[index].snooze_until = Date.now() + (days * 24 * 60 * 60 * 1000);
             this.saveState();
             this.refreshSuggestions();
             this.ui.hideContactDetail();
@@ -1279,7 +1281,9 @@ class GreatuncleApp {
 
             if (foresightEl) this.settings.foresightWindow = parseInt(foresightEl.value) || 7;
 
+            const skipEl = document.getElementById('setting-skip-days');
             if (rotEl) this.settings.rotationLimit = parseInt(rotEl.value) || 3;
+            if (skipEl) this.settings.skipDays = parseInt(skipEl.value) || 1;
 
             // 3. Prompts
             this.settings.prompts = {

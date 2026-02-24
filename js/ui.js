@@ -147,6 +147,8 @@ export class GreatuncleUI {
 
     syncSettingsToUI() {
         document.getElementById('rotation-limit').value = this.app.settings.rotationLimit || 3;
+        const skipEl = document.getElementById('setting-skip-days');
+        if (skipEl) skipEl.value = this.app.settings.skipDays || 1;
         document.getElementById('user-name').value = this.app.settings.userName || "";
 
         const bday = this.app.settings.userBirthday || "";
