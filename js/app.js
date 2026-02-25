@@ -440,6 +440,9 @@ class GreatuncleApp {
 
             const isDaily = contact.tags && (contact.tags.includes('!daily') || contact.tags.includes('&daily'));
             if (isDaily) return false;
+
+            if (contact.tags && contact.tags.includes('&level5')) return false;
+
             if (contact.snooze_until && Date.now() < contact.snooze_until) return false;
             return true;
         });
