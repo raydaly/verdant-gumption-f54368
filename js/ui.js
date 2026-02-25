@@ -548,18 +548,16 @@ export class GreatuncleUI {
                     dirActs.querySelector('.btn-email').classList.add('is-missing');
                 }
 
-                if (!hasLevel5) {
-                    card.querySelector('.btn-snooze').classList.remove('hidden');
-                    card.querySelector('.btn-snooze').dataset.id = person.id;
+                card.querySelector('.btn-snooze').classList.remove('hidden');
+                card.querySelector('.btn-snooze').dataset.id = person.id;
 
-                    let snoozeDays = this.app.settings.skipDays || 1;
-                    if ((person.tags || []).includes('&level50')) snoozeDays = 7;
-                    else if ((person.tags || []).includes('&level150')) snoozeDays = 14;
-                    card.querySelector('.btn-snooze').textContent = `Snooze (${snoozeDays}d)`;
+                let snoozeDays = this.app.settings.skipDays || 1;
+                if ((person.tags || []).includes('&level50')) snoozeDays = 7;
+                else if ((person.tags || []).includes('&level150')) snoozeDays = 14;
+                card.querySelector('.btn-snooze').textContent = `Snooze (${snoozeDays}d)`;
 
-                    card.querySelector('.btn-complete').classList.remove('hidden');
-                    card.querySelector('.btn-complete').dataset.id = person.id;
-                }
+                card.querySelector('.btn-complete').classList.remove('hidden');
+                card.querySelector('.btn-complete').dataset.id = person.id;
             }
         }
 
@@ -986,11 +984,7 @@ export class GreatuncleUI {
         }
 
         const historyContainer = document.getElementById('detail-history');
-        const hasLevel5 = person.tags && person.tags.includes('&level5');
-
-        if (hasLevel5) {
-            historyContainer.innerHTML = '<p class="empty-list-note">Interactions are not tracked for your Inner 5.</p>';
-        } else if (!person.logs || person.logs.length === 0) {
+        if (!person.logs || person.logs.length === 0) {
             historyContainer.innerHTML = '<p class="empty-list-note">No history yet.</p>';
         } else {
             const sortedLogs = [...person.logs].sort((a, b) => b.timestamp - a.timestamp);
@@ -1016,18 +1010,10 @@ export class GreatuncleUI {
             else if ((person.tags || []).includes('&level150')) snoozeDays = 14;
             snoozeBtn.textContent = `Snooze (${snoozeDays}d)`;
             snoozeBtn.dataset.id = id;
-            if (!person.is_user && !(person.tags || []).some(t => t.includes('legacy')) && !hasLevel5) {
+            if (!person.is_user && !(person.tags || []).some(t => t.includes('legacy'))) {
                 snoozeBtn.classList.remove('hidden');
             } else {
                 snoozeBtn.classList.add('hidden');
-            }
-        }
-
-        if (cardActions) {
-            const completeBtn = cardActions.querySelector('.btn-complete');
-            if (completeBtn) {
-                if (hasLevel5) completeBtn.classList.add('hidden');
-                else completeBtn.classList.remove('hidden');
             }
         }
 

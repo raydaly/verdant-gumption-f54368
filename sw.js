@@ -1,4 +1,4 @@
-const CACHE_NAME = 'greatuncle-v21';
+const CACHE_NAME = 'greatuncle-v22';
 const ASSETS = [
     '/',
     '/index.html',
