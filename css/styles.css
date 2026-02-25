@@ -122,8 +122,8 @@ h4 {
 .card-container {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
-    padding-top: var(--space-md);
+    gap: var(--space-md);
+    padding-top: var(--space-sm);
 }
 
 /* Polaroid Card (Snapshot) */
@@ -173,7 +173,7 @@ h4 {
 }
 
 .dashboard-section {
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
 }
 
 .section-label {
