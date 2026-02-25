@@ -1102,7 +1102,7 @@ export class GreatuncleUI {
         const methods = [
             { id: 'sms', label: 'Send Text', icon: '📱' },
             { id: 'phone', label: 'Call Phone', icon: '📞' },
-            { id: 'email', label: 'Send Email', icon: '✉️' },
+            { id: 'email', label: 'Send Email', icon: '📧' },
             { id: 'postcard', label: 'Postcard', icon: '🖼️' },
             { id: 'visit', label: 'Drop Visit', icon: '🏠' },
             { id: 'social', label: 'Social', icon: '💬' },
@@ -1497,7 +1497,7 @@ export class GreatuncleUI {
                     clone.querySelector('.sr-phone').textContent = `📱 ${this.formatPhone(item.phone)}`;
                 }
                 if (item.email) {
-                    clone.querySelector('.sr-email').textContent = `✉️ ${item.email}`;
+                    clone.querySelector('.sr-email').textContent = `📧 ${item.email}`;
                 }
 
                 const tagInput = clone.querySelector('.share-tag-input');
