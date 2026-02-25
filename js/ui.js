@@ -473,7 +473,17 @@ export class GreatuncleUI {
             }
         }
 
-        card.querySelector('.contact-name').innerHTML = `${namePrefix}${person.name}${nameSuffix}`;
+        let statusHtml = '';
+        if (!person.is_user && !isLegacy) {
+            const overdueDays = Math.floor((Date.now() - person.last_contacted) / (1000 * 60 * 60 * 24));
+            const statusText = person.last_contacted === 0 ? 'Not Yet' :
+                overdueDays === 0 ? 'Today' :
+                    overdueDays === 1 ? 'Yesterday' :
+                        overdueDays + ' days ago';
+            statusHtml = `<span class="contact-last-status" style="font-size: 0.8rem; font-weight: normal; opacity: 0.6; margin-left: 8px;">${statusText}</span>`;
+        }
+
+        card.querySelector('.contact-name').innerHTML = `${namePrefix}${person.name}${nameSuffix}${statusHtml}`;
 
         const metaEl = card.querySelector('.contact-meta');
         if (person.is_user) {
@@ -481,12 +491,7 @@ export class GreatuncleUI {
         } else if (isLegacy) {
             metaEl.textContent = 'In Loving Memory';
         } else {
-            const overdueDays = Math.floor((Date.now() - person.last_contacted) / (1000 * 60 * 60 * 24));
-            metaEl.textContent = `Last contacted: ${person.last_contacted === 0 ? 'Not Yet' :
-                overdueDays === 0 ? 'Today' :
-                    overdueDays === 1 ? 'Yesterday' :
-                        overdueDays + ' days ago'
-                }`;
+            metaEl.textContent = '';
         }
 
         // Handle Sections Visibility
