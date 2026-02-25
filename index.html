@@ -32,7 +32,12 @@
         <main id="main-content">
             <!-- Dashboard: The Heart of the App -->
             <section id="daily-suggestions" class="view-section">
-                <header class="section-header" style="display: flex; justify-content: space-between; align-items: center; padding-top: var(--space-sm); padding-right: var(--space-md);"><h2 class="subtitle-title" style="visibility: hidden;">Home</h2><button class="nav-item nav-header-settings" class="nav-item" aria-label="About" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button></header>
+                <header class="section-header"
+                    style="display: flex; justify-content: space-between; align-items: center; padding-top: var(--space-sm); padding-right: var(--space-md);">
+                    <h2 class="subtitle-title" style="visibility: hidden;">Home</h2><button
+                        class="nav-item nav-header-settings" class="nav-item" aria-label="About"
+                        style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button>
+                </header>
                 <!-- Anchor Events (Today's Milestones) -->
                 <div id="anchor-events" class="dashboard-section hidden">
                     <h3 class="section-label">Anchor Events</h3>
@@ -70,7 +75,11 @@
             <!-- Full Circle List -->
             <section id="full-circle" class="view-section hidden">
                 <header class="section-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><h2 class="subtitle-title" style="margin:0;">People</h2><button class="nav-item nav-header-settings" class="nav-item" aria-label="About" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <h2 class="subtitle-title" style="margin:0;">People</h2><button
+                            class="nav-item nav-header-settings" class="nav-item" aria-label="About"
+                            style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button>
+                    </div>
                 </header>
 
                 <div class="search-container">
@@ -320,86 +329,93 @@
                 </div>
             </section>
 
-            <!-- Backup View -->\n
-                <section id="backup-view" class="view-section hidden">
+            <!-- Backup View -->
+            <section id="backup-view" class="view-section hidden">
                 <header class="section-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><h2 class="subtitle-title" style="margin:0;">Backup</h2><button class="nav-item nav-header-settings" class="nav-item" aria-label="About" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <h2 class="subtitle-title" style="margin:0;">Backup</h2><button
+                            class="nav-item nav-header-settings" class="nav-item" aria-label="About"
+                            style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button>
+                    </div>
                 </header>
-                    <div class="settings-group">
-                        <h3>Garden Shed</h3>
-                        <p class="setting-desc">Backup your data often because it is private to you - no cloud here-
-                            to ensure your connections are never lost.</p>
+                <div class="settings-group">
+                    <h3>Garden Shed</h3>
+                    <p class="setting-desc">Backup your data often because it is private to you - no cloud here-
+                        to ensure your connections are never lost.</p>
 
-                        <div id="backup-nudge" class="backup-info hidden"
-                            style="margin-bottom: var(--space-md); padding: 12px; background: rgba(212, 163, 115, 0.1); border-radius: 8px; font-size: 0.9rem; border-left: 4px solid var(--color-snooze-amber); text-align: left;">
-                            <!-- Nudge message injected here -->
+                    <div id="backup-nudge" class="backup-info hidden"
+                        style="margin-bottom: var(--space-md); padding: 12px; background: rgba(212, 163, 115, 0.1); border-radius: 8px; font-size: 0.9rem; border-left: 4px solid var(--color-snooze-amber); text-align: left;">
+                        <!-- Nudge message injected here -->
+                    </div>
+
+                    <div class="backup-section" style="text-align: left;">
+                        <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
+                            Digital Seedling (Data)</h4>
+                        <p class="setting-desc">A copy of your data for digital storage or transfer.</p>
+
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <input type="checkbox" id="toggle-readable-json" style="width: auto;">
+                            <label for="toggle-readable-json" style="font-size: 0.8rem; cursor: pointer;">View as
+                                Human-Readable JSON</label>
                         </div>
 
-                        <div class="backup-section" style="text-align: left;">
-                            <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
-                                Digital Seedling (Data)</h4>
-                            <p class="setting-desc">A copy of your data for digital storage or transfer.</p>
-
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <input type="checkbox" id="toggle-readable-json" style="width: auto;">
-                                <label for="toggle-readable-json" style="font-size: 0.8rem; cursor: pointer;">View as
-                                    Human-Readable JSON</label>
-                            </div>
-
-                            <textarea id="digital-seed-box" rows="5"
-                                placeholder="Your Digital Seedling will appear here..."
-                                style="width: 100%; font-family: monospace; font-size: 0.8rem; margin-bottom: var(--space-sm); border-radius: 8px; padding: 10px;"></textarea>
-                            <div class="form-row" style="flex-wrap: wrap; gap: 8px;">
-                                <button class="btn btn-secondary btn-sm" id="btn-export-json"
-                                    data-action="export-json">Generate & Copy</button>
-                                <button class="btn btn-secondary btn-sm" id="btn-share-backup"
-                                    data-action="share-backup">Share Seedling</button>
-                                <button class="btn btn-secondary btn-sm" id="btn-import-json"
-                                    data-action="import-json">Full Restore from Paste and Overwrite All</button>
-                                <button class="btn btn-secondary btn-sm" id="btn-merge-json" data-action="merge-json"
-                                    style="flex: 1; min-width: 100%;">Merge People (Not History) from Paste</button>
-                            </div>
-                        </div>
-
-                        <div class="backup-section"
-                            style="text-align: left; margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
-                            <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
-                                Browser Storage Status</h4>
-                            <p class="setting-desc" id="storage-status-text" style="margin-bottom: 8px;">Checking
-                                logic...</p>
-                            <span id="storage-status-badge" class="tag-chip hidden"
-                                style="background: var(--color-connected-green); color: white; display: inline-block; margin-bottom: 12px;">Protected
-                                from auto-deletion</span>
-                            <button class="btn btn-secondary btn-block hidden" id="btn-persist-storage"
-                                data-action="persist-storage">Enable Persistent Storage</button>
-                        </div>
-
-                        <div class="backup-section"
-                            style="text-align: left; margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
-                            <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
-                                Physical Ledger (Paper)</h4>
-                            <p class="setting-desc">Generate a printable PDF with a QR code. Your data survives even if
-                                electronics fail.</p>
-                            <button class="btn btn-secondary btn-block" id="btn-print-ledger"
-                                data-action="print-ledger">Generate Paper Ledger</button>
-                        </div>
-
-                        <div class="backup-section"
-                            style="text-align: left; margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
-                            <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
-                                Maintenance</h4>
-                            <p class="setting-desc">If the app feels "stale" or doesn't show recent updates, use this to
-                                force a refresh. (This will not delete your data).</p>
-                            <button class="btn btn-secondary btn-block" data-action="bust-cache">Bust Cache & Force
-                                Update</button>
+                        <textarea id="digital-seed-box" rows="5" placeholder="Your Digital Seedling will appear here..."
+                            style="width: 100%; font-family: monospace; font-size: 0.8rem; margin-bottom: var(--space-sm); border-radius: 8px; padding: 10px;"></textarea>
+                        <div class="form-row" style="flex-wrap: wrap; gap: 8px;">
+                            <button class="btn btn-secondary btn-sm" id="btn-export-json"
+                                data-action="export-json">Generate & Copy</button>
+                            <button class="btn btn-secondary btn-sm" id="btn-share-backup"
+                                data-action="share-backup">Share Seedling</button>
+                            <button class="btn btn-secondary btn-sm" id="btn-import-json" data-action="import-json">Full
+                                Restore from Paste and Overwrite All</button>
+                            <button class="btn btn-secondary btn-sm" id="btn-merge-json" data-action="merge-json"
+                                style="flex: 1; min-width: 100%;">Merge People (Not History) from Paste</button>
                         </div>
                     </div>
-                </section>
 
-\n            <!-- Journal View -->
+                    <div class="backup-section"
+                        style="text-align: left; margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
+                        <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
+                            Browser Storage Status</h4>
+                        <p class="setting-desc" id="storage-status-text" style="margin-bottom: 8px;">Checking
+                            logic...</p>
+                        <span id="storage-status-badge" class="tag-chip hidden"
+                            style="background: var(--color-connected-green); color: white; display: inline-block; margin-bottom: 12px;">Protected
+                            from auto-deletion</span>
+                        <button class="btn btn-secondary btn-block hidden" id="btn-persist-storage"
+                            data-action="persist-storage">Enable Persistent Storage</button>
+                    </div>
+
+                    <div class="backup-section"
+                        style="text-align: left; margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
+                        <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
+                            Physical Ledger (Paper)</h4>
+                        <p class="setting-desc">Generate a printable PDF with a QR code. Your data survives even if
+                            electronics fail.</p>
+                        <button class="btn btn-secondary btn-block" id="btn-print-ledger"
+                            data-action="print-ledger">Generate Paper Ledger</button>
+                    </div>
+
+                    <div class="backup-section"
+                        style="text-align: left; margin-top: var(--space-xl); border-top: 1px dashed var(--color-border); padding-top: var(--space-lg);">
+                        <h4 style="margin-bottom: var(--space-xs); font-family: var(--font-body); font-size: 1rem;">
+                            Maintenance</h4>
+                        <p class="setting-desc">If the app feels "stale" or doesn't show recent updates, use this to
+                            force a refresh. (This will not delete your data).</p>
+                        <button class="btn btn-secondary btn-block" data-action="bust-cache">Bust Cache & Force
+                            Update</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Journal View -->
             <section id="journal-view" class="view-section hidden">
                 <header class="section-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><h2 class="subtitle-title" style="margin:0;">Journal</h2><button class="nav-item nav-header-settings" class="nav-item" aria-label="About" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <h2 class="subtitle-title" style="margin:0;">Journal</h2>
+                        <button class="nav-item nav-header-settings" class="nav-item" aria-label="About"
+                            style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button>
+                    </div>
                     <p class="text-muted" id="journal-strapline">Sustaining your connections</p>
                 </header>
 
