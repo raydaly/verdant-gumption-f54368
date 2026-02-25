@@ -589,7 +589,16 @@ class GreatuncleApp {
     snooze(id) {
         const index = this.contacts.findIndex(c => c.id === id);
         if (index !== -1) {
-            const days = this.settings.skipDays || 1;
+            const contact = this.contacts[index];
+            const tags = contact.tags || [];
+
+            let days = this.settings.skipDays || 1;
+            if (tags.includes('&level50')) {
+                days = 7;
+            } else if (tags.includes('&level150')) {
+                days = 14;
+            }
+
             this.contacts[index].snooze_until = Date.now() + (days * 24 * 60 * 60 * 1000);
             this.saveState();
             this.refreshSuggestions();
