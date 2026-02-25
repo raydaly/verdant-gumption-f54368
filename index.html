@@ -25,19 +25,17 @@
 
 <body>
     <div id="main-app">
-        <header class="app-header">
-            <h1 class="brand">Greatuncle</h1>
+        <header class="app-header"
+            style="position: relative; display: flex; justify-content: center; align-items: center; padding: var(--space-sm) var(--space-lg) 0;">
+            <h1 class="brand" style="margin: 0;">Greatuncle</h1>
+            <button class="nav-item nav-header-settings" aria-label="About"
+                style="position: absolute; right: var(--space-lg); background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none;">⚙️</button>
         </header>
 
         <main id="main-content">
             <!-- Dashboard: The Heart of the App -->
             <section id="daily-suggestions" class="view-section">
-                <header class="section-header"
-                    style="display: flex; justify-content: space-between; align-items: center; padding-top: var(--space-sm); padding-right: var(--space-md);">
-                    <h2 class="subtitle-title" style="visibility: hidden;">Home</h2><button
-                        class="nav-item nav-header-settings" class="nav-item" aria-label="About"
-                        style="background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none; margin-left: auto;">⚙️</button>
-                </header>
+
                 <!-- Anchor Events (Today's Milestones) -->
                 <div id="anchor-events" class="dashboard-section hidden">
                     <h3 class="section-label">Anchor Events</h3>
