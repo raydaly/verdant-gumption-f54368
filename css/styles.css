@@ -130,7 +130,7 @@ h4 {
 .snapshot-card {
     background: var(--color-white);
     border-radius: var(--radius-card);
-    padding: var(--space-md) var(--space-md) var(--space-sm);
+    padding: var(--space-md) var(--space-sm) var(--space-sm);
     box-shadow: var(--shadow-diffused);
     border: 1px solid rgba(0, 0, 0, 0.03);
     position: relative;
@@ -821,9 +821,9 @@ select {
 .direct-actions {
     display: flex;
     justify-content: space-around;
-    padding: var(--space-sm) 0;
+    padding: var(--space-xs) 0;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
-    margin-top: var(--space-xs);
+    margin-top: 0;
 }
 
 .btn-action-icon {
