@@ -100,15 +100,32 @@ export class GreatuncleUI {
     }
 
     switchView(viewName) {
-        Object.keys(this.els.views).forEach(key => {
-            if (key === viewName) {
-                this.els.views[key].classList.remove('hidden');
-                if (this.els.navs[key]) this.els.navs[key].classList.add('active');
-            } else {
-                this.els.views[key].classList.add('hidden');
-                if (this.els.navs[key]) this.els.navs[key].classList.remove('active');
-            }
-        });
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.classList.add('view-fade-out');
+            setTimeout(() => {
+                Object.keys(this.els.views).forEach(key => {
+                    if (key === viewName) {
+                        this.els.views[key].classList.remove('hidden');
+                        if (this.els.navs[key]) this.els.navs[key].classList.add('active');
+                    } else {
+                        this.els.views[key].classList.add('hidden');
+                        if (this.els.navs[key]) this.els.navs[key].classList.remove('active');
+                    }
+                });
+                mainContent.classList.remove('view-fade-out');
+            }, 150); // Match CSS transition timing
+        } else {
+            Object.keys(this.els.views).forEach(key => {
+                if (key === viewName) {
+                    this.els.views[key].classList.remove('hidden');
+                    if (this.els.navs[key]) this.els.navs[key].classList.add('active');
+                } else {
+                    this.els.views[key].classList.add('hidden');
+                    if (this.els.navs[key]) this.els.navs[key].classList.remove('active');
+                }
+            });
+        }
 
         this.app.isViewingHome = (viewName === 'home');
         if (viewName === 'home') {

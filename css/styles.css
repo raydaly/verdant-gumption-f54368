@@ -1782,6 +1782,14 @@ textarea:focus {
     transform: scale(0.95);
 }
 
+#main-content {
+    transition: opacity 0.15s ease-in-out;
+}
+
+.view-fade-out {
+    opacity: 0;
+}
+
 /* Animations */
 .list-fade {
     transition: opacity 0.2s ease-in-out;

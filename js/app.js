@@ -853,14 +853,16 @@ class GreatuncleApp {
             if (action === 'filter-tag') {
                 const tag = target.dataset.value;
                 this.currentTagFilters = [tag];
+                const alreadyOnCircle = !document.getElementById('full-circle').classList.contains('hidden');
                 this.ui.switchView('circle');
-                this.ui.renderCircleListWithAnimation();
+                if (alreadyOnCircle) this.ui.renderCircleListWithAnimation();
             }
             if (action === 'filter-group') {
                 const group = target.dataset.value;
                 this.currentGroupFilters = [group];
+                const alreadyOnCircle = !document.getElementById('full-circle').classList.contains('hidden');
                 this.ui.switchView('circle');
-                this.ui.renderCircleListWithAnimation();
+                if (alreadyOnCircle) this.ui.renderCircleListWithAnimation();
             }
 
 
