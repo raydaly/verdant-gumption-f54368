@@ -716,7 +716,7 @@ export class GreatuncleUI {
             const isActive = this.app.currentSort === opt.id;
             return `
                 <button class="circle-tab-btn sort-tab-btn ${isActive ? 'active' : ''}" data-sort="${opt.id}">
-                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${opt.label}
+                    ${opt.label}
                 </button>
             `;
         }).join('');
@@ -737,7 +737,7 @@ export class GreatuncleUI {
             const isActive = this.app.currentLevelFilters.includes(opt.id);
             return `
                 <button class="circle-tab-btn level-tab-btn ${isActive ? 'active' : ''}" data-level="${opt.id}">
-                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${opt.label}
+                    ${opt.label}
                 </button>
             `;
         }).join('');
@@ -803,7 +803,7 @@ export class GreatuncleUI {
             const isActive = this.app.currentGroupFilters.includes(group);
             return `
                 <button class="circle-tab-btn group-tab-btn ${isActive ? 'active' : ''}" data-group="${group}">
-                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${group.substring(1)}
+                    ${group.substring(1)}
                 </button>
             `;
         }).join('');
@@ -829,7 +829,7 @@ export class GreatuncleUI {
 
         let tagsHtml = `
             <button class="circle-tab-btn ${activeTags.includes('&legacy') ? 'active' : ''}" data-tag="&legacy" style="margin-right: 15px;">
-                <span class="radio-icon">${activeTags.includes('&legacy') ? '●' : '○'}</span> &legacy
+                &legacy
             </button>
         `;
 
@@ -837,7 +837,7 @@ export class GreatuncleUI {
             const isActive = activeTags.includes(tag);
             return `
                 <button class="circle-tab-btn ${isActive ? 'active' : ''}" data-tag="${tag}">
-                    <span class="radio-icon">${isActive ? '●' : '○'}</span> ${tag}
+                    ${tag}
                 </button>
             `;
         }).join('');
