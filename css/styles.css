@@ -157,16 +157,30 @@ h4 {
 }
 
 .tag-chip {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    opacity: 0.8;
     background: #E8E5DA;
     color: var(--color-text-primary);
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
     display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.tag-chip:hover {
+    background: var(--color-parchment-dark);
+    border-color: rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.tag-chip:active {
+    transform: translateY(0);
 }
 
 .tag-inner {

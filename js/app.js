@@ -850,6 +850,19 @@ class GreatuncleApp {
                 }
             }
 
+            if (action === 'filter-tag') {
+                const tag = target.dataset.value;
+                this.currentTagFilters = [tag];
+                this.ui.switchView('circle');
+                this.ui.renderCircleListWithAnimation();
+            }
+            if (action === 'filter-group') {
+                const group = target.dataset.value;
+                this.currentGroupFilters = [group];
+                this.ui.switchView('circle');
+                this.ui.renderCircleListWithAnimation();
+            }
+
 
             if (action === 'export-json') this.sync.exportJson();
             if (action === 'share-backup') this.sync.shareBackup();

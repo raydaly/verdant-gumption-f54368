@@ -439,7 +439,11 @@ export class GreatuncleUI {
         // Tag Chips
         const tagChipsHtml = tags
             .filter(t => t.startsWith('#') || t.startsWith('@'))
-            .map(t => `<span class="tag-chip">${t}</span>`)
+            .map(t => {
+                const type = t.startsWith('#') ? 'tag' : 'group';
+                const val = t.substring(1);
+                return `<button class="tag-chip clickable-chip" data-action="filter-${type}" data-value="${val}">${t}</button>`;
+            })
             .join('');
         card.querySelector('.tag-chips').innerHTML = tagChipsHtml;
 
