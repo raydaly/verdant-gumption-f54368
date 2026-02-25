@@ -855,6 +855,12 @@ select {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.btn-email-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
 .btn-action-icon:hover {
     transform: translateY(-2px);
     background: #e5e0d5;

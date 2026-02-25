@@ -1,4 +1,4 @@
-const CACHE_NAME = 'greatuncle-v16';
+const CACHE_NAME = 'greatuncle-v17';
 const ASSETS = [
     '/',
     '/index.html',
@@ -7,7 +7,8 @@ const ASSETS = [
     '/js/ui.js',
     '/manifest.json',
     '/assets/images/icon-192.png',
-    '/assets/images/icon-512.png'
+    '/assets/images/icon-512.png',
+    '/assets/images/email-icon.png'
 ];
 
 self.addEventListener('install', (event) => {

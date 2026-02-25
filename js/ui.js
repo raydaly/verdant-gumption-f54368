@@ -1102,7 +1102,7 @@ export class GreatuncleUI {
         const methods = [
             { id: 'sms', label: 'Send Text', icon: '📱' },
             { id: 'phone', label: 'Call Phone', icon: '📞' },
-            { id: 'email', label: 'Send Email', icon: '📧' },
+            { id: 'email', label: 'Send Email', icon: '<img src="assets/images/email-icon.png" class="btn-email-img" alt="Email">' },
             { id: 'postcard', label: 'Postcard', icon: '🖼️' },
             { id: 'visit', label: 'Drop Visit', icon: '🏠' },
             { id: 'social', label: 'Social', icon: '💬' },
