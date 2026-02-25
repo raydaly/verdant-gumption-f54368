@@ -1063,12 +1063,12 @@ select {
 .circle-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 4px;
 }
 
 .contact-row {
     background: white;
-    padding: var(--space-md);
+    padding: var(--space-sm);
     border-radius: 12px;
     display: flex;
     justify-content: space-between;
@@ -1622,10 +1622,10 @@ textarea:focus {
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    padding: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
     background: var(--color-parchment-dark);
     border-radius: var(--radius-card);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-sm);
     font-size: 0.9rem;
     color: var(--color-text-muted);
 }
