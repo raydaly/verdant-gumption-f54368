@@ -189,6 +189,11 @@ export class GreatuncleUI {
         const foresightEl = document.getElementById('setting-foresight-window');
         if (foresightEl) foresightEl.value = this.app.settings.foresightWindow || 7;
 
+        const foresightLevels = this.app.settings.foresightLevels || [];
+        document.querySelectorAll('input[name="foresight-level"]').forEach(cb => {
+            cb.checked = foresightLevels.includes(cb.value);
+        });
+
         if (this.app.settings.prompts) {
             document.getElementById('prompt-sms').value = this.app.settings.prompts.sms || "";
             document.getElementById('prompt-phone').value = this.app.settings.prompts.phone || "";

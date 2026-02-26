@@ -31,6 +31,7 @@ class GreatuncleApp {
             ],
             theme: 'system',
             foresightWindow: 7,
+            foresightLevels: [],
             lastExportTimestamp: 0
         };
         this.searchQuery = '';
@@ -421,8 +422,12 @@ class GreatuncleApp {
             });
         }
 
+        const autoForesightLevels = this.settings.foresightLevels || [];
         activeContacts.forEach(contact => {
-            const hasSpecial = contact.tags && contact.tags.includes('&previewdays');
+            const hasSpecial = contact.tags && (
+                contact.tags.includes('&previewdays') ||
+                contact.tags.some(t => autoForesightLevels.includes(t))
+            );
             if (hasSpecial) {
                 const upcoming = this.getUpcomingMilestones(contact, foresightWindow);
                 if (upcoming.length > 0 && !this.dashboard.anchors.find(a => a.id === contact.id)) {
@@ -1310,6 +1315,8 @@ class GreatuncleApp {
             if (foresightEl) this.settings.foresightWindow = parseInt(foresightEl.value) || 7;
 
             const skipEl = document.getElementById('setting-skip-days');
+            const newForesightLevels = Array.from(document.querySelectorAll('input[name="foresight-level"]:checked')).map(cb => cb.value);
+            this.settings.foresightLevels = newForesightLevels;
             if (rotEl) this.settings.rotationLimit = parseInt(rotEl.value) || 3;
             if (skipEl) this.settings.skipDays = parseInt(skipEl.value) || 1;
 
