@@ -5,7 +5,7 @@
 
 **Core Logic**: Relationships are managed via "Smart Hashtags" (Tags-as-Circles) and **Dunbar Layers** of intimacy.
 
-**Privacy First**: Local-first storage (localStorage) ensures all data remains on the device. No cloud processing of personal contacts.
+**Privacy First**: Local-first storage (IndexedDB) ensures all data remains on the device. No cloud processing of personal contacts.
 
 **The "User as Figure"**: The user is included in the 150 count to allow the app to celebrate the user's own milestones.
 
@@ -49,31 +49,30 @@
 - **`#` (Topics)**: User-defined categories (e.g., #politics, #hobby).
 - **`@` (Groups)**: Broadcast circles for bulk SMS/Email actions.
 - **`&` (System)**: Logic-driving tags (e.g., &level5, &legacy). Abstracted from use unless explicitly advanced.
-- **`!` (Actions)**: Behavioral triggers (e.g., !daily for manual outreach control).
+- **`!` (Actions)**: Behavioral triggers (e.g., !daily to exclude from standard automatic rotation).
 
 ### C. Reserved System Tags
-- **`&level5`, `&level15`, `&level50`, `&level150`**: Dunbar Layers. Level 5 and 15 receive a **2x frequency boost** in outreach suggestions.
-- **`&previewdays`**: Triggers foresight preparation (Gifts, Flowers, etc.) within the user-defined window.
+- **`&level5`, `&level15`, `&level50`, `&level150`**: Dunbar Layers mapping to Inner (5), Sympathy (10), Affinity (35), and Active (100). 
+    - **&level5** acts as the Inner Circle and is completely excluded from algorithmic outreach suggestions, though interactions can still be logged functionally. 
+    - The other layers have automatic target intervals of 30, 90, and 365 days respectively to surface in the outreach rotation.
+- **`&previewdays`**: Triggers Event Radar preparation (Gifts, Flowers, etc.) within the user-defined window for an individual contact.
 - **`&legacy`**: For deceased contacts. Switches card to "Reflect" mode on anniversaries and displays "In Loving Memory."
 
 ---
 
 ## 4. UI/UX Design ("Earth & Hearth")
-**Theme**: Warm, organic (Parchment, Charcoal, Sage Green, "Snooze" Amber).
+**Theme**: Warm, organic (Parchment, Charcoal, Sage Green, "Snooze" Amber). Includes System, Dark, and Light mode toggles.
 
-**Tabbed About/Settings View**:
-1. **The Vision**: Mission statement and Dunbar Layer visual breakdown ("Connection Health").
-2. **App Settings**: Profile management, theme toggle, and engine calibration (Foresight Window, Rotation Limit).
-3. **Garden Shed**: The utility hub for data resiliency.
-4. **People & Review**: Management view for all 150 contacts and a **Share Review Queue** for merging/importing shared groups with manual conflict resolution.
+**Main Views**:
+1. **Home (Dashboard)**: Daily suggestions, active anchors, radar events.
+2. **People (Circle)**: Management view for all 150 contacts, filterable by tags, groups, and layers.
+3. **Journal**: A chronological timeline of all connection logs across the entire circle, complete with a stats dashboard.
+4. **Settings / About**: Configuration limits, prompt defaults, and profile info.
+5. **Garden Shed (Backup)**: The utility hub for data resiliency (JSON extract/merge).
 
-**Grounded Level Selection**: Horizontal segment controls for Dunbar Layer assignment (5, 15, 50, 150) during contact addition, ensuring intimacy level is considered at the point of "Your Community."
+**Grounded Level Selection**: Horizontal segment controls for Dunbar Layer assignment (labeled 5, 10, 35, 100 for display, translating to the cumulative 150) during contact addition and editing.
 
-**Merge Tool**: Intelligent data reconciliation that detects conflicts (phone/email/milestones) and prompts the user to choose between existing and incoming data while preserving interaction logs.
-
-**Digital Postcard**: Interface to upload/snap a photo, apply a Greatuncle frame/stamp, and share via system share sheet.
-
-**Journal**: A chronological timeline of all connection logs across the entire circle.
+**Action Interfaces**: Action buttons (📱, 📞, 📧) exist uniformly across contact cards, with conditional rendering of "Snooze" and "Connected" buttons.
 
 ---
 
@@ -81,27 +80,28 @@
 
 **Dashboard Sections**:
 1. **Anchor Events**: Today's milestones (Birthdays/Anniversaries).
-2. **Gathering Mode**: Triggered by rules (e.g., `#church` on Sunday). Surfaces everyone in that tag.
-3. **Daily Outreach**: Priority-scored cards based on "days since last contact" and intimacy level boost.
-4. **Upcoming Milestones**: Prep shelf for `&previewdays` contacts.
+2. **Gathering Mode**: Triggered by rules (e.g., `#church` on Sunday). Surfaces everyone with that tag instantly.
+3. **Daily Outreach**: Priority-scored cards based on "days since last contact" relative to their layer intervals (Inner excluded). 
+4. **Event Radar (Foresight)**: Prep shelf for milestones happening in the near future (configurable day limit). Populates automatically based on user-selected Layer checkboxes in settings, or individually by the `&previewdays` tag.
 
-**Smart Search**:
-- Start search with `#`, `@`, `$`, or `!` to instantly filter by tags.
-- Otherwise, searches by Name.
+**Dynamic Snooze**:
+- Contacts snoozed inherit dynamic skip durations based on their intimacy layer: Affinity = 7 days, Active = 14 days, Sympathy/Default = defined by user limit.
 
 ---
 
 ## 6. Onboarding & Lifecycle
-**Warm Start**: Initialize with setup flow: Create User Profile -> Add Aspirational contacts ("Your Community") -> Assign Dunbar Layers via UI radio buttons.
+**Warm Start**: Initialize with setup flow: Create User Profile -> Add Aspirational contacts ("Your Community") -> Assign Dunbar Layers via UI level buttons.
 
 **Maintenance & The Garden Shed**: 
 - **Backup Nudge**: UI notification if the "Seedling" hasn't been exported in >30 days.
 - **Seedling Export**: Generates a Base64 JSON "Seedling" (or raw JSON) for clipboard backup.
-- **Restore Logic**: Re-hydrates the circle from a pasted Seedling data string.
+- **Restore & Merge Logic**: Re-hydrates the circle from a pasted Seedling data string, with intelligent merging capability for incoming contacts that maps existing logs/metadata during conflict resolution.
 
-**Calibrations**:
-- **Foresight Window**: Configurable setting (default 7 days) for upcoming preparations.
+**Calibrations (Settings Control)**:
+- **Days Preview**: Configurable window (default 7 days) for Event Radar.
+- **Event Radar Layers**: Checkboxes to auto-preview all birthdays/anniversaries within designated Dunbar Layers.
 - **Rotation Limit**: Controls how many standard outreach cards appear daily.
+- **Skip Days**: The default base snooze duration.
 
 ---
 
@@ -112,4 +112,3 @@
 - **Digital Postcard**: Interface to upload/snap a photo, apply a Greatuncle frame/stamp, and share via system share sheet.
 - **Sustain Groups**: Quick-action buttons for `@group` broadcast messaging (Text/Email).
 - **Google Keep Integration**
- 
