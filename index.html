@@ -278,18 +278,22 @@
                         </p>
                         <div id="foresight-levels-config"
                             style="display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap;">
-                            <label class="pill-checkbox-label">
-                                <input type="checkbox" name="foresight-level" value="&level5"> Inner (5)
-                            </label>
-                            <label class="pill-checkbox-label">
-                                <input type="checkbox" name="foresight-level" value="&level15"> Sympathy (10)
-                            </label>
-                            <label class="pill-checkbox-label">
-                                <input type="checkbox" name="foresight-level" value="&level50"> Affinity (35)
-                            </label>
-                            <label class="pill-checkbox-label">
-                                <input type="checkbox" name="foresight-level" value="&level150"> Active (100)
-                            </label>
+                            <div class="pill-checkbox-wrapper">
+                                <input type="checkbox" id="fr-level5" name="foresight-level" value="&level5">
+                                <label for="fr-level5" class="pill-checkbox-label">Inner (5)</label>
+                            </div>
+                            <div class="pill-checkbox-wrapper">
+                                <input type="checkbox" id="fr-level15" name="foresight-level" value="&level15">
+                                <label for="fr-level15" class="pill-checkbox-label">Sympathy (10)</label>
+                            </div>
+                            <div class="pill-checkbox-wrapper">
+                                <input type="checkbox" id="fr-level50" name="foresight-level" value="&level50">
+                                <label for="fr-level50" class="pill-checkbox-label">Affinity (35)</label>
+                            </div>
+                            <div class="pill-checkbox-wrapper">
+                                <input type="checkbox" id="fr-level150" name="foresight-level" value="&level150">
+                                <label for="fr-level150" class="pill-checkbox-label">Active (100)</label>
+                            </div>
                         </div>
                     </div>
 

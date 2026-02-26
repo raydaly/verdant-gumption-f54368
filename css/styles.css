@@ -1020,6 +1020,14 @@ select {
 }
 
 /* Pill Checkboxes */
+.pill-checkbox-wrapper {
+    display: inline-block;
+}
+
+.pill-checkbox-wrapper input[type="checkbox"] {
+    display: none;
+}
+
 .pill-checkbox-label {
     display: inline-block;
     background: rgba(0, 0, 0, 0.03);
@@ -1035,14 +1043,10 @@ select {
     user-select: none;
 }
 
-.pill-checkbox-label:has(input[type="checkbox"]:checked) {
+.pill-checkbox-wrapper input[type="checkbox"]:checked+.pill-checkbox-label {
     opacity: 1;
     background: var(--color-action-green);
     color: white;
-}
-
-.pill-checkbox-label input[type="checkbox"] {
-    display: none;
 }
 
 .freq-tabs {
