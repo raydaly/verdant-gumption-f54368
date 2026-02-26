@@ -1019,6 +1019,32 @@ select {
     vertical-align: middle;
 }
 
+/* Pill Checkboxes */
+.pill-checkbox-label {
+    display: inline-block;
+    background: rgba(0, 0, 0, 0.03);
+    border: none;
+    border-radius: 20px;
+    padding: var(--space-xs) var(--space-md);
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0.4;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 4px;
+    user-select: none;
+}
+
+.pill-checkbox-label:has(input[type="checkbox"]:checked) {
+    opacity: 1;
+    background: var(--color-action-green);
+    color: white;
+}
+
+.pill-checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
 .freq-tabs {
     padding: var(--space-xs) var(--space-sm);
     margin-bottom: var(--space-md);
