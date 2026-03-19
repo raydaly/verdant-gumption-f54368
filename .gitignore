@@ -1,3 +1,5 @@
-.firebase
 .DS_Store
-*.gdoc
+node_modules/
+*.mjs
+check.js
+/tmp/

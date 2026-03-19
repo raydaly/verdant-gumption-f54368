@@ -1,0 +1,382 @@
+import { getOwner, saveContact, clearAllContacts, deleteContact, getAllContacts } from '../storage/contacts.js';
+import { getSettings, saveSettings } from '../storage/settings.js';
+import { clearAllLogs, deleteLogsForContact } from '../storage/logs.js';
+import { goBack, navigate } from './router.js';
+import { showConfirmDialog } from './components/confirm-dialog.js';
+
+export function applyTheme(theme) {
+  if (theme === 'system') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+}
+
+let activeTab = 'settings'; 
+
+export async function renderSettings(db) {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  const owner = await getOwner(db);
+  const settings = await getSettings(db);
+  const allContacts = await getAllContacts(db);
+
+  const formView = document.createElement('div');
+  formView.className = 'form-view';
+
+  // --- Header ---
+  const formHeader = document.createElement('div');
+  formHeader.className = 'form-header';
+
+  const backBtn = document.createElement('button');
+  backBtn.type = 'button';
+  backBtn.className = 'form-cancel-btn';
+  backBtn.textContent = '← Back';
+  backBtn.addEventListener('click', () => goBack());
+
+  const h1 = document.createElement('h1');
+  h1.textContent = 'Settings';
+  let devModeTaps = 0;
+  h1.addEventListener('click', () => {
+    devModeTaps++;
+    if (devModeTaps >= 5) {
+      devModeTaps = 0;
+      const isEnabled = localStorage.getItem('developerMode') === '1';
+      localStorage.setItem('developerMode', isEnabled ? '0' : '1');
+      alert(isEnabled ? 'Developer Mode Disabled' : 'Developer Mode Enabled');
+      renderSettings(db);
+    }
+  });
+
+  const spacer = document.createElement('span');
+  spacer.style.width = '4rem';
+
+  formHeader.appendChild(backBtn);
+  formHeader.appendChild(h1);
+  formHeader.appendChild(spacer);
+  formView.appendChild(formHeader);
+
+  // --- Tab Switcher ---
+  const tabs = document.createElement('div');
+  tabs.className = 'settings-tabs';
+
+  const settingsTab = document.createElement('button');
+  settingsTab.className = `settings-tab-btn ${activeTab === 'settings' ? 'settings-tab-btn--active' : ''}`;
+  settingsTab.textContent = 'Controls';
+  settingsTab.onclick = () => { activeTab = 'settings'; renderSettings(db); };
+
+  const visionTab = document.createElement('button');
+  visionTab.className = `settings-tab-btn ${activeTab === 'vision' ? 'settings-tab-btn--active' : ''}`;
+  visionTab.textContent = 'Vision';
+  visionTab.onclick = () => { activeTab = 'vision'; renderSettings(db); };
+
+  tabs.appendChild(settingsTab);
+  tabs.appendChild(visionTab);
+  formView.appendChild(tabs);
+
+  // --- Body ---
+  const formBody = document.createElement('div');
+  formBody.className = 'form-body';
+
+  if (activeTab === 'settings') {
+    renderSettingsTab(db, formBody, owner, settings, allContacts);
+  } else {
+    renderVisionTab(db, formBody, allContacts);
+  }
+
+  formView.appendChild(formBody);
+  app.appendChild(formView);
+}
+
+/**
+ * Tab 1: Controls (The original settings form)
+ */
+async function renderSettingsTab(db, container, owner, settings, allContacts) {
+  // --- My Profile ---
+  const profileSection = document.createElement('div');
+  profileSection.className = 'settings-section';
+  const profileTitle = document.createElement('div');
+  profileTitle.className = 'settings-section-title';
+  profileTitle.textContent = 'My Profile';
+  profileSection.appendChild(profileTitle);
+
+  const nameField = makeField('Name', 'text', owner?.name);
+  const phoneField = makeField('Phone', 'tel', owner?.phone);
+  const emailField = makeField('Email', 'email', owner?.email);
+  const tagsField = makeField('Tags (@group #topic)', 'text', owner?.tags?.filter(t => !t.startsWith('&')).join(' '));
+  tagsField.getInput().placeholder = 'e.g. @family #inner';
+
+  const saveProfileBtn = document.createElement('button');
+  saveProfileBtn.className = 'trunk-btn';
+  saveProfileBtn.textContent = 'Save profile';
+  saveProfileBtn.onclick = async () => {
+    if (!owner) return;
+    const updated = {
+      ...owner,
+      name: nameField.getInput().value.trim() || owner.name,
+      phone: phoneField.getInput().value.trim() || null,
+      email: emailField.getInput().value.trim() || null,
+      tags: [
+        ...(owner.tags || []).filter(t => t.startsWith('&')),
+        ...tagsField.getInput().value.trim().split(/\s+/).filter(Boolean)
+      ],
+      updated_at: Date.now(),
+    };
+    await saveContact(db, updated);
+    saveProfileBtn.textContent = 'Saved ✓';
+    setTimeout(() => { saveProfileBtn.textContent = 'Save profile'; }, 2000);
+  };
+
+  profileSection.appendChild(nameField);
+  profileSection.appendChild(phoneField);
+  profileSection.appendChild(emailField);
+  profileSection.appendChild(tagsField);
+  profileSection.appendChild(saveProfileBtn);
+  container.appendChild(profileSection);
+
+  // --- Appearance ---
+  const appearanceSection = document.createElement('div');
+  appearanceSection.className = 'settings-section';
+  const appearanceTitle = document.createElement('div');
+  appearanceTitle.className = 'settings-section-title';
+  appearanceTitle.textContent = 'Appearance';
+  appearanceSection.appendChild(appearanceTitle);
+
+  const themeRow = document.createElement('div');
+  themeRow.className = 'settings-row';
+  const themeLabel = document.createElement('span');
+  themeLabel.textContent = 'Theme';
+  const themeSelect = document.createElement('select');
+  themeSelect.className = 'form-input';
+  themeSelect.style.width = 'auto';
+  ['system', 'light', 'dark'].forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+    opt.selected = settings.theme === t;
+    themeSelect.appendChild(opt);
+  });
+  themeSelect.addEventListener('change', async () => {
+    const newTheme = themeSelect.value;
+    await saveSettings(db, { theme: newTheme });
+    applyTheme(newTheme);
+  });
+  themeRow.appendChild(themeLabel);
+  themeRow.appendChild(themeSelect);
+  appearanceSection.appendChild(themeRow);
+  container.appendChild(appearanceSection);
+
+  // --- Advanced ---
+  const advancedSection = document.createElement('div');
+  advancedSection.className = 'settings-section';
+  const advancedTitle = document.createElement('div');
+  advancedTitle.className = 'settings-section-title';
+  advancedTitle.textContent = 'Advanced';
+  advancedSection.appendChild(advancedTitle);
+
+  const legacyRow = makeToggleRow('Track date of passing', settings.trackLegacy, (val) => saveSettings(db, { trackLegacy: val }));
+  advancedSection.appendChild(legacyRow);
+  container.appendChild(advancedSection);
+
+  // --- Developer Mode ---
+  if (localStorage.getItem('developerMode') === '1') {
+    const devSection = document.createElement('div');
+    devSection.className = 'settings-section dev-mode-section';
+    const devTitle = document.createElement('div');
+    devTitle.className = 'settings-section-title';
+    devTitle.textContent = 'Developer Mode';
+    devSection.appendChild(devTitle);
+
+    const bustBtn = document.createElement('button');
+    bustBtn.className = 'trunk-btn trunk-btn--secondary';
+    bustBtn.textContent = 'Bust Cache & Force Update';
+    bustBtn.onclick = async () => {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let reg of registrations) await reg.unregister();
+      }
+      window.location.reload(true);
+    };
+    devSection.appendChild(bustBtn);
+    container.appendChild(devSection);
+  }
+
+  // --- Danger Zone ---
+  const dangerSection = document.createElement('div');
+  dangerSection.className = 'settings-section';
+  const dangerTitle = document.createElement('div');
+  dangerTitle.className = 'settings-section-title';
+  dangerTitle.style.color = 'var(--color-amber)';
+  dangerTitle.textContent = 'Danger Zone';
+  dangerSection.appendChild(dangerTitle);
+
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'trunk-btn trunk-btn--secondary';
+  clearBtn.style.color = 'var(--color-amber)';
+  clearBtn.textContent = 'Delete all contacts/history';
+  clearBtn.onclick = async () => {
+    const confirmed = await showConfirmDialog({
+      title: 'Delete Everything?',
+      message: 'This will wipe all contacts and history. This cannot be undone.',
+      confirmText: 'Yes, Delete',
+      confirmColor: 'var(--color-amber)'
+    });
+    if (confirmed) {
+      await clearAllContacts(db);
+      await clearAllLogs(db);
+      window.location.reload();
+    }
+  };
+  dangerSection.appendChild(clearBtn);
+  container.appendChild(dangerSection);
+}
+
+/**
+ * Tab 2: Vision (The Dunbar Bars and Magic Mike spirit)
+ */
+function renderVisionTab(db, container, allContacts) {
+  const intro = document.createElement('div');
+  intro.className = 'vision-text';
+  intro.innerHTML = `
+    <p>Greatuncle is a private tool built on a simple premise: 
+    <strong>Grounded connection</strong> is the work of maintaining deep roots.</p>
+  `;
+  container.appendChild(intro);
+
+  // Dunbar Charts
+  const chartsContainer = document.createElement('div');
+  chartsContainer.className = 'dunbar-charts';
+
+  const layers = [
+    { tag: '&level5',   label: 'Hearth',       limit: 5,   desc: 'Weekly check-ins' },
+    { tag: '&level15',  label: 'Table',        limit: 15,  desc: 'Monthly dinners' },
+    { tag: '&level50',  label: 'Neighborhood', limit: 50,  desc: 'Quarterly coffee' },
+    { tag: '&level150', label: 'Horizon',      limit: 150, desc: 'Yearly hello' },
+  ];
+
+  layers.forEach(layer => {
+    const count = allContacts.filter(c => (c.tags || []).includes(layer.tag)).length;
+    const percent = Math.min(100, (count / layer.limit) * 100);
+    const isOver = count > layer.limit;
+
+    const item = document.createElement('div');
+    item.className = 'chart-item';
+    item.innerHTML = `
+      <div class="chart-header">
+        <span class="chart-label">${layer.label}</span>
+        <span class="chart-count">${count} / ${layer.limit}</span>
+      </div>
+      <div class="chart-bar-bg">
+        <div class="chart-bar-fill ${isOver ? 'chart-bar-fill--warning' : ''}" style="width: ${percent}%"></div>
+      </div>
+      <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.25rem;">${layer.desc}</div>
+    `;
+    chartsContainer.appendChild(item);
+  });
+  
+  container.appendChild(chartsContainer);
+
+  // Tag Directory
+  const tagCounts = {};
+  allContacts.forEach(contact => {
+    (contact.tags || []).forEach(tag => {
+      if (!tag.startsWith('&')) {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      }
+    });
+  });
+
+  const validTags = Object.keys(tagCounts).sort();
+
+  if (validTags.length > 0) {
+    const dirContainer = document.createElement('div');
+    dirContainer.className = 'settings-section';
+    dirContainer.style.marginTop = '2rem';
+    dirContainer.style.background = 'transparent';
+    dirContainer.style.border = 'none';
+
+    const dirTitle = document.createElement('div');
+    dirTitle.className = 'settings-section-title';
+    dirTitle.textContent = 'Tag Directory';
+    dirContainer.appendChild(dirTitle);
+
+    const tagList = document.createElement('div');
+    tagList.style.display = 'flex';
+    tagList.style.flexWrap = 'wrap';
+    tagList.style.gap = '0.5rem';
+
+    validTags.forEach(tag => {
+      const pill = document.createElement('div');
+      pill.className = 'pill-btn';
+      pill.style.display = 'inline-flex';
+      pill.style.alignItems = 'center';
+      pill.style.background = 'var(--color-bg-card)';
+      pill.style.border = '1px solid var(--color-bg-accent)';
+      
+      const countPill = document.createElement('span');
+      countPill.textContent = tagCounts[tag];
+      countPill.style.background = 'var(--color-action)';
+      countPill.style.color = 'white';
+      countPill.style.padding = '0.1rem 0.4rem';
+      countPill.style.borderRadius = '20px';
+      countPill.style.fontSize = '0.7rem';
+      countPill.style.marginLeft = '0.4rem';
+
+      pill.textContent = tag;
+      pill.appendChild(countPill);
+      tagList.appendChild(pill);
+    });
+
+    dirContainer.appendChild(tagList);
+    container.appendChild(dirContainer);
+  }
+
+  const spirit = document.createElement('div');
+  spirit.className = 'vision-text';
+  spirit.innerHTML = `
+    <p>We believe in <strong>stability over signal</strong>. While social media thrives on "high-energy" spikes, resilient connection is the slow, organic work of consistent maintenance.</p>
+  `;
+  container.appendChild(spirit);
+
+  const quote = document.createElement('div');
+  quote.className = 'vision-quote';
+  quote.innerHTML = `Stay rooted. Stay connected.<br>Dedicated to Great Uncle Mike.`;
+  container.appendChild(quote);
+}
+
+// Helpers
+function makeField(labelText, inputType, value) {
+  const field = document.createElement('div');
+  field.className = 'form-field';
+  const lbl = document.createElement('label');
+  lbl.textContent = labelText;
+  const input = document.createElement('input');
+  input.type = inputType;
+  input.className = 'form-input';
+  input.value = value || '';
+  field.appendChild(lbl);
+  field.appendChild(input);
+  field.getInput = () => input;
+  return field;
+}
+
+function makeToggleRow(label, checked, onToggle) {
+  const row = document.createElement('div');
+  row.className = 'settings-row';
+  const lbl = document.createElement('span');
+  lbl.className = 'settings-row-label';
+  lbl.textContent = label;
+
+  const toggle = document.createElement('div');
+  toggle.className = 'settings-toggle';
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = checked === true;
+  checkbox.addEventListener('change', () => onToggle(checkbox.checked));
+  toggle.appendChild(checkbox);
+
+  row.appendChild(lbl);
+  row.appendChild(toggle);
+  return row;
+}

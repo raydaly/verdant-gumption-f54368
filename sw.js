@@ -1,62 +1,75 @@
-const CACHE_NAME = 'greatuncle-v28';
-const ASSETS = [
-    '/',
-    '/index.html',
-    '/css/styles.css',
-    '/js/app.js',
-    '/js/ui.js',
-    '/manifest.json',
-    '/assets/images/icon-192.png',
-    '/assets/images/icon-512.png'
+var CACHE_NAME = 'greatuncle-v6';
+var STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/src/core/constants.js',
+  '/src/storage/db.js',
+  '/src/storage/settings.js',
+  '/src/storage/contacts.js',
+  '/src/storage/logs.js',
+  '/src/ui/boot.js',
+  '/src/ui/app.js',
+  '/src/styles/main.css',
+  '/src/ui/router.js',
+  '/src/ui/people.js',
+  '/src/ui/contact-form.js',
+  '/src/ui/components/level-selector.js',
+  '/src/ui/components/tag-input.js',
+  '/src/core/outreach-engine.js',
+  '/src/core/seedling.js',
+  '/src/ui/home.js',
+  '/src/ui/journal.js',
+  '/src/ui/trunk.js',
+  '/src/ui/settings.js',
+  '/src/ui/onboarding.js',
+  '/src/ui/components/bottom-sheet.js',
+  '/src/ui/components/toast.js',
+  '/src/ui/components/connected-sheet.js',
+  '/src/ui/components/confirm-dialog.js',
+  '/src/ui/about.js',
 ];
 
-self.addEventListener('install', (event) => {
-    self.skipWaiting();
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS);
+self.addEventListener('install', function (event) {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(function (cache) {
+      return cache.addAll(STATIC_ASSETS);
+    }).then(function () {
+      return self.skipWaiting();
+    })
+  );
+});
+
+self.addEventListener('activate', function (event) {
+  event.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(
+        keys.filter(function (key) {
+          return key !== CACHE_NAME;
+        }).map(function (key) {
+          return caches.delete(key);
         })
-    );
+      );
+    }).then(function () {
+      return self.clients.claim();
+    })
+  );
 });
 
-self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        }).then(() => self.clients.claim())
-    );
-});
+self.addEventListener('fetch', function (event) {
+  if (event.request.method !== 'GET') return;
 
-self.addEventListener('fetch', (event) => {
-    // Skip cross-origin and non-HTTP requests (like chrome-extension://)
-    if (!event.request.url.startsWith('http')) return;
+  event.respondWith(
+    caches.match(event.request).then(function (cached) {
+      if (cached) return cached;
 
-    // Network First strategy: Try the network, fall back to cache
-    event.respondWith(
-        fetch(event.request)
-            .then((networkResponse) => {
-                // Ensure we only cache valid, same-origin successful responses
-                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                    return networkResponse;
-                }
-
-                // If valid, clone and update the cache
-                const responseToCache = networkResponse.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseToCache);
-                });
-
-                return networkResponse;
-            })
-            .catch(() => {
-                // If network fails (offline), return from cache
-                return caches.match(event.request);
-            })
-    );
+      return fetch(event.request).then(function (response) {
+        var responseClone = response.clone();
+        caches.open(CACHE_NAME).then(function (cache) {
+          cache.put(event.request, responseClone);
+        });
+        return response;
+      });
+    })
+  );
 });

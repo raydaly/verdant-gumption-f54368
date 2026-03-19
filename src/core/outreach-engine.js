@@ -1,0 +1,116 @@
+// Frequency in days between contacts for each level tag.
+// These match the `display` values in the LEVELS array (level-selector.js).
+const LEVEL_DAYS = {
+  '&level5':   5,
+  '&level15':  10,
+  '&level50':  35,
+  '&level150': 100,
+};
+
+function isOwner(contact) {
+  return (contact.tags || []).includes('&owner');
+}
+
+function getLevelTag(tags) {
+  return Object.keys(LEVEL_DAYS).find(t => (tags || []).includes(t)) || null;
+}
+
+export function getDueContacts(contacts, today = new Date()) {
+  const now = today.getTime();
+  const results = [];
+
+  for (const c of contacts) {
+    if (isOwner(c)) continue;
+
+    const levelTag = getLevelTag(c.tags);
+    if (!levelTag) continue;
+
+    if (c.snooze_until && c.snooze_until > now) continue;
+
+    const frequency = LEVEL_DAYS[levelTag];
+    const lastMs = c.last_contacted || 0;
+    const daysSince = (now - lastMs) / 86400000;
+    const daysOverdue = daysSince - frequency;
+    const urgency = daysOverdue / frequency;
+
+    if (urgency > -0.2) {
+      results.push({
+        contact: c,
+        levelTag,
+        frequency,
+        daysSince: Math.round(daysSince),
+        daysOverdue: Math.round(daysOverdue),
+        urgency,
+      });
+    }
+  }
+
+  return results.sort((a, b) => b.urgency - a.urgency);
+}
+
+export function getAnchorEvents(contacts, today = new Date(), lookAheadDays = 30) {
+  const todayMs = today.getTime();
+  const year = today.getFullYear();
+  const events = [];
+
+  for (const c of contacts) {
+    if (isOwner(c)) continue;
+
+    for (const field of ['birthday', 'anniversary']) {
+      const stored = c[field];
+      if (!stored) continue;
+
+      let month, day;
+      if (stored.startsWith('0000-')) {
+        const parts = stored.split('-');
+        month = parseInt(parts[1], 10) - 1;
+        day = parseInt(parts[2], 10);
+      } else {
+        const d = new Date(stored);
+        if (isNaN(d.getTime())) continue;
+        month = d.getMonth();
+        day = d.getDate();
+      }
+
+      let eventDate = new Date(year, month, day);
+      if (eventDate.getTime() < todayMs - 86400000) {
+        eventDate = new Date(year + 1, month, day);
+      }
+
+      const daysUntil = Math.round((eventDate.getTime() - todayMs) / 86400000);
+      if (daysUntil >= 0 && daysUntil <= lookAheadDays) {
+        events.push({ contact: c, type: field, date: eventDate, daysUntil });
+      }
+    }
+  }
+
+  return events.sort((a, b) => a.daysUntil - b.daysUntil);
+}
+
+export function getSnoozeMs(settings) {
+  return ((settings && settings.skipDays) || 7) * 86400000;
+}
+
+export function checkGatheringRules(rules, today = new Date()) {
+  if (!rules || rules.length === 0) return [];
+  const dayOfWeek = today.getDay();
+  return rules.filter(rule => rule.dayOfWeek === dayOfWeek);
+}
+
+export function getConnectionHealth(contacts) {
+  const eligible = contacts.filter(c => !isOwner(c) && getLevelTag(c.tags));
+  if (eligible.length === 0) return { upToDate: 0, overdue: 0, total: 0, pct: 100 };
+
+  const now = Date.now();
+  let upToDate = 0;
+
+  for (const c of eligible) {
+    const freq = LEVEL_DAYS[getLevelTag(c.tags)];
+    const lastMs = c.last_contacted || 0;
+    if ((now - lastMs) / 86400000 <= freq) upToDate++;
+  }
+
+  const overdue = eligible.length - upToDate;
+  const pct = Math.round((upToDate / eligible.length) * 100);
+  return { upToDate, overdue, total: eligible.length, pct };
+}
