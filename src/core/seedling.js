@@ -84,6 +84,8 @@ export function encodeInvite(contact) {
       email: contact.email || null,
       address: contact.address || null,
       zip_code: contact.zip_code || null,
+      birthday: contact.birthday || null,
+      anniversary: contact.anniversary || null,
       tags: (contact.tags || []).filter(t => t.startsWith('@') || t.startsWith('#')),
     },
   });
@@ -100,6 +102,8 @@ export function encodeGroup(contacts, groupTag) {
       email: c.email || null,
       address: c.address || null,
       zip_code: c.zip_code || null,
+      birthday: c.birthday || null,
+      anniversary: c.anniversary || null,
       tags: (c.tags || []).filter(t => t.startsWith('@') || t.startsWith('#')),
     })),
   });
