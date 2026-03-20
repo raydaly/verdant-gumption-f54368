@@ -53,6 +53,22 @@ async function parseAndWriteImport(db, params) {
       const safeAddress = typeof c.address === 'string' ? c.address.replace(/</g, '').substring(0, 200).trim() : null;
       const safeZip = typeof c.zip_code === 'string' ? c.zip_code.replace(/</g, '').substring(0, 20).trim() : null;
       
+      const validateDate = (d) => {
+        if (!d) return null;
+        if (typeof d === 'number' && d > 0) return d; // Unix timestamp
+        if (typeof d !== 'string') return null;
+        const s = d.replace(/</g, '').trim();
+        // Allow YYYY-MM-DD or MM-DD (regex tests)
+        if (/^(\d{4}-)?\d{1,2}-\d{1,2}$/.test(s)) return s;
+        // Also allow legacy unix string
+        if (/^\d{10,14}$/.test(s)) return parseInt(s);
+        return null;
+      };
+
+      const safeBirthday = validateDate(c.birthday);
+      const safeAnniversary = validateDate(c.anniversary);
+      const safePassing = validateDate(c.date_of_passing);
+
       const safeTags = (Array.isArray(c.tags) ? c.tags : [])
         .filter(t => typeof t === 'string')
         .map(t => t.replace(/</g, '').substring(0, 50).trim())
@@ -60,7 +76,18 @@ async function parseAndWriteImport(db, params) {
 
       const safeBatchTag = batchTag ? batchTag.replace(/</g, '').substring(0, 50).trim() : null;
 
-      c = { ...c, name: safeName, phone: safePhone, email: safeEmail, address: safeAddress, zip_code: safeZip, tags: safeTags };
+      c = { 
+        ...c, 
+        name: safeName, 
+        phone: safePhone, 
+        email: safeEmail, 
+        address: safeAddress, 
+        zip_code: safeZip, 
+        tags: safeTags,
+        birthday: safeBirthday,
+        anniversary: safeAnniversary,
+        date_of_passing: safePassing
+      };
 
       const match = findMatch(c, existingContacts);
       
@@ -98,9 +125,9 @@ async function parseAndWriteImport(db, params) {
         email: c.email || null,
         address: c.address || null,
         zip_code: c.zip_code || null,
-        birthday: null,
-        anniversary: null,
-        date_of_passing: null,
+        birthday: c.birthday,
+        anniversary: c.anniversary,
+        date_of_passing: c.date_of_passing,
         tags: finalTags,
         last_contacted: null,
         snooze_until: null,

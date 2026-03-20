@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v34';
+var CACHE_NAME = 'greatuncle-v35';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -20,12 +20,14 @@ var STATIC_ASSETS = [
   '/src/core/outreach-engine.js',
   '/src/core/seedling.js',
   '/src/core/calendar.js',
+  '/src/core/milestone-engine.js',
   '/src/ui/home.js',
   '/src/ui/journal.js',
   '/src/ui/trunk.js',
   '/src/ui/settings.js',
   '/src/ui/onboarding.js',
   '/src/ui/stewardship.js',
+  '/src/ui/milestone-calendar.js',
   '/src/ui/share-review.js',
   '/src/ui/about.js',
   '/src/ui/components/bottom-sheet.js',

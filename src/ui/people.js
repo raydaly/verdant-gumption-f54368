@@ -7,6 +7,7 @@ import { showConnectedSheet } from './components/connected-sheet.js';
 import { showContactProfile } from './components/contact-profile.js';
 import { encodeInvite, encodeGroup } from '../core/seedling.js';
 import { performStewardshipRitual } from './stewardship.js';
+import { getUpcomingMilestones } from '../core/milestone-engine.js';
 
 const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
 
@@ -124,6 +125,7 @@ function buildContactRow(contact, isOwner, db, onRefresh) {
       smsBtn.href = `sms:${contact.phone}`;
       smsBtn.textContent = '💬';
       smsBtn.setAttribute('aria-label', 'Send SMS');
+      smsBtn.setAttribute('title', 'Send SMS');
       smsBtn.addEventListener('click', e => e.stopPropagation());
       actions.appendChild(smsBtn);
 
@@ -132,6 +134,7 @@ function buildContactRow(contact, isOwner, db, onRefresh) {
       callBtn.href = `tel:${contact.phone}`;
       callBtn.textContent = '📞';
       callBtn.setAttribute('aria-label', 'Call');
+      callBtn.setAttribute('title', 'Call');
       callBtn.addEventListener('click', e => e.stopPropagation());
       actions.appendChild(callBtn);
     }
@@ -142,6 +145,7 @@ function buildContactRow(contact, isOwner, db, onRefresh) {
       emailBtn.href = `mailto:${contact.email}`;
       emailBtn.textContent = '📧';
       emailBtn.setAttribute('aria-label', 'Send email');
+      emailBtn.setAttribute('title', 'Send email');
       emailBtn.addEventListener('click', e => e.stopPropagation());
       actions.appendChild(emailBtn);
     }
@@ -415,7 +419,7 @@ export async function renderPeople(db) {
     printEl.className = 'print-contact-list';
 
     const title = document.createElement('h1');
-    title.textContent = 'My Contacts';
+    title.textContent = 'My Contact from Greatuncle';
     printEl.appendChild(title);
 
     nonOwners.forEach(c => {
@@ -473,6 +477,14 @@ export async function renderPeople(db) {
     headerRight.appendChild(shareBtn);
   }
 
+  const calBtn = document.createElement('button');
+  calBtn.type = 'button';
+  calBtn.className = 'header-icon-btn';
+  calBtn.setAttribute('aria-label', 'View milestone calendar');
+  calBtn.textContent = '📅';
+  calBtn.addEventListener('click', () => navigate('milestone-calendar'));
+
+  headerRight.appendChild(calBtn);
   headerRight.appendChild(printBtn);
   headerRight.appendChild(gearBtn);
 
@@ -529,6 +541,51 @@ export async function renderPeople(db) {
   content.appendChild(ul);
 
   app.appendChild(content);
+
+  // Upcoming Milestones Section (only if < 30 people listed)
+  if (sortedAll.length > 0 && sortedAll.length < 30) {
+    const milestones = getUpcomingMilestones(sortedAll);
+    if (milestones.length > 0) {
+      const milestoneSection = document.createElement('div');
+      milestoneSection.className = 'view-content milestone-radar';
+      milestoneSection.style.marginTop = '0';
+      milestoneSection.style.paddingTop = '1rem';
+      milestoneSection.style.borderTop = '1px dashed var(--color-border)';
+
+      const mTitle = document.createElement('div');
+      mTitle.className = 'form-section-label';
+      mTitle.style.marginBottom = '12px';
+      mTitle.textContent = 'Upcoming Milestones (Next 31 Days)';
+      milestoneSection.appendChild(mTitle);
+
+      const mList = document.createElement('div');
+      mList.style.display = 'flex';
+      mList.style.flexDirection = 'column';
+      mList.style.gap = '10px';
+
+      milestones.forEach(m => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.alignItems = 'center';
+        item.style.gap = '12px';
+        item.style.padding = '4px 0';
+        
+        const daysLabel = m.daysUntil === 0 ? 'TODAY' : `in ${m.daysUntil} day${m.daysUntil === 1 ? '' : 's'}`;
+        
+        item.innerHTML = `
+          <div style="font-size: 1.2rem;">${m.icon}</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 500;">${m.name}</div>
+            <div style="font-size: 0.8rem; opacity: 0.6;">${m.type} · ${daysLabel}</div>
+          </div>
+        `;
+        mList.appendChild(item);
+      });
+
+      milestoneSection.appendChild(mList);
+      app.appendChild(milestoneSection);
+    }
+  }
 
   // FAB
   const fab = document.createElement('button');

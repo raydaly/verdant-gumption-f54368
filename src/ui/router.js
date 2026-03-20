@@ -6,6 +6,7 @@ import { renderTrunk } from './trunk.js';
 import { renderSettings } from './settings.js';
 import { renderAbout } from './about.js';
 import { renderShareReview } from './share-review.js';
+import { renderMilestoneCalendar } from './milestone-calendar.js';
 
 let _db = null;
 let _version = 'v-router-start';
@@ -62,6 +63,9 @@ async function render(view, params) {
       break;
     case 'share-review':
       await renderShareReview(_db);
+      break;
+    case 'milestone-calendar':
+      await renderMilestoneCalendar(_db);
       break;
     default:
       break;
