@@ -274,8 +274,29 @@ class GreatuncleApp {
             }
         });
 
+        // --- User Profile Migration ---
+        let ownerContact = this.contacts.find(c => c.tags && c.tags.includes('&owner'));
+        if (!ownerContact) {
+            ownerContact = {
+                id: 'owner-id-' + Date.now(),
+                name: this.settings.userName || "You",
+                phone: this.settings.userPhone || "",
+                email: this.settings.userEmail || "",
+                address: this.settings.userAddress || "",
+                zip_code: this.settings.userPostalCode || "",
+                birthday: this.settings.userBirthday || null,
+                anniversary: this.settings.userAnniversary || null,
+                tags: ['&owner', '&level5'], // Automatically in inner circle
+                last_contacted: 0,
+                logs: []
+            };
+            this.contacts.push(ownerContact);
+            migrated = true;
+        }
+        // --- End User Profile Migration ---
+
         if (migrated) {
-            console.log("Migration complete: Unified system tags to new prefixes.");
+            console.log("Migration complete: Unified system tags and Owner Profile.");
             await this.saveState();
         }
         // --- End Migration ---
@@ -311,8 +332,8 @@ class GreatuncleApp {
                 const todayMidnight = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate()).getTime();
 
                 const stillNeedsOutreach = (p) => {
-                    if (p.is_user) return true; // Keep user milestones
                     const actual = this.contacts.find(c => c.id === p.id);
+                    if (actual?.tags?.includes('&owner')) return true; // Keep owner milestones
                     if (!actual) return false;
                     if (actual.last_contacted >= todayMidnight) return false;
                     if (actual.snooze_until && Date.now() < actual.snooze_until) return false;
@@ -354,37 +375,17 @@ class GreatuncleApp {
         // 1. Anchors: Milestones today
         activeContacts.forEach(contact => {
             const milestones = this.getMilestonesToday(contact);
-            if (milestones.length > 0) {
+            if (contact.tags?.includes('&owner') && milestones.length > 0) {
+                const renamedMilestones = milestones.map(m => {
+                    if (m === 'Birthday 🎂') return 'Your Birthday 🎂';
+                    if (m.startsWith('Anniversary')) return 'Your Anniversary 💍';
+                    return m;
+                });
+                this.dashboard.anchors.unshift({ ...contact, milestones: renamedMilestones });
+            } else if (milestones.length > 0) {
                 this.dashboard.anchors.push({ ...contact, milestones });
             }
         });
-
-        // Add user milestones if applicable
-        if (this.settings.userBirthday && isToday(this.settings.userBirthday)) {
-            this.dashboard.anchors.unshift({
-                id: 'user-id',
-                name: this.settings.userName || "You",
-                is_user: true,
-                tags: ['&owner'],
-                milestones: ['Your Birthday 🎂']
-            });
-        }
-
-        if (this.settings.userAnniversary && isToday(this.settings.userAnniversary)) {
-            // Look for contacts who share this anniversary
-            const partners = this.contacts.filter(c => c.anniversary && isToday(c.anniversary));
-            const milestoneText = partners.length > 0
-                ? `Anniversary with ${partners.map(p => p.name).join(' & ')} 💍`
-                : 'Your Anniversary 💍';
-
-            this.dashboard.anchors.unshift({
-                id: 'user-id-anniv',
-                name: this.settings.userName || "You",
-                is_user: true,
-                tags: ['&owner'],
-                milestones: [milestoneText]
-            });
-        }
 
         // 2. Gathering Rule: Check for triggered hashtags (e.g., #church on Sunday)
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -406,32 +407,26 @@ class GreatuncleApp {
         // 3. Foresight: &previewdays and User within Window
         const foresightWindow = this.settings.foresightWindow || 7;
 
-        // Check User Profile for upcoming milestones
-        const userUpcoming = this.getUpcomingMilestones({
-            birthday: this.settings.userBirthday,
-            anniversary: this.settings.userAnniversary
-        }, foresightWindow);
-
-        if (userUpcoming.length > 0) {
-            this.dashboard.foresight.push({
-                id: 'user-foresight',
-                name: this.settings.userName || "You",
-                is_user: true,
-                tags: ['&owner'],
-                upcoming: userUpcoming
-            });
-        }
-
         const autoForesightLevels = this.settings.foresightLevels || [];
         activeContacts.forEach(contact => {
             const hasSpecial = contact.tags && (
                 contact.tags.includes('&previewdays') ||
-                contact.tags.some(t => autoForesightLevels.includes(t))
+                contact.tags.some(t => autoForesightLevels.includes(t)) ||
+                contact.tags.includes('&owner')
             );
             if (hasSpecial) {
                 const upcoming = this.getUpcomingMilestones(contact, foresightWindow);
                 if (upcoming.length > 0 && !this.dashboard.anchors.find(a => a.id === contact.id)) {
-                    this.dashboard.foresight.push({ ...contact, upcoming });
+                    if (contact.tags?.includes('&owner')) {
+                        const modifiedUpcoming = upcoming.map(item => {
+                            if (item.event === 'Birthday') return { ...item, text: 'Your Birthday' };
+                            if (item.event === 'Anniversary') return { ...item, text: 'Your Anniversary' };
+                            return item;
+                        });
+                        this.dashboard.foresight.push({ ...contact, upcoming: modifiedUpcoming });
+                    } else {
+                        this.dashboard.foresight.push({ ...contact, upcoming });
+                    }
                 }
             }
         });
@@ -622,7 +617,6 @@ class GreatuncleApp {
             last_contacted: 0,
             snooze_until: null,
             logs: [],
-            is_user: false,
             ...contact
         });
         this.saveState();
@@ -703,7 +697,10 @@ class GreatuncleApp {
         const encodedUser = btoa(JSON.stringify(userData));
         const baseUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
 
-        let shareBody = `I'm using Greatuncle to sustain my community of friends and family. \n\nClick here to join me and add me to your community:\n${baseUrl}?invite=${encodedUser}\n\n`;
+        let shareTitle = 'Join me on Greatuncle';
+        let shareBody = `I'm using Greatuncle to sustain my community of friends and family.\n\nClick here to join me and add me to your community:\n${baseUrl}?invite=${encodedUser}\n\n`;
+
+        let groupEmails = [];
 
         if (selectedGroup !== 'none') {
             const groupMembers = this.contacts.filter(c => c.tags && c.tags.includes(selectedGroup));
@@ -727,15 +724,41 @@ class GreatuncleApp {
                 };
 
                 const encodedGroup = btoa(JSON.stringify(groupExport));
-                shareBody += `I've also shared the contact info for our "${selectedGroup.substring(1)}" group. Click here to import them (they will be tagged as ${batchTag}):\n${baseUrl}?importGroup=${encodedGroup}\n\n`;
+                const groupName = selectedGroup.substring(1);
+                shareTitle = `Greatuncle — ${groupName} group update`;
+                shareBody += `I've also shared the contact info for our "${groupName}" group. Click here to import them (they will be tagged as ${batchTag}):\n${baseUrl}?importGroup=${encodedGroup}\n\n`;
+
+                // Collect emails from group members for mailto To: field
+                groupEmails = groupMembers.map(c => c.email).filter(Boolean);
+                const missing = groupMembers.length - groupEmails.length;
+                if (missing > 0) {
+                    this.ui.showToast(`${missing} contact${missing > 1 ? 's' : ''} in this group have no email — they won't be auto-addressed.`, 5000);
+                }
             }
         }
 
-        const subject = encodeURIComponent("Join me on Greatuncle");
-        const mailto = `mailto:?subject=${subject}&body=${encodeURIComponent(shareBody)}`;
+        // Try Web Share API first (mobile: opens native share sheet for SMS, iMessage, WhatsApp, etc.)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: shareTitle,
+                    text: shareBody
+                });
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return; // User cancelled — don't fall through
+                console.log('Web Share failed, falling back to mailto:', err);
+            }
+        }
 
+        // Fallback: mailto: with group members pre-populated in To:
+        const toField = groupEmails.join(',');
+        const subject = encodeURIComponent(shareTitle);
+        const mailto = `mailto:${toField}?subject=${subject}&body=${encodeURIComponent(shareBody)}`;
         window.location.href = mailto;
     }
+
+
 
 
 
@@ -1067,7 +1090,6 @@ class GreatuncleApp {
                         last_contacted: 0,
                         snooze_until: null,
                         logs: [],
-                        is_user: false,
                         name,
                         tags
                     });
@@ -1338,6 +1360,18 @@ class GreatuncleApp {
                     tag: tagEl ? tagEl.value.trim().toLowerCase() : ''
                 };
             }).filter(r => r.tag && r.tag.trim().length > 0);
+
+            // 5. Synchronize with &owner Contact
+            let ownerContact = this.contacts.find(c => c.tags && c.tags.includes('&owner'));
+            if (ownerContact) {
+                ownerContact.name = this.settings.userName || "You";
+                ownerContact.birthday = this.settings.userBirthday;
+                ownerContact.anniversary = this.settings.userAnniversary;
+                ownerContact.phone = this.settings.userPhone || "";
+                ownerContact.email = this.settings.userEmail || "";
+                ownerContact.address = this.settings.userAddress || "";
+                ownerContact.zip_code = this.settings.userPostalCode || "";
+            }
 
             console.log("Saving Settings:", this.settings);
 

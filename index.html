@@ -8,7 +8,7 @@
 
     <!-- SEO Meta Tags -->
     <meta name="description"
-        content="A private, local-first PWA to help you maintain meaningful connections with up to 150 people.">
+        content="The app make you the greatuncle to your family and friendsA private, local-first PWA to help you maintain meaningful connections with up to 150 people.">
     <meta name="theme-color" content="#F9F7F2">
 
     <!-- Fonts: Playfair Display (Serif) and Inter (Sans-serif) -->
@@ -28,13 +28,19 @@
         <header class="app-header"
             style="position: relative; display: flex; justify-content: center; align-items: center; padding: var(--space-sm) var(--space-lg) 0;">
             <h1 class="brand" style="margin: 0;">Greatuncle</h1>
-            <button class="nav-item nav-header-settings" aria-label="About"
+            <button class="nav-item nav-header-settings" aria-label="About Settings"
                 style="position: absolute; right: var(--space-lg); background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.6; padding: 0; outline: none;">⚙️</button>
         </header>
 
         <main id="main-content">
             <!-- Dashboard: The Heart of the App -->
             <section id="daily-suggestions" class="view-section">
+                <!-- Quick Jump Search (Home Page) -->
+                <div id="home-search-container" class="search-container hidden"
+                    style="margin-bottom: var(--space-md); margin-top: var(--space-sm);">
+                    <input type="text" id="home-search" placeholder="Search names or type #tag, @group..."
+                        style="background: var(--color-parchment-white); box-shadow: var(--shadow-diffused); border: 1px solid rgba(0,0,0,0.02);">
+                </div>
 
                 <!-- Anchor Events (Today's Milestones) -->
                 <div id="anchor-events" class="dashboard-section hidden">
@@ -81,36 +87,145 @@
                     </div>
                 </header>
 
-                <div class="search-container">
-                    <input type="text" id="circle-search" placeholder="Search names or type #tag, @group...">
+                <div class="search-container" style="display: flex; gap: 8px; align-items: center;">
+                    <input type="text" id="circle-search" placeholder="Search names or type #tag, @group..."
+                        style="flex: 1;">
+                    <button id="btn-toggle-filters" class="circle-tab-btn"
+                        style="white-space: nowrap; margin-bottom: 0; background: var(--color-parchment-dark); border-color: rgba(0,0,0,0.1);">
+                        Refine
+                    </button>
                 </div>
 
-                <div class="level-filter-row">
-                    <span class="level-label">Level: </span>
-                    <div id="level-filter-container" style="display: flex; flex-wrap: wrap; gap: 6px;">
-                        <!-- Dynamic levels (&level) injected here -->
+                <div id="filter-library" class="shelf-closed"
+                    style="background: var(--color-parchment-dark); border-radius: 16px; border: 1px solid var(--color-border); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); margin-bottom: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                    <style>
+                        #filter-library {
+                            display: block !important;
+                            overflow: hidden;
+                            visibility: visible !important;
+                        }
+
+                        #filter-library.shelf-closed {
+                            max-height: 0 !important;
+                            opacity: 0 !important;
+                            padding-top: 0 !important;
+                            padding-bottom: 0 !important;
+                            margin-top: 0 !important;
+                            margin-bottom: 0 !important;
+                            border-width: 0 !important;
+                            pointer-events: none;
+                        }
+
+                        #filter-library:not(.shelf-closed) {
+                            max-height: 800px !important;
+                            opacity: 1 !important;
+                            padding: 24px 20px !important;
+                            margin-bottom: 24px !important;
+                            border-width: 1px !important;
+                        }
+
+                        .filter-section-label {
+                            display: block;
+                            margin-bottom: 12px;
+                            font-size: 0.65rem;
+                            font-weight: 800;
+                            letter-spacing: 0.1em;
+                            opacity: 0.6;
+                            color: var(--color-text);
+                            text-transform: uppercase;
+                        }
+
+                        /* FORCE buttons to be visible and styled well in the library */
+                        #filter-library .circle-tab-btn {
+                            background: white !important;
+                            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+                            opacity: 1 !important;
+                            color: var(--color-text) !important;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+                            margin-bottom: 8px;
+                            padding: 8px 16px !important;
+                            height: auto !important;
+                            display: inline-flex !important;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 20px !important;
+                            font-size: 0.85rem !important;
+                        }
+
+                        #level-filter-container,
+                        #group-filter-container,
+                        #tag-cloud {
+                            min-height: 36px;
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 10px;
+                        }
+                    </style>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                        <div>
+                            <span class="filter-section-label">Dunbar Levels</span>
+                            <div id="level-filter-container" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                        </div>
+                        <div>
+                            <span class="filter-section-label">Groups (@)</span>
+                            <div id="group-filter-container" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                        </div>
+                        <div>
+                            <span class="filter-section-label">Topics (#)</span>
+                            <div id="tag-cloud" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="level-filter-row">
-                    <span class="level-label">Groups: </span>
-                    <div id="group-filter-container" style="display: flex; flex-wrap: wrap; gap: var(--space-md);">
-                        <!-- Dynamic groups (@) injected here -->
-                    </div>
-                </div>
+                <div id="active-filter-bar"
+                    style="display: flex; overflow-x: auto; white-space: nowrap; gap: 10px; padding: 4px 0; margin-bottom: 8px; align-items: center; scrollbar-width: none; -webkit-overflow-scrolling: touch; border-bottom: 1px solid rgba(0,0,0,0.03);">
+                    <style>
+                        #active-filter-bar::-webkit-scrollbar {
+                            display: none;
+                        }
 
-                <div class="level-filter-row">
-                    <span class="level-label">Topics: </span>
-                    <div id="tag-cloud" style="display: flex; flex-wrap: wrap; gap: 6px;">
-                        <!-- Dynamic hashtags (#) injected here -->
-                    </div>
-                </div>
+                        .active-gem {
+                            background: var(--color-action-green) !important;
+                            color: white !important;
+                            padding: 5px 12px !important;
+                            border-radius: 20px !important;
+                            font-size: 0.85rem !important;
+                            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            opacity: 1 !important;
+                        }
 
-                <div class="level-filter-row">
-                    <span class="level-label">Sort: </span>
-                    <div id="sort-controls" style="display: flex; flex-wrap: wrap; gap: 6px;">
-                        <!-- Dynamic sort buttons injected here -->
-                    </div>
+                        .active-gem::after {
+                            content: '✕';
+                            font-size: 0.7rem;
+                            opacity: 0.8;
+                            background: rgba(255, 255, 255, 0.2);
+                            border-radius: 50%;
+                            width: 16px;
+                            height: 16px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin-left: 4px;
+                        }
+
+                        .sort-pill {
+                            background: white !important;
+                            color: var(--color-text) !important;
+                            border: 1px solid var(--color-border) !important;
+                            padding: 5px 12px !important;
+                            border-radius: 20px !important;
+                            font-size: 0.85rem !important;
+                            font-weight: 600;
+                            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                            opacity: 1 !important;
+                        }
+                    </style>
+                    <div id="sort-controls" style="display: inline-flex;"></div>
+                    <div id="active-pills-container" style="display: inline-flex; gap: 8px;"></div>
                 </div>
 
                 <div id="circle-list-container" class="circle-list list-fade">
@@ -146,7 +261,7 @@
                 </header>
 
                 <div class="tab-control">
-                    <button class="tab-btn active" data-tab="about">The Vision</button>
+                    <button class="tab-btn active" data-tab="about">Get Started</button>
                     <button class="tab-btn" data-tab="settings">App Settings</button>
                 </div>
 
@@ -154,16 +269,13 @@
                 <div id="about-tab" class="tab-content" data-tab="about">
                     <div class="settings-group" style="text-align: left;">
                         <h3 class="font-heading">Grounded Connection</h3>
-                        <p class="setting-desc">Greatuncle is a private, local-first tool designed to help you
-                            <strong>sustain</strong> meaningful connections. It is built for stability over
-                            noise—replacing
-                            the "viral" energy of social media with the steady, quiet work of staying rooted in your
-                            community.
+                        <p class="setting-desc">Greatuncle is a private, local-first app that helps you stay in touch
+                            with your friends and family. You organize upto 150 people into manageable layers of
+                            frequency
+                            so you won't forget anyone.
                         </p>
 
-                        <p class="setting-desc"><strong>Numbers and Friendships:</strong> Greatuncle separates your
-                            friendships into four categories based on how often you interact with them.
-                        </p>
+
                         <ul class="setting-desc" style="padding-left: 24px; margin-top: -16px;">
                             <li style="margin-bottom: 8px;"><strong>Inner:</strong> 5 people you interact with at least
                                 once a week.</li>
@@ -171,10 +283,18 @@
                                 interactions.</li>
                             <li style="margin-bottom: 8px;"><strong>Acquaintances:</strong> 35 more people quarterly or
                                 semi-annually.</li>
-                            <li><strong>Active:</strong> 100 people you interact with less than once a year.</li>
+                            <li><strong>Active:</strong> 100 people you interact with at least once a year.</li>
                         </ul>
-                        <p class="setting-desc">This gives you 150 people in your community.</p>
 
+                        <p class="setting-desc"><strong>How It Works:</strong> Everyday you open Greatuncle it nudges
+                            you to reach out to three people you haven't spoken to in a while. Then directly in the app
+                            you can call, email, or txt them. Or you can choose other modes like sending them a
+                            postcard or a calendar invite.
+
+                        </p>
+                        <p class="setting-desc"><strong>Early Reminders</strong>of birthdays and anniversaries help you
+                            stay
+                            connected with your friends and family on their special days.</p>
                         <p class="setting-desc"><strong>Stability Over Signal:</strong> While social media thrives on
                             "high-energy" spikes,
                             grounded connection is about the slow, organic work of maintenance. Just as a tree needs
@@ -182,14 +302,9 @@
                             we need deep, sustained connections to stay resilient.
                         </p>
 
-                        <p class="setting-desc"><strong>The Greatuncle Archetype:</strong> Inspired by the one who
-                            remembers
-                            every birthdate, knows the names of your neighbors, and checks in just to say hello. We
-                            ensure those
-                            who matter most never slip through the cracks of a busy life.
-                        </p>
 
-                        <p class="setting-desc" style="font-style: italic;">Stay rooted. Stay connected.</p>
+                        <p class="setting-desc" style="font-style: italic;">Stay rooted. Stay connected. <br />
+                            Be a Great Uncle for your chosen extended family.</p>
 
                         <div id="dunbar-layers-container" class="dunbar-layers-group">
                             <!-- Dunbar layers injected here -->
@@ -274,7 +389,7 @@
                         </div>
                         <p class="setting-desc" style="margin-top: 15px;">Automatically preview birthdays and
                             anniversaries for everyone in these connection layers. For anyone else, add the
-                            <strong>previewdays</strong> tag to their profile.
+                            <strong>#previewdays</strong> tag to their profile.
                         </p>
                         <div id="foresight-levels-config"
                             style="display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap;">
@@ -386,9 +501,11 @@
                             style="width: 100%; font-family: monospace; font-size: 0.8rem; margin-bottom: var(--space-sm); border-radius: 8px; padding: 10px;"></textarea>
                         <div class="form-row" style="flex-wrap: wrap; gap: 8px;">
                             <button class="btn btn-secondary btn-sm" id="btn-export-json"
-                                data-action="export-json">Generate & Copy</button>
+                                data-action="export-json">Generate &
+                                Copy</button>
                             <button class="btn btn-secondary btn-sm" id="btn-share-backup"
-                                data-action="share-backup">Share Seedling</button>
+                                data-action="share-backup">Share
+                                Seedling</button>
                             <button class="btn btn-secondary btn-sm" id="btn-import-json" data-action="import-json">Full
                                 Restore from Paste and Overwrite All</button>
                             <button class="btn btn-secondary btn-sm" id="btn-merge-json" data-action="merge-json"
@@ -416,7 +533,8 @@
                         <p class="setting-desc">Generate a printable PDF with a QR code. Your data survives even if
                             electronics fail.</p>
                         <button class="btn btn-secondary btn-block" id="btn-print-ledger"
-                            data-action="print-ledger">Generate Paper Ledger</button>
+                            data-action="print-ledger">Generate
+                            Paper Ledger</button>
                     </div>
 
                     <div class="backup-section"
@@ -607,11 +725,14 @@
                         style="margin-top: var(--space-md); display: flex; flex-direction: column; gap: 12px; align-items: center;">
                         <div class="direct-actions" id="detail-direct-actions"
                             style="width: 100%; border-top: none; margin-top: 0;">
-                            <button class="btn-action-icon btn-sms" data-action="quick-sms" title="Text">📱</button>
-                            <button class="btn-action-icon btn-call" data-action="quick-call" title="Call">📞</button>
-                            <button class="btn-action-icon btn-email" data-action="quick-email"
-                                title="Email">📧</button>
-                            <button class="btn-action-icon" data-action="pick-prompt" title="Other Methods">✨</button>
+                            <button class="btn-action-icon btn-sms" data-action="quick-sms" title="Text"
+                                aria-label="Text message">📱</button>
+                            <button class="btn-action-icon btn-call" data-action="quick-call" title="Call"
+                                aria-label="Phone call">📞</button>
+                            <button class="btn-action-icon btn-email" data-action="quick-email" title="Email"
+                                aria-label="Send email">📧</button>
+                            <button class="btn-action-icon" data-action="pick-prompt" title="Other Methods"
+                                aria-label="Other connection methods">✨</button>
                         </div>
                         <div class="card-actions" id="detail-card-actions"
                             style="width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: 0;">
@@ -851,19 +972,13 @@
                 <button type="button" class="close-x" data-action="close-overlay" aria-label="Close">×</button>
                 <header>
                     <h2 class="font-heading">Review Shared People</h2>
-                    <p id="share-review-meta">The following people were shared with you. Review and add them to your
-                        circle.</p>
                 </header>
 
-                <div id="share-review-list" class="share-review-list">
-                    <!-- Pending contacts injected here -->
-                </div>
-
                 <div class="bulk-tag-actions"
-                    style="margin-top: var(--space-md); padding: 12px; background: rgba(212, 163, 115, 0.05); border-radius: 8px; border: 1px solid var(--color-border);">
-                    <label for="bulk-share-tag" style="font-size: 0.8rem; display: block; margin-bottom: 4px;">Set all
-                        group
-                        tags to:</label>
+                    style="margin-top: var(--space-sm); margin-bottom: var(--space-md); padding: 12px; background: rgba(212, 163, 115, 0.05); border-radius: 8px; border: 1px solid var(--color-border);">
+                    <label for="bulk-share-tag"
+                        style="font-size: 0.8rem; display: block; margin-bottom: 4px; font-weight: 600;">Set all
+                        group tags to:</label>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" id="bulk-share-tag" placeholder="@group"
                             style="flex: 1; font-size: 0.9rem; padding: 6px;">
@@ -871,8 +986,18 @@
                     </div>
                 </div>
 
+                <p id="share-review-meta" style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 12px;">The following
+                    people were shared with you. Review and add them to your
+                    circle.</p>
+
+                <div id="share-review-list" class="share-review-list">
+                    <!-- Pending contacts injected here -->
+                </div>
+
+
+
                 <div class="form-row" style="margin-top: var(--space-lg);">
-                    <button class="btn btn-primary btn-block" id="bulk-import-shared">Import All Selected</button>
+                    <button class="btn btn-primary btn-block" id="bulk-import-shared">Save Updates & Imports</button>
                     <button class="btn btn-link" id="pause-review-btn" data-action="close-overlay">Pause Reviewing for
                         Now</button>
                 </div>
@@ -975,11 +1100,16 @@
             </div>
 
             <div class="direct-actions hidden">
-                <button class="btn-action-icon btn-sms" data-action="quick-sms" data-id="" title="Text">📱</button>
-                <button class="btn-action-icon btn-call" data-action="quick-call" data-id="" title="Call">📞</button>
-                <button class="btn-action-icon btn-email" data-action="quick-email" data-id="" title="Email">📧</button>
-                <button class="btn-action-icon" data-action="export-calendar" data-id="" title="Plan">📅</button>
-                <button class="btn-action-icon" data-action="pick-prompt" data-id="" title="Other Methods">✨</button>
+                <button class="btn-action-icon btn-sms" data-action="quick-sms" data-id="" title="Text"
+                    aria-label="Text message">📱</button>
+                <button class="btn-action-icon btn-call" data-action="quick-call" data-id="" title="Call"
+                    aria-label="Phone call">📞</button>
+                <button class="btn-action-icon btn-email" data-action="quick-email" data-id="" title="Email"
+                    aria-label="Send email">📧</button>
+                <button class="btn-action-icon" data-action="export-calendar" data-id="" title="Plan"
+                    aria-label="Plan calendar event">📅</button>
+                <button class="btn-action-icon" data-action="pick-prompt" data-id="" title="Other Methods"
+                    aria-label="Other connection methods">✨</button>
             </div>
 
             <div class="card-actions">
@@ -1011,6 +1141,7 @@
                 <div class="share-details" style="font-size: 0.8rem; color: var(--text-muted);">
                     <span class="sr-phone"></span>
                     <span class="sr-email" style="margin-left:8px;"></span>
+                    <div class="sr-address" style="margin-top: 4px; font-style: italic;"></div>
                 </div>
                 <div class="sr-duplicate-text hidden"
                     style="font-size: 0.7rem; color: var(--color-snooze-amber); font-weight: 600;">Already in your
@@ -1025,7 +1156,7 @@
                     New</button>
                 <button class="btn btn-primary btn-sm sr-btn-merge hidden"
                     title="Combine info with existing contact">Merge</button>
-                <button class="btn-remove-rule sr-btn-skip">Skip</button>
+                <button class="btn btn-secondary btn-sm sr-btn-skip" title="Skip this contact">Skip</button>
             </div>
         </div>
     </template>

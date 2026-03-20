@@ -1,4 +1,4 @@
-const CACHE_NAME = 'greatuncle-v25';
+const CACHE_NAME = 'greatuncle-v28';
 const ASSETS = [
     '/',
     '/index.html',
@@ -34,15 +34,25 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    // Skip cross-origin and non-HTTP requests (like chrome-extension://)
+    if (!event.request.url.startsWith('http')) return;
+
     // Network First strategy: Try the network, fall back to cache
     event.respondWith(
         fetch(event.request)
             .then((networkResponse) => {
-                // If network works, update the cache with the new version
-                return caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, networkResponse.clone());
+                // Ensure we only cache valid, same-origin successful responses
+                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
                     return networkResponse;
+                }
+
+                // If valid, clone and update the cache
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseToCache);
                 });
+
+                return networkResponse;
             })
             .catch(() => {
                 // If network fails (offline), return from cache

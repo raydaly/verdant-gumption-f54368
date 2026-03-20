@@ -100,7 +100,6 @@ export class SyncManager {
                     logs: [],
                     tags: [],
                     snooze_until: null,
-                    is_user: false,
                     ...c
                 }));
 

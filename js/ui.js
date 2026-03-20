@@ -33,7 +33,54 @@ export class GreatuncleUI {
             header: document.querySelector('.app-header')
         };
         this.currentDetailId = null;
+        this.isFilterLibraryOpen = false;
         this.setupEasterEgg();
+        this.setupOverlayHistoryListener();
+    }
+
+    setupOverlayHistoryListener() {
+        this._isClosingOverlaysProgrammatically = false;
+
+        window.addEventListener('popstate', (e) => {
+            if (this._isClosingOverlaysProgrammatically) return;
+
+            // Physical back button or swipe used
+            if (!window.location.hash || window.location.hash === '') {
+                const activeOverlays = document.querySelectorAll('.overlay:not(.hidden)');
+                activeOverlays.forEach(overlay => {
+                    overlay.classList.add('hidden');
+                });
+                this._checkOverlayStack();
+            }
+        });
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const target = mutation.target;
+                    const isHidden = target.classList.contains('hidden');
+                    const wasHidden = mutation.oldValue ? mutation.oldValue.split(' ').includes('hidden') : false;
+
+                    if (!isHidden && wasHidden) {
+                        // Overlay Opened
+                        history.pushState({ overlayId: target.id }, '', `#${target.id}`);
+                    } else if (isHidden && !wasHidden) {
+                        // Overlay Closed Manually
+                        if (window.location.hash === `#${target.id}`) {
+                            this._isClosingOverlaysProgrammatically = true;
+                            history.back();
+                            setTimeout(() => {
+                                this._isClosingOverlaysProgrammatically = false;
+                            }, 50);
+                        }
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.overlay').forEach(overlay => {
+            observer.observe(overlay, { attributes: true, attributeOldValue: true, attributeFilter: ['class'] });
+        });
     }
 
     formatPhone(str) {
@@ -99,9 +146,9 @@ export class GreatuncleUI {
         }, duration);
     }
 
-    switchView(viewName) {
+    switchView(viewName, instant = false) {
         const mainContent = document.getElementById('main-content');
-        if (mainContent) {
+        if (mainContent && !instant) {
             mainContent.classList.add('view-fade-out');
             setTimeout(() => {
                 Object.keys(this.els.views).forEach(key => {
@@ -239,12 +286,12 @@ export class GreatuncleUI {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
         container.innerHTML = this.app.settings.gatheringRules.map((rule, index) => `
-            <div class="gathering-rule-item" style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <div class="gathering-rule-item">
                 <select class="rule-day" data-index="${index}">
                     ${days.map(d => `<option value="${d}" ${rule.day === d ? 'selected' : ''}>${d}</option>`).join('')}
                 </select>
                 <input type="text" class="rule-tag" data-index="${index}" value="${rule.tag}" placeholder="#tag">
-                <button class="btn-remove-rule" data-index="${index}" style="background: none; border: none; cursor: pointer;">❌</button>
+                <button class="btn-remove-rule" data-index="${index}">❌</button>
             </div>
         `).join('');
 
@@ -278,6 +325,9 @@ export class GreatuncleUI {
             this.renderEmptyCircle();
             return;
         }
+
+        const homeSearch = document.getElementById('home-search-container');
+        if (homeSearch) homeSearch.classList.remove('hidden');
 
         const appendCards = (container, people, mode, meta = null) => {
             container.innerHTML = '';
@@ -383,15 +433,47 @@ export class GreatuncleUI {
         outreachCards.innerHTML = `
             <div class="empty-state">
                 <div class="seasonal-image" style="background-image: url('assets/images/seasonal/${monthStr}.png');"></div>
-                <p>Your circle is empty. Start by adding someone you care about.</p>
-                <button class="btn btn-primary" data-action="add-initial" style="margin-top: 20px; background: var(--color-action-green); color: white; padding: 12px 24px; border-radius: 8px;">
+               
+                
+                <div class="vision-preview" style="margin: 20px 0; text-align: left; background: var(--color-parchment-white); padding: 24px; border-radius: var(--radius-card); border: 1px dashed var(--color-snooze-amber); max-width: 400px; width: 100%;">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 12px; color: var(--color-action-green);">
+                    Let's Build Your Community</h3>
+                    
+                    <p style="font-weight: 600; font-size: 1rem; margin-bottom: 16px; color: var(--color-action-green);">100% Local. Your contacts never leave your device.</p>
+
+                    <p style="font-size: 0.95rem; margin-bottom: 16px; opacity: 0.9;">Greatuncle is a private, local-first app that 
+                    helps you stay in touch with your friends and family. You organize up to 150 people into manageable layers so 
+                    you won't forget anyone.</p>
+                    
+                    <ul style="font-size: 0.9rem; margin-bottom: 16px; padding-left: 20px; opacity: 0.8;">
+                        <li style="margin-bottom: 4px;"><strong>Inner:</strong> 5 people you interact with weekly.</li>
+                        <li style="margin-bottom: 4px;"><strong>Sympathy:</strong> 10 people with monthly touchpoints.</li>
+                        <li style="margin-bottom: 4px;"><strong>Acquaintances:</strong> 35 people quarterly.</li>
+                        <li><strong>Active:</strong> 100 people you interact with annually.</li>
+                    </ul>
+
+                    <p style="font-size: 0.95rem;">How It Works: Everyday you open Greatuncle it nudges you to reach out to three 
+                    people you haven't spoken to in a while. Then directly in the app you can call, email, or txt them. </p>
+
+                     <p style="font-size: 0.95rem;">Or you can choose other modes like sending them a postcard or a calendar invite. 
+                     People are also highlighted on their birthdays and anniversaries.</p>
+
+                    <p style="font-size: 0.95rem; margin-bottom: 16px; opacity: 0.9;">Start by adding a few people you care about.</p>
+
+                    <p style="font-size: 0.95rem; font-style: italic; opacity: 0.8; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 12px; text-align: center;">
+                        Stay rooted. Stay connected. <br />
+                        Be a Great Uncle for your community.
+                    </p>
+                </div>
+
+                <button class="btn btn-primary" data-action="add-initial" style="background: var(--color-action-green); color: white; padding: 12px 24px; border-radius: 50px; font-weight: 600; box-shadow: 0 4px 12px rgba(74, 103, 65, 0.2);">
                     Begin Your Community
                 </button>
             </div>
         `;
 
         // Hide other sections if they were showing
-        ['anchor-events', 'gathering-events', 'upcoming-foresight'].forEach(id => {
+        ['home-search-container', 'anchor-events', 'gathering-events', 'upcoming-foresight'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.add('hidden');
         });
@@ -436,7 +518,7 @@ export class GreatuncleUI {
         card.dataset.id = person.id;
         if (meta) card.dataset.meta = meta;
 
-        if (person.is_user) card.classList.add('is-user-card');
+        if (person.tags?.includes('&owner')) card.classList.add('is-user-card');
         if (mode === 'anchor') card.classList.add('anchor-card');
 
         const tags = person.tags || [];
@@ -501,7 +583,7 @@ export class GreatuncleUI {
 
         let statusHtml = '';
         const hasLevel5 = person.tags && person.tags.includes('&level5');
-        if (!person.is_user && !isLegacy && !hasLevel5) {
+        if (!person.tags?.includes('&owner') && !isLegacy && !hasLevel5) {
             const overdueDays = Math.floor((Date.now() - person.last_contacted) / (1000 * 60 * 60 * 24));
             const statusText = person.last_contacted === 0 ? 'Not Yet' :
                 overdueDays === 0 ? 'Today' :
@@ -513,7 +595,7 @@ export class GreatuncleUI {
         card.querySelector('.contact-name').innerHTML = `${namePrefix}${person.name}${nameSuffix}${statusHtml}`;
 
         const metaEl = card.querySelector('.contact-meta');
-        if (person.is_user) {
+        if (person.tags?.includes('&owner')) {
             metaEl.textContent = 'Concentrate on your community today.';
         } else if (isLegacy) {
             metaEl.textContent = 'In Loving Memory';
@@ -522,7 +604,7 @@ export class GreatuncleUI {
         }
 
         // Handle Sections Visibility
-        if (person.is_user) {
+        if (person.tags?.includes('&owner')) {
             const celUi = card.querySelector('.celebration-ui');
             celUi.classList.remove('hidden');
             celUi.textContent = `✨ Happy ${person.milestones ? person.milestones[0] : 'Day'}! ✨`;
@@ -572,14 +654,16 @@ export class GreatuncleUI {
     renderCircleList() {
         if (!this.els.circleList) return;
 
-        // Render Tag Cloud, Group Filters, Level Filters, and Sort Controls first so they always appear
-        this.renderTagCloud();
-        this.renderGroupFilters();
-        this.renderLevelFilters();
-        this.renderSortControls();
+        // Render Hybrid Filters (Active Bar + Library Shelf)
+        this.renderHybridFilters();
 
         if (this.app.contacts.length === 0) {
-            this.els.circleList.innerHTML = '<p class="empty-list-note">Your circle is waiting to be filled.</p>';
+            this.els.circleList.innerHTML = `
+                <div class="empty-state" style="text-align: center; margin-top: var(--space-xl);">
+                    <p class="empty-list-note" style="margin-bottom: var(--space-md); font-size: 1.1rem;">Start by adding your inner circle, and let the garden grow from there.</p>
+                    <button class="btn btn-primary" data-action="add-initial">Add First Contact</button>
+                </div>
+            `;
             return;
         }
 
@@ -714,23 +798,80 @@ export class GreatuncleUI {
         }, 200);
     }
 
+    renderHybridFilters() {
+        this.renderSortControls();
+        this.renderLevelFilters();
+        this.renderGroupFilters();
+        this.renderTagCloud();
+        this.renderActiveBar();
+        this.setupFilterToggle();
+    }
+
+    setupFilterToggle() {
+        const btn = document.getElementById('btn-toggle-filters');
+        const library = document.getElementById('filter-library');
+        if (!btn || !library) return;
+
+        const activeCount = (this.app.currentLevelFilters?.length || 0) +
+            (this.app.currentGroupFilters?.length || 0) +
+            (this.app.currentTagFilters?.length || 0);
+
+        if (this.isFilterLibraryOpen) {
+            btn.textContent = 'Close';
+        } else {
+            btn.textContent = activeCount > 0 ? `Refine (${activeCount})` : 'Refine';
+        }
+
+        btn.onclick = () => {
+            this.isFilterLibraryOpen = !this.isFilterLibraryOpen;
+            library.classList.toggle('shelf-closed', !this.isFilterLibraryOpen);
+            this.setupFilterToggle(); // Update label
+        };
+    }
+
+    renderActiveBar() {
+        const container = document.getElementById('active-pills-container');
+        if (!container) return;
+
+        const activeLevels = this.app.currentLevelFilters || [];
+        const activeGroups = this.app.currentGroupFilters || [];
+        const activeTags = this.app.currentTagFilters || [];
+
+        const levelMap = { '&level5': '5', '&level15': '10', '&level50': '35', '&level150': '100' };
+
+        let html = '';
+
+        // Add Levels
+        activeLevels.forEach(lvl => {
+            html += `<button class="circle-tab-btn active-gem" data-level="${lvl}">${levelMap[lvl] || lvl}</button>`;
+        });
+
+        // Add Groups
+        activeGroups.forEach(grp => {
+            html += `<button class="circle-tab-btn active-gem" data-group="${grp}">${grp.substring(1)}</button>`;
+        });
+
+        // Add Tags
+        activeTags.forEach(tag => {
+            html += `<button class="circle-tab-btn active-gem" data-tag="${tag}">${tag}</button>`;
+        });
+
+        container.innerHTML = html;
+    }
+
     renderSortControls() {
         const container = document.getElementById('sort-controls');
         if (!container) return;
 
-        const options = [
-            { id: 'alpha', label: 'Name' },
-            { id: 'due', label: 'Overdue' }
-        ];
+        const currentSort = this.app.currentSort || 'alpha';
+        const label = currentSort === 'alpha' ? 'Name' : 'Overdue';
+        const nextSort = currentSort === 'alpha' ? 'due' : 'alpha';
 
-        container.innerHTML = options.map(opt => {
-            const isActive = this.app.currentSort === opt.id;
-            return `
-                <button class="circle-tab-btn sort-tab-btn ${isActive ? 'active' : ''}" data-sort="${opt.id}">
-                    ${opt.label}
-                </button>
-            `;
-        }).join('');
+        container.innerHTML = `
+            <button class="circle-tab-btn sort-pill" data-sort="${nextSort}">
+                ↕ ${label}
+            </button>
+        `;
     }
 
     renderLevelFilters() {
@@ -745,9 +886,9 @@ export class GreatuncleUI {
         ];
 
         container.innerHTML = levels.map(opt => {
-            const isActive = this.app.currentLevelFilters.includes(opt.id);
+            if (this.app.currentLevelFilters.includes(opt.id)) return '';
             return `
-                <button class="circle-tab-btn level-tab-btn ${isActive ? 'active' : ''}" data-level="${opt.id}">
+                <button class="circle-tab-btn level-tab-btn" data-level="${opt.id}">
                     ${opt.label}
                 </button>
             `;
@@ -811,9 +952,9 @@ export class GreatuncleUI {
         const sortedGroups = Array.from(allGroups).sort();
 
         let html = sortedGroups.map(group => {
-            const isActive = this.app.currentGroupFilters.includes(group);
+            if (this.app.currentGroupFilters.includes(group)) return '';
             return `
-                <button class="circle-tab-btn group-tab-btn ${isActive ? 'active' : ''}" data-group="${group}">
+                <button class="circle-tab-btn group-tab-btn" data-group="${group}">
                     ${group.substring(1)}
                 </button>
             `;
@@ -838,16 +979,19 @@ export class GreatuncleUI {
 
         const activeTags = this.app.currentTagFilters || [];
 
-        let tagsHtml = `
-            <button class="circle-tab-btn ${activeTags.includes('&legacy') ? 'active' : ''}" data-tag="&legacy" style="margin-right: 15px;">
-                &legacy
-            </button>
-        `;
+        let tagsHtml = '';
+        if (!activeTags.includes('&legacy')) {
+            tagsHtml += `
+                <button class="circle-tab-btn" data-tag="&legacy">
+                    &legacy
+                </button>
+            `;
+        }
 
         tagsHtml += Array.from(allTags).sort().filter(t => t.startsWith('#')).map(tag => {
-            const isActive = activeTags.includes(tag);
+            if (activeTags.includes(tag)) return '';
             return `
-                <button class="circle-tab-btn ${isActive ? 'active' : ''}" data-tag="${tag}">
+                <button class="circle-tab-btn" data-tag="${tag}">
                     ${tag}
                 </button>
             `;
@@ -1015,7 +1159,7 @@ export class GreatuncleUI {
             else if ((person.tags || []).includes('&level150')) snoozeDays = 14;
             snoozeBtn.textContent = `Snooze (${snoozeDays}d)`;
             snoozeBtn.dataset.id = id;
-            if (!person.is_user && !(person.tags || []).some(t => t.includes('legacy'))) {
+            if (!person.tags?.includes('&owner') && !(person.tags || []).some(t => t.includes('legacy'))) {
                 snoozeBtn.classList.remove('hidden');
             } else {
                 snoozeBtn.classList.add('hidden');
@@ -1440,7 +1584,7 @@ export class GreatuncleUI {
         const daysSinceDirty = Math.floor((now - dirtySince) / (1000 * 60 * 60 * 24));
 
         if (lastExport === 0) {
-            nudge.innerHTML = `<strong>Seedling not saved!</strong> You haven't backed up your community yet. Generate a Digital Seedling to keep your 150 safe.`;
+            nudge.innerHTML = `<strong>Store your first backup seedling today.</strong> You haven't backed up your community yet. Generate a Digital Seedling to keep your 150 safe.`;
             nudge.classList.remove('hidden');
         } else if (isDirty && daysSinceDirty >= 7) {
             nudge.innerHTML = `<strong>Stale Seedling!</strong> You've made changes starting ${daysSinceDirty} days ago. It's time to generate a new Digital Seedling.`;
@@ -1473,7 +1617,7 @@ export class GreatuncleUI {
         const bulkTagArea = document.querySelector('.bulk-tag-actions');
 
         if (bulkBtn) {
-            bulkBtn.textContent = `Import All Selected (${reviewedCount}/${total})`;
+            bulkBtn.textContent = `Save Updates & Imports (${reviewedCount}/${total})`;
             bulkBtn.disabled = currentCount === 0;
             bulkBtn.style.opacity = currentCount === 0 ? '0.5' : '1';
         }
@@ -1491,12 +1635,51 @@ export class GreatuncleUI {
 
         if (bulkTagArea) {
             bulkTagArea.classList.toggle('hidden', currentCount === 0);
+
+            // Intelligent Auto-Match
+            const bulkTagInput = document.getElementById('bulk-share-tag');
+            if (bulkTagInput && !bulkTagInput.value) {
+                // Tally groups of existing duplicate matches
+                const groupCounts = {};
+                pending.forEach(item => {
+                    if (item.tags.includes('&duplicate') && item.matchedId) {
+                        const original = this.app.contacts.find(c => c.id === item.matchedId);
+                        if (original && original.tags) {
+                            original.tags.filter(t => t.startsWith('@')).forEach(tag => {
+                                groupCounts[tag] = (groupCounts[tag] || 0) + 1;
+                            });
+                        }
+                    }
+                });
+
+                // Find most popular group
+                let bestMatch = '';
+                let maxCount = 0;
+                for (const [group, count] of Object.entries(groupCounts)) {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        bestMatch = group;
+                    }
+                }
+
+                // If a clear pattern exists, suggest it in the bulk input
+                if (bestMatch && maxCount > 0) {
+                    bulkTagInput.value = bestMatch;
+                }
+            }
         }
 
         if (pending.length === 0) {
             list.innerHTML = '<p class="empty-list-note">No more people to review.</p>';
             return;
         }
+
+        // Preserve unsaved tag input values before re-rendering
+        const currentInputs = {};
+        document.querySelectorAll('.share-tag-input').forEach(input => {
+            const id = input.id.replace('tag-item-', '');
+            currentInputs[id] = input.value;
+        });
 
         const tmpl = document.getElementById('tmpl-share-review-item');
         list.innerHTML = '';
@@ -1519,15 +1702,26 @@ export class GreatuncleUI {
                 }
 
                 if (item.phone) {
-                    clone.querySelector('.sr-phone').textContent = `📱 ${this.formatPhone(item.phone)}`;
+                    clone.querySelector('.sr-phone').textContent = this.formatPhone(item.phone);
                 }
                 if (item.email) {
-                    clone.querySelector('.sr-email').textContent = `📧 ${item.email}`;
+                    clone.querySelector('.sr-email').textContent = item.email;
+                }
+
+                if (item.address || item.zip_code) {
+                    const addrInfo = [item.address, item.zip_code].filter(Boolean).join(' ');
+                    clone.querySelector('.sr-address').textContent = addrInfo;
+                } else {
+                    clone.querySelector('.sr-address').classList.add('hidden');
                 }
 
                 const tagInput = clone.querySelector('.share-tag-input');
                 tagInput.id = `tag-item-${item.id}`;
-                tagInput.value = batchTag;
+                // Set placeholder instead of value to encourage/force explicit assignment
+                tagInput.placeholder = "@group (e.g. @family)";
+
+                // Restore any previously typed/applied value
+                tagInput.value = currentInputs[item.id] || "";
 
                 const btnAddNew = clone.querySelector('.sr-btn-add-new');
                 btnAddNew.onclick = () => this.app.ui.importSingleShared(item.id);
@@ -1574,6 +1768,8 @@ export class GreatuncleUI {
         check('email', 'Email', (v) => v);
         check('birthday', 'Birthday', (v) => v);
         check('anniversary', 'Anniversary', (v) => v);
+        check('address', 'Address', (v) => v);
+        check('zip_code', 'Zip', (v) => v);
 
         if (conflicts.length > 0) {
             this.showMergeConflict(originalContact, pendingContact, conflicts, userTagValue);
@@ -1630,7 +1826,7 @@ export class GreatuncleUI {
 
     finishMerge(original, shared, choices, userTag) {
         // 1. Apply choices OR defaults
-        const fields = ['phone', 'email', 'birthday', 'anniversary'];
+        const fields = ['phone', 'email', 'birthday', 'anniversary', 'address', 'zip_code'];
         fields.forEach(f => {
             if (choices[f]) {
                 original[f] = choices[f];
@@ -1660,20 +1856,30 @@ export class GreatuncleUI {
         this.showToast(`Merged details into ${original.name}`);
     }
 
-    importSingleShared(id) {
+    importSingleShared(id, silent = false) {
         const contact = this.app.contacts.find(c => c.id === id);
-        if (!contact) return;
+        if (!contact) return false;
 
         const tagInput = document.getElementById(`tag-item-${id}`);
-        const userTag = tagInput ? tagInput.value.trim() : '@received';
+        const userTag = tagInput ? tagInput.value.trim() : '';
 
-        // Update tags: remove &share and &duplicate, add &shared and the user-specified group tag
+        // Force a non-empty, non-batch tag
+        const batchTag = contact.tags.find(t => t.startsWith('@') && t.includes('share')) || '@received';
+        if (!userTag || userTag === batchTag) {
+            if (!silent) {
+                alert(`Please assign ${contact.name} to a specific group (e.g. @family).`);
+                if (tagInput) tagInput.focus();
+            }
+            return false;
+        }
+
+        // Update tags: remove &share and &duplicate, keep &origin, add &shared and the user-specified group tag
         let tags = (contact.tags || []).filter(t => t !== '&share' && t !== '&duplicate');
         tags.push('&shared');
 
         if (userTag) {
-            // Remove old batch tag if present
-            const oldBatch = tags.find(t => t.startsWith('@'));
+            // Remove old auto-generated batch tag if present
+            const oldBatch = tags.find(t => t.startsWith('@') && t.includes('share'));
             if (oldBatch) tags = tags.filter(t => t !== oldBatch);
 
             const prefix = userTag.startsWith('@') || userTag.startsWith('#') || userTag.startsWith('&') || userTag.startsWith('!') ? '' : '@';
@@ -1685,6 +1891,7 @@ export class GreatuncleUI {
         this.app.refreshSuggestions();
         this.renderShareReviewList();
         this.render(); // Update counts and nudges
+        return true;
     }
 
     skipShared(id) {
@@ -1726,12 +1933,62 @@ export class GreatuncleUI {
 
     bulkImportSelected() {
         const pending = this.app.contacts.filter(c => c.tags?.includes('&share'));
+        let addedCount = 0;
+        let updatedCount = 0;
+        let conflictCount = 0;
+
         pending.forEach(c => {
-            this.importSingleShared(c.id);
+            const isDuplicate = c.tags.includes('&duplicate');
+            if (isDuplicate) {
+                // Determine if there's a conflict first before attempting merge
+                const originalContact = this.app.contacts.find(orig => orig.id === c.matchedId);
+                let hasConflict = false;
+                if (originalContact) {
+                    const fields = ['phone', 'email', 'birthday', 'anniversary', 'address', 'zip_code'];
+                    fields.forEach(field => {
+                        const val1 = originalContact[field];
+                        const val2 = c[field];
+                        if (val1 && val2 && val1 !== val2) {
+                            if (field === 'phone' && this.app.normalizePhone(val1) === this.app.normalizePhone(val2)) return;
+                            hasConflict = true;
+                        }
+                    });
+                }
+
+                if (hasConflict) {
+                    conflictCount++;
+                } else {
+                    // Safe to auto-merge (it will automatically call finishMerge)
+                    this.mergeShared(c.id);
+                    updatedCount++;
+                }
+            } else {
+                // Normal add
+                if (this.importSingleShared(c.id, true)) {
+                    addedCount++;
+                }
+            }
         });
 
+        let msgParts = [];
+        if (addedCount > 0) msgParts.push(`${addedCount} new people added`);
+        if (updatedCount > 0) msgParts.push(`${updatedCount} existing people updated`);
+
+        let msg = '';
+        if (msgParts.length > 0) {
+            msg = `Successfully saved: ${msgParts.join(' and ')}.`;
+        }
+
+        if (conflictCount > 0) {
+            msg += `\n\nThere are ${conflictCount} people with conflicting information that require manual review. Please click 'Merge' on them individually.`;
+        }
+
+        if (msg) {
+            alert(msg.trim());
+        }
+
         setTimeout(() => {
-            this.els.shareReviewOverlay.classList.add('hidden');
+            this.renderShareReviewList();
             this._checkOverlayStack();
         }, 300);
     }

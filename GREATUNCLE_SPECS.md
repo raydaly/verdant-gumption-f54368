@@ -19,7 +19,7 @@
 - **Canvas API**: Overlay frames and stamps onto shared photos.
 - **.ics Export**: Generate calendar events for milestones.
 - **Digital Seedling (JSON/Base64)**: Proprietary text-based format for local-first backup and restoration. Supports both encoded strings and human-readable JSON.
-- **Invitation & Import System**: Share URL-encoded groups for instant intake with robust duplicate detection and conflict resolution.
+- **Invitation & Import System**: Share URL-encoded groups for instant intake with robust duplicate detection, per-field conflict resolution, and Intelligent Auto-Match for automatically categorizing incoming contacts natively.
 
 ---
 
@@ -57,6 +57,8 @@
     - The other layers have automatic target intervals of 30, 90, and 365 days respectively to surface in the outreach rotation.
 - **`&previewdays`**: Triggers Event Radar preparation (Gifts, Flowers, etc.) within the user-defined window for an individual contact.
 - **`&legacy`**: For deceased contacts. Switches card to "Reflect" mode on anniversaries and displays "In Loving Memory."
+- **`&origin:[date]`**: Automatically generated during group imports to track the source batch silently without cluttering the user's UI.
+- **`&shared`**: Applied automatically to denote that a contact was imported or updated via a shared link.
 
 ---
 
@@ -94,8 +96,8 @@
 
 **Maintenance & The Garden Shed**: 
 - **Backup Nudge**: UI notification if the "Seedling" hasn't been exported in >30 days.
-- **Seedling Export**: Generates a Base64 JSON "Seedling" (or raw JSON) for clipboard backup.
-- **Restore & Merge Logic**: Re-hydrates the circle from a pasted Seedling data string, with intelligent merging capability for incoming contacts that maps existing logs/metadata during conflict resolution.
+- **Seedling Export**: Generates a Base64 JSON "Seedling" (or raw JSON) for clipboard backup. Group exports additionally bundle Address and Zip Code data.
+- **Restore & Merge Logic**: Re-hydrates the circle from a pasted Seedling data string or URL invite. Employs Intelligent Auto-Match for bulk-applying group tags and silent auto-merging of non-conflicting data.
 
 **Calibrations (Settings Control)**:
 - **Days Preview**: Configurable window (default 7 days) for Event Radar.
