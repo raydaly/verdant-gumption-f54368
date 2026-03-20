@@ -4,9 +4,20 @@ import { renderOnboarding } from './onboarding.js';
 import { applyTheme } from './settings.js';
 import { getSettings } from '../storage/settings.js';
 
-function initApp(db, startView = 'home') {
+let appVersion = 'v-app-start';
+
+function initApp(db, startView = 'home', isGallery = false) {
   document.getElementById('tab-bar').removeAttribute('hidden');
-  initRouter(db);
+  
+  if (isGallery) {
+    document.querySelector('[data-tab="home"]').style.display = 'none';
+    document.querySelector('[data-tab="journal"]').style.display = 'none';
+  } else {
+    document.querySelector('[data-tab="home"]').style.display = '';
+    document.querySelector('[data-tab="journal"]').style.display = '';
+  }
+
+  initRouter(db, appVersion);
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => navigate(btn.dataset.tab));
@@ -16,14 +27,24 @@ function initApp(db, startView = 'home') {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const { db, hasOwner, hasNewImports } = await boot();
+  const { db, hasOwner, hasNewImports, version, hadParams, hasContacts } = await boot();
+  appVersion = version;
 
   applyTheme((await getSettings(db)).theme);
 
-  if (!hasOwner) {
-    renderOnboarding(db, () => initApp(db, hasNewImports ? 'share-review' : 'home'));
+  const isGallery = !hasOwner && hasContacts;
+  let startView = isGallery ? 'people' : 'home';
+
+  if (hasNewImports) {
+    startView = 'share-review';
+  } else if (hadParams && isGallery) {
+    startView = 'people';
+  }
+
+  if (!hasOwner && !hasContacts) {
+    renderOnboarding(db, () => initApp(db, 'home', false));
     return;
   }
 
-  initApp(db, hasNewImports ? 'share-review' : 'home');
+  initApp(db, startView, isGallery);
 });

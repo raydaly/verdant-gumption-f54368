@@ -38,10 +38,47 @@ async function parseAndWriteImport(db, params) {
     const incomingContacts = payload.contacts || (payload.contact ? [payload.contact] : []);
     const batchTag = payload.group || (payload.contact ? null : '@received');
 
-    for (const c of incomingContacts) {
-      if (!c.name) continue;
+    for (let c of incomingContacts) {
+      if (!c.name || typeof c.name !== 'string') continue;
+
+      // Sanitization Gate (Trust Pillar)
+      const safeName = c.name.replace(/</g, '').substring(0, 100).trim();
+      if (!safeName) continue;
+      
+      const safePhone = typeof c.phone === 'string' ? c.phone.replace(/</g, '').substring(0, 50).trim() : null;
+      let safeEmail = typeof c.email === 'string' ? c.email.replace(/</g, '').substring(0, 100).trim() : null;
+      if (safeEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safeEmail)) {
+        safeEmail = null;
+      }
+      const safeAddress = typeof c.address === 'string' ? c.address.replace(/</g, '').substring(0, 200).trim() : null;
+      const safeZip = typeof c.zip_code === 'string' ? c.zip_code.replace(/</g, '').substring(0, 20).trim() : null;
+      
+      const safeTags = (Array.isArray(c.tags) ? c.tags : [])
+        .filter(t => typeof t === 'string')
+        .map(t => t.replace(/</g, '').substring(0, 50).trim())
+        .filter(t => t && (t.startsWith('@') || t.startsWith('#')));
+
+      const safeBatchTag = batchTag ? batchTag.replace(/</g, '').substring(0, 50).trim() : null;
+
+      c = { ...c, name: safeName, phone: safePhone, email: safeEmail, address: safeAddress, zip_code: safeZip, tags: safeTags };
 
       const match = findMatch(c, existingContacts);
+      
+      if (match) {
+        // Optimization: If the incoming contact is IDENTICAL to the match, 
+        // we can skip adding it to the review queue entirely.
+        const isIdentical = 
+          c.name === match.name &&
+          (c.email || null) === (match.email || null) &&
+          (c.phone || null) === (match.phone || null) &&
+          (c.address || null) === (match.address || null) &&
+          (c.zip_code || null) === (match.zip_code || null);
+        
+        // If it's a perfect match AND we don't have a specific batch tag to add, skip it.
+        // If we DO have a batch tag (like @testgroup) and the user ALREADY has that tag, skip it.
+        const hasNewTag = safeBatchTag && !(match.tags || []).includes(safeBatchTag);
+        if (isIdentical && !hasNewTag) continue;
+      }
       
       // CRITICAL: If this exact person is ALREADY in the pending queue (&share), 
       // do not add them again. This prevents spamming the review list if the link is clicked twice.
@@ -50,9 +87,8 @@ async function parseAndWriteImport(db, params) {
       );
       if (isAlreadyPending) continue;
 
-      const tags = (c.tags || []).filter(t => !t.startsWith('&'));
-      tags.push('&share', '&dirty');
-      if (batchTag && !tags.includes(batchTag)) tags.push(batchTag);
+      const finalTags = [...c.tags, '&share', '&dirty'];
+      if (safeBatchTag && !finalTags.includes(safeBatchTag)) finalTags.push(safeBatchTag);
 
       const now = Date.now();
       const record = {
@@ -65,7 +101,7 @@ async function parseAndWriteImport(db, params) {
         birthday: null,
         anniversary: null,
         date_of_passing: null,
-        tags,
+        tags: finalTags,
         last_contacted: null,
         snooze_until: null,
         notes: null,
@@ -109,5 +145,24 @@ export async function boot() {
   }
 
   const owner = await getOwner(db);
-  return { db, hasOwner: !!owner, hasNewImports };
+  
+  let version = 'v-boot-start';
+  try {
+    const res = await fetch('/manifest.json?cb=' + Date.now());
+    if (res.ok) {
+      const manifest = await res.json();
+      version = manifest.version || 'v-missing';
+      console.log('Manifest version:', version);
+    } else {
+      console.warn('Manifest fetch failed:', res.status);
+      version = 'v-res-' + res.status;
+    }
+  } catch (err) {
+    console.error('Manifest error:', err);
+    version = 'v-err';
+  }
+
+  const allContacts = await getAllContacts(db);
+  const hasContacts = allContacts.length > 0;
+  return { db, hasOwner: !!owner, hasNewImports, version, hadParams: hasUrlParams, hasContacts };
 }

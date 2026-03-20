@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v6';
+var CACHE_NAME = 'greatuncle-v34';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -16,18 +16,22 @@ var STATIC_ASSETS = [
   '/src/ui/contact-form.js',
   '/src/ui/components/level-selector.js',
   '/src/ui/components/tag-input.js',
+  '/src/ui/components/contact-profile.js',
   '/src/core/outreach-engine.js',
   '/src/core/seedling.js',
+  '/src/core/calendar.js',
   '/src/ui/home.js',
   '/src/ui/journal.js',
   '/src/ui/trunk.js',
   '/src/ui/settings.js',
   '/src/ui/onboarding.js',
+  '/src/ui/stewardship.js',
+  '/src/ui/share-review.js',
+  '/src/ui/about.js',
   '/src/ui/components/bottom-sheet.js',
   '/src/ui/components/toast.js',
   '/src/ui/components/connected-sheet.js',
   '/src/ui/components/confirm-dialog.js',
-  '/src/ui/about.js',
 ];
 
 self.addEventListener('install', function (event) {

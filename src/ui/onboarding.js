@@ -38,10 +38,18 @@ export function renderOnboarding(db, onComplete) {
   });
 
   submitBtn.addEventListener('click', async () => {
-    const name = nameInput.value.trim();
+    if (emailInput.value && !emailInput.checkValidity()) {
+      emailInput.reportValidity();
+      return;
+    }
+
+    let name = nameInput.value.trim();
+    if (name) name = name.replace(/</g, '').substring(0, 100).trim();
     if (!name) return;
 
-    const email = emailInput.value.trim() || null;
+    let email = emailInput.value.trim() || null;
+    if (email) email = email.replace(/</g, '').substring(0, 100).trim();
+
     const now = Date.now();
     const owner = {
       id: crypto.randomUUID(),

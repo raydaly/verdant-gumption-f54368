@@ -8,7 +8,19 @@ import { renderAbout } from './about.js';
 import { renderShareReview } from './share-review.js';
 
 let _db = null;
+let _version = 'v-router-start';
 const stack = [];
+
+export function initRouter(db, version = 'v?') {
+  _db = db;
+  _version = version;
+
+  window.addEventListener('popstate', (e) => {
+    if (e.state) {
+      navigate(e.state.view, e.state.params, true);
+    }
+  });
+}
 
 const TOP_LEVEL_TABS = new Set(['home', 'people', 'journal', 'backup']);
 
@@ -25,9 +37,10 @@ function updateTabActiveState(view) {
 }
 
 async function render(view, params) {
+  const app = document.getElementById('app');
   switch (view) {
     case 'home':
-      await renderHome(_db);
+      await renderHome(_db, _version);
       break;
     case 'people':
       await renderPeople(_db);
@@ -55,38 +68,25 @@ async function render(view, params) {
   }
   updateTabActiveState(view);
   
-  // Apply a smooth transition
-  app.classList.remove('view-fade-in');
-  void app.offsetWidth; // Trigger reflow
-  app.classList.add('view-fade-in');
+  if (app) {
+    app.classList.remove('view-fade-in');
+    void app.offsetWidth; // Trigger reflow
+    app.classList.add('view-fade-in');
+  }
 }
 
-export function initRouter(db) {
-  _db = db;
-
-  window.addEventListener('popstate', () => {
-    if (stack.length > 1) {
-      stack.pop();
-      const prev = stack[stack.length - 1];
-      render(prev.view, prev.params);
+export async function navigate(view, params = {}, isPop = false) {
+  if (!isPop) {
+    stack.push({ view, params });
+    if (!TOP_LEVEL_TABS.has(view)) {
+      history.pushState({ view, params }, '');
     }
-  });
-}
-
-export async function navigate(view, params = {}) {
-  stack.push({ view, params });
-  if (!TOP_LEVEL_TABS.has(view)) {
-    history.pushState({ view, params }, '');
   }
   await render(view, params);
 }
 
 export function goBack() {
-  if (stack.length > 1) {
-    stack.pop();
-    const prev = stack[stack.length - 1];
-    render(prev.view, prev.params);
-  }
+  window.history.back();
 }
 
 export function getCurrentRoute() {

@@ -7,6 +7,8 @@ import { showConnectedSheet } from './components/connected-sheet.js';
 import { showBottomSheet } from './components/bottom-sheet.js';
 import { showContactProfile } from './components/contact-profile.js';
 
+let currentVersion = 'v?';
+
 function formatDaysOverdue(daysOverdue) {
   if (daysOverdue <= 0) return 'Due soon';
   if (daysOverdue === 1) return '1 day overdue';
@@ -88,7 +90,8 @@ async function showGatheringMode(db, dueItems, onDone) {
   });
 }
 
-export async function renderHome(db) {
+export async function renderHome(db, version = currentVersion) {
+  currentVersion = version;
   const app = document.getElementById('app');
   app.innerHTML = '<div class="view-loading"><div class="view-loading-spinner"></div><span>Checking connections...</span></div>';
 
@@ -116,7 +119,7 @@ export async function renderHome(db) {
   header.className = 'view-header';
 
   const h1 = document.createElement('h1');
-  h1.textContent = 'Home';
+  h1.innerHTML = `Home <small class="version-tag">${currentVersion}</small>`;
 
   const headerRight = document.createElement('div');
   headerRight.className = 'view-header-right';

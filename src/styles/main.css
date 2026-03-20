@@ -122,6 +122,14 @@ body {
   font-size: 1.1rem;
 }
 
+.version-tag {
+  font-size: 0.65rem;
+  opacity: 0.5;
+  font-weight: 400;
+  vertical-align: super;
+  margin-left: 0.1rem;
+}
+
 .view-header-right {
   position: absolute;
   right: 1rem;

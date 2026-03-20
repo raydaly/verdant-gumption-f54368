@@ -6,6 +6,7 @@ import { showBottomSheet } from './components/bottom-sheet.js';
 import { showConnectedSheet } from './components/connected-sheet.js';
 import { showContactProfile } from './components/contact-profile.js';
 import { encodeInvite, encodeGroup } from '../core/seedling.js';
+import { performStewardshipRitual } from './stewardship.js';
 
 const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
 
@@ -364,6 +365,31 @@ export async function renderPeople(db) {
 
   app.innerHTML = '';
 
+  if (!ownerContact) {
+    const claimBanner = document.createElement('div');
+    claimBanner.className = 'claim-banner';
+    claimBanner.style.background = 'var(--color-bg-elevated)';
+    claimBanner.style.padding = '12px 16px';
+    claimBanner.style.borderBottom = '1px solid var(--color-border)';
+    claimBanner.style.display = 'flex';
+    claimBanner.style.flexDirection = 'column';
+    claimBanner.style.gap = '12px';
+
+    const text = document.createElement('p');
+    text.textContent = 'You are viewing a shared circle. Claim your circle to unlock connection tracking and editing.';
+    text.style.margin = '0';
+    text.style.fontSize = '0.9rem';
+
+    const claimBtn = document.createElement('button');
+    claimBtn.className = 'trunk-btn trunk-btn--primary';
+    claimBtn.textContent = 'Claim Circle';
+    claimBtn.onclick = () => performStewardshipRitual(db);
+
+    claimBanner.appendChild(text);
+    claimBanner.appendChild(claimBtn);
+    app.appendChild(claimBanner);
+  }
+
   // Header
   const header = document.createElement('div');
   header.className = 'view-header';
@@ -510,7 +536,13 @@ export async function renderPeople(db) {
   fab.className = 'add-contact-fab';
   fab.textContent = '+';
   fab.setAttribute('aria-label', 'Add contact');
-  fab.addEventListener('click', () => navigate('contact-form', {}));
+  fab.addEventListener('click', () => {
+    if (!ownerContact) {
+      performStewardshipRitual(db, () => navigate('contact-form', {}));
+    } else {
+      navigate('contact-form', {});
+    }
+  });
   app.appendChild(fab);
 
   // Filter button handler

@@ -2,6 +2,8 @@ import { showBottomSheet } from './bottom-sheet.js';
 import { getAllLogs } from '../../storage/logs.js';
 import { navigate } from '../router.js';
 import { exportToCalendar } from '../../core/calendar.js';
+import { performStewardshipRitual } from '../stewardship.js';
+import { getOwner } from '../../storage/contacts.js';
 
 /**
  * Renders the Connection Sheet (Contact Profile) for a specific contact.
@@ -108,9 +110,17 @@ export async function showContactProfile(db, contact, onRefresh) {
   editBtn.style.marginTop = '1.5rem';
   editBtn.style.width = '100%';
   editBtn.textContent = 'Edit Profile';
-  editBtn.addEventListener('click', () => {
-    close();
-    navigate('contact-form', { contactId: contact.id });
+  editBtn.addEventListener('click', async () => {
+    const owner = await getOwner(db);
+    if (!owner) {
+      performStewardshipRitual(db, () => {
+        close();
+        navigate('contact-form', { contactId: contact.id });
+      });
+    } else {
+      close();
+      navigate('contact-form', { contactId: contact.id });
+    }
   });
   detailsBox.appendChild(editBtn);
   

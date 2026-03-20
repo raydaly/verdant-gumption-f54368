@@ -374,11 +374,31 @@ export async function renderContactForm(db, contactId) {
 
   // Save handler
   saveBtn.addEventListener('click', async () => {
-    const name = nameInput.value.trim();
+    const emailNode = emailField.getInput();
+    if (emailNode.value && !emailNode.checkValidity()) {
+      emailNode.reportValidity();
+      return;
+    }
+
+    let name = nameInput.value.trim();
+    if (!name) return;
+
+    // Sanitization Gate (Trust Pillar)
+    name = name.replace(/</g, '').substring(0, 100).trim();
     if (!name) return;
 
     const originalAddress = existingContact?.address || null;
-    const newAddress = addressField.getInput().value.trim() || null;
+    let newAddress = addressField.getInput().value.trim() || null;
+    if (newAddress) newAddress = newAddress.replace(/</g, '').substring(0, 200).trim();
+
+    let safePhone = phoneField.getInput().value.trim() || null;
+    if (safePhone) safePhone = safePhone.replace(/</g, '').substring(0, 50).trim();
+
+    let safeEmail = emailField.getInput().value.trim() || null;
+    if (safeEmail) safeEmail = safeEmail.replace(/</g, '').substring(0, 100).trim();
+
+    let safeZip = zipField.getInput().value.trim() || null;
+    if (safeZip) safeZip = safeZip.replace(/</g, '').substring(0, 20).trim();
 
     const systemTags = currentTags.filter(t => t.startsWith('&') || t.startsWith('!'));
     const nonLevelSystemTags = systemTags.filter(t => !LEVEL_TAGS.includes(t));
@@ -386,15 +406,20 @@ export async function renderContactForm(db, contactId) {
     if (currentLevelTag) newSystemTags.push(currentLevelTag);
     if (!newSystemTags.includes('&dirty')) newSystemTags.push('&dirty');
 
-    const finalTags = [...newSystemTags, ...userTags];
+    const safeUserTags = userTags
+      .filter(t => typeof t === 'string')
+      .map(t => t.replace(/</g, '').substring(0, 50).trim())
+      .filter(t => t && (t.startsWith('@') || t.startsWith('#')));
+
+    const finalTags = [...newSystemTags, ...safeUserTags];
 
     const contact = {
       id: existingContact?.id || crypto.randomUUID(),
       name,
-      phone: phoneField.getInput().value.trim() || null,
-      email: emailField.getInput().value.trim() || null,
+      phone: safePhone,
+      email: safeEmail,
       address: newAddress,
-      zip_code: zipField.getInput().value.trim() || null,
+      zip_code: safeZip,
       birthday: birthdayField.getValue(),
       anniversary: anniversaryField.getValue(),
       date_of_passing: dateOfPassingField

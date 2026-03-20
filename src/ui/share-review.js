@@ -74,19 +74,42 @@ export async function renderShareReview(db) {
         if (!hasConflict) {
           const merged = { ...match, ...updates, tags: [...updates.tags, '&dirty'], updated_at: Date.now() };
           await saveContact(db, merged);
-          await deleteContact(db, p.id);
           count++;
         }
       }
     }
     if (count > 0) {
-      alert(`Auto-accepted ${count} non-conflicting updates.`);
       renderShareReview(db);
     } else {
-      alert("No easy merges found. Please review these manually.");
+      alert("No easy merges found. Select 'Add to Circle' for new contacts.");
     }
   });
 
+  const importAllBtn = document.createElement('button');
+  importAllBtn.className = 'header-icon-btn';
+  importAllBtn.textContent = '➕';
+  importAllBtn.title = 'Add all new contacts to circle';
+  importAllBtn.setAttribute('aria-label', 'Add all new');
+  importAllBtn.addEventListener('click', async () => {
+    const newOnes = pending.filter(p => !p.matchedId);
+    if (newOnes.length === 0) return;
+    
+    if (confirm(`Add all ${newOnes.length} new people to your circle?`)) {
+      for (const p of newOnes) {
+        const incomingTags = (p.tags || []).filter(t => !t.startsWith('&'));
+        const tags = new Set(incomingTags);
+        if (suggestedTag) tags.add(suggestedTag);
+        tags.add('&dirty');
+        
+        const saved = { ...p, tags: [...tags], updated_at: Date.now() };
+        delete saved.matchedId;
+        await saveContact(db, saved);
+      }
+      renderShareReview(db);
+    }
+  });
+
+  headerRight.appendChild(importAllBtn);
   headerRight.appendChild(acceptAllBtn);
   headerRight.appendChild(skipAllBtn);
   header.appendChild(headerRight);
@@ -288,17 +311,17 @@ export async function renderShareReview(db) {
         }
         tags.add('&dirty');
 
-        const saved = { 
-          ...pendingContact, 
-          tags: [...tags], 
-          updated_at: Date.now() 
-        };
+        const saved = { ...pendingContact, tags: [...tags], updated_at: Date.now() };
         delete saved.matchedId;
         
-        await saveContact(db, saved);
-        await deleteContact(db, pendingContact.id);
-        card.remove();
-        await checkEmpty(db);
+        try {
+          await saveContact(db, saved);
+          alert('Saved ' + saved.name + ' to Circle!');
+          card.remove();
+          await checkEmpty(db);
+        } catch (err) {
+          alert('Error saving contact: ' + err.message);
+        }
       };
     }
 

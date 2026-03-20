@@ -112,14 +112,34 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
   saveProfileBtn.textContent = 'Save profile';
   saveProfileBtn.onclick = async () => {
     if (!owner) return;
+
+    const emailNode = emailField.getInput();
+    if (emailNode.value && !emailNode.checkValidity()) {
+      emailNode.reportValidity();
+      return;
+    }
+
+    let safeName = nameField.getInput().value.trim() || owner.name;
+    if (safeName) safeName = safeName.replace(/</g, '').substring(0, 100).trim();
+
+    let safePhone = phoneField.getInput().value.trim() || null;
+    if (safePhone) safePhone = safePhone.replace(/</g, '').substring(0, 50).trim();
+
+    let safeEmail = emailField.getInput().value.trim() || null;
+    if (safeEmail) safeEmail = safeEmail.replace(/</g, '').substring(0, 100).trim();
+
+    const safeUserTags = tagsField.getInput().value.trim().split(/\\s+/).filter(Boolean)
+      .map(t => t.replace(/</g, '').substring(0, 50).trim())
+      .filter(t => t && (t.startsWith('@') || t.startsWith('#')));
+
     const updated = {
       ...owner,
-      name: nameField.getInput().value.trim() || owner.name,
-      phone: phoneField.getInput().value.trim() || null,
-      email: emailField.getInput().value.trim() || null,
+      name: safeName,
+      phone: safePhone,
+      email: safeEmail,
       tags: [
         ...(owner.tags || []).filter(t => t.startsWith('&')),
-        ...tagsField.getInput().value.trim().split(/\s+/).filter(Boolean)
+        ...safeUserTags
       ],
       updated_at: Date.now(),
     };
@@ -211,6 +231,19 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
   dangerTitle.textContent = 'Danger Zone';
   dangerSection.appendChild(dangerTitle);
 
+  const resetBtn = document.createElement('button');
+  resetBtn.className = 'trunk-btn trunk-btn--secondary';
+  resetBtn.style.opacity = '0.7';
+  resetBtn.textContent = 'Hard Reset App (Bust Cache)';
+  resetBtn.onclick = async () => {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (let reg of registrations) await reg.unregister();
+    }
+    window.location.reload(true);
+  };
+  dangerSection.appendChild(resetBtn);
+
   const clearBtn = document.createElement('button');
   clearBtn.className = 'trunk-btn trunk-btn--secondary';
   clearBtn.style.color = 'var(--color-amber)';
@@ -219,8 +252,7 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
     const confirmed = await showConfirmDialog({
       title: 'Delete Everything?',
       message: 'This will wipe all contacts and history. This cannot be undone.',
-      confirmText: 'Yes, Delete',
-      confirmColor: 'var(--color-amber)'
+      confirmPhrase: 'DELETE EVERYTHING'
     });
     if (confirmed) {
       await clearAllContacts(db);

@@ -28,7 +28,7 @@ export function getDueContacts(contacts, today = new Date()) {
     if (c.snooze_until && c.snooze_until > now) continue;
 
     const frequency = LEVEL_DAYS[levelTag];
-    const lastMs = c.last_contacted || 0;
+    const lastMs = c.last_contacted || c.created_at || now;
     const daysSince = (now - lastMs) / 86400000;
     const daysOverdue = daysSince - frequency;
     const urgency = daysOverdue / frequency;
