@@ -1,6 +1,7 @@
 import { getAllContacts } from '../storage/contacts.js';
-import { getFullYearMilestones } from '../core/milestone-engine.js';
+import { getFullYearMilestones, formatMilestoneDate } from '../core/milestone-engine.js';
 import { navigate } from './router.js';
+import { getSettings } from '../storage/settings.js';
 
 /**
  * Renders the full 12-month milestone calendar.
@@ -9,11 +10,22 @@ export async function renderMilestoneCalendar(db) {
   const app = document.getElementById('app');
   app.innerHTML = '<div class="view-loading"><div class="view-loading-spinner"></div><span>Opening the calendar...</span></div>';
 
-  const allContacts = await getAllContacts(db);
+  const [allContacts, settings] = await Promise.all([
+    getAllContacts(db),
+    getSettings(db)
+  ]);
   const nonOwnerContacts = allContacts.filter(c => !(c.tags || []).includes('&owner'));
   const milestonesByMonth = getFullYearMilestones(nonOwnerContacts);
 
   app.innerHTML = '';
+  
+  const formatAge = (e) => {
+    if (!settings.showAge || !e.age) return '';
+    const suffix = (e.age % 10 === 1 && e.age !== 11) ? 'st' : 
+                   (e.age % 10 === 2 && e.age !== 12) ? 'nd' :
+                   (e.age % 10 === 3 && e.age !== 13) ? 'rd' : 'th';
+    return ` · ${e.age}${suffix}`;
+  };
 
   // Header
   const header = document.createElement('div');
@@ -50,7 +62,8 @@ export async function renderMilestoneCalendar(db) {
       m.events.forEach(e => {
         const row = document.createElement('div');
         row.className = 'print-contact-row';
-        row.innerHTML = `<strong>${e.day}</strong> · ${e.name} (${e.type})`;
+        const dateStr = formatMilestoneDate(e.month, e.day, settings.dateFormat);
+        row.innerHTML = `<strong>${dateStr}</strong> · ${e.name} (${e.type}${formatAge(e)})`;
         printEl.appendChild(row);
       });
     });
@@ -102,12 +115,15 @@ export async function renderMilestoneCalendar(db) {
         item.style.gap = '12px';
         item.style.padding = '8px 4px';
 
+        const ageLabel = formatAge(e);
+        const dateStr = formatMilestoneDate(e.month, e.day, settings.dateFormat);
+
         item.innerHTML = `
-          <div class="milestone-day" style="width: 30px; font-weight: bold; font-size: 1.1rem; opacity: 0.8;">${e.day}</div>
+          <div class="milestone-day" style="width: auto; min-width: 30px; font-weight: bold; font-size: 1.0rem; opacity: 0.8;">${e.day}</div>
           <div class="milestone-icon" style="font-size: 1.2rem;">${e.icon}</div>
           <div class="milestone-details">
             <div style="font-weight: 500;">${e.name}</div>
-            <div style="font-size: 0.8rem; opacity: 0.6;">${e.type}</div>
+            <div style="font-size: 0.8rem; opacity: 0.6;">${e.type}${ageLabel}</div>
           </div>
         `;
         list.appendChild(item);

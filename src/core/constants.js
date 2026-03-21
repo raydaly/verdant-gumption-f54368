@@ -16,6 +16,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   outreachGoal: 0,
   groundedLevel: null,
   theme: 'system',
+  dateFormat: 'default', // 'default' (locale-aware), 'mdy', 'dmy', 'ymd'
+  showAge: true,
   exportReminderDays: 30,
   eventRadarDays: 30,
   trackLegacy: false,

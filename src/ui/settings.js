@@ -199,6 +199,42 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
   advancedSection.appendChild(legacyRow);
   container.appendChild(advancedSection);
 
+  // --- Locale & Dates ---
+  const localeSection = document.createElement('div');
+  localeSection.className = 'settings-section';
+  const localeTitle = document.createElement('div');
+  localeTitle.className = 'settings-section-title';
+  localeTitle.textContent = 'Locale & Dates';
+  localeSection.appendChild(localeTitle);
+
+  const formatRow = document.createElement('div');
+  formatRow.className = 'settings-row';
+  const formatLabel = document.createElement('span');
+  formatLabel.textContent = 'Primary format';
+  const formatSelect = document.createElement('select');
+  formatSelect.className = 'form-input';
+  formatSelect.style.width = 'auto';
+  [
+    { val: 'default', lbl: 'Browser default' },
+    { val: 'mdy', lbl: 'Month/Day (USA)' },
+    { val: 'dmy', lbl: 'Day/Month (Intl)' },
+    { val: 'ymd', lbl: 'Year-Month-Day' }
+  ].forEach(fmt => {
+    const opt = document.createElement('option');
+    opt.value = fmt.val;
+    opt.textContent = fmt.lbl;
+    opt.selected = settings.dateFormat === fmt.val;
+    formatSelect.appendChild(opt);
+  });
+  formatSelect.addEventListener('change', async () => saveSettings(db, { dateFormat: formatSelect.value }));
+  formatRow.appendChild(formatLabel);
+  formatRow.appendChild(formatSelect);
+  localeSection.appendChild(formatRow);
+
+  const ageRow = makeToggleRow('Show age in milestones', settings.showAge, (val) => saveSettings(db, { showAge: val }));
+  localeSection.appendChild(ageRow);
+  container.appendChild(localeSection);
+
   // --- Developer Mode ---
   if (localStorage.getItem('developerMode') === '1') {
     const devSection = document.createElement('div');

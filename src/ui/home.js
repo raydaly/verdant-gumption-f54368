@@ -1,6 +1,7 @@
 import { getAllContacts, saveContact } from '../storage/contacts.js';
 import { addLog } from '../storage/logs.js';
 import { getSettings } from '../storage/settings.js';
+import { getMonthDay } from '../core/milestone-engine.js';
 import { getDueContacts, getAnchorEvents, getConnectionHealth, getSnoozeMs, checkGatheringRules } from '../core/outreach-engine.js';
 import { navigate } from './router.js';
 import { showConnectedSheet } from './components/connected-sheet.js';
@@ -209,7 +210,18 @@ export async function renderHome(db, version = currentVersion) {
 
       const date = document.createElement('div');
       date.className = 'event-date';
-      date.textContent = (type === 'birthday' ? 'Birthday' : 'Anniversary') + ' · ' + formatDaysUntil(daysUntil);
+      const age = (settings.showAge && contact[type]) ? (() => {
+          const md = getMonthDay(contact[type]);
+          const eventAge = md ? (new Date(new Date().getFullYear() + (md.month < new Date().getMonth() || (md.month === new Date().getMonth() && md.day < new Date().getDate()) ? 1 : 0), md.month, md.day).getFullYear() - md.year) : null;
+          if (!eventAge || eventAge < 0) return '';
+          const suffix = (eventAge % 10 === 1 && eventAge !== 11) ? 'st' : 
+                         (eventAge % 10 === 2 && eventAge !== 12) ? 'nd' :
+                         (eventAge % 10 === 3 && eventAge !== 13) ? 'rd' : 'th';
+          return ` · ${eventAge}${suffix}`;
+      })() : '';
+      
+      const typeLabel = type === 'birthday' ? 'Birthday' : 'Anniversary';
+      date.textContent = typeLabel + age + ' · ' + formatDaysUntil(daysUntil);
 
       info.appendChild(name);
       info.appendChild(date);

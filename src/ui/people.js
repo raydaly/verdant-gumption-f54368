@@ -7,7 +7,7 @@ import { showConnectedSheet } from './components/connected-sheet.js';
 import { showContactProfile } from './components/contact-profile.js';
 import { encodeInvite, encodeGroup } from '../core/seedling.js';
 import { performStewardshipRitual } from './stewardship.js';
-import { getUpcomingMilestones } from '../core/milestone-engine.js';
+import { getUpcomingMilestones, formatMilestoneDate } from '../core/milestone-engine.js';
 
 const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
 
@@ -546,6 +546,7 @@ export async function renderPeople(db) {
   if (sortedAll.length > 0 && sortedAll.length < 30) {
     const milestones = getUpcomingMilestones(sortedAll);
     if (milestones.length > 0) {
+      const settings = await getSettings(db);
       const milestoneSection = document.createElement('div');
       milestoneSection.className = 'view-content milestone-radar';
       milestoneSection.style.marginTop = '0';
@@ -563,6 +564,14 @@ export async function renderPeople(db) {
       mList.style.flexDirection = 'column';
       mList.style.gap = '10px';
 
+      const formatAge = (m) => {
+        if (!settings.showAge || !m.age) return '';
+        const suffix = (m.age % 10 === 1 && m.age !== 11) ? 'st' : 
+                       (m.age % 10 === 2 && m.age !== 12) ? 'nd' :
+                       (m.age % 10 === 3 && m.age !== 13) ? 'rd' : 'th';
+        return ` · ${m.age}${suffix}`;
+      };
+
       milestones.forEach(m => {
         const item = document.createElement('div');
         item.style.display = 'flex';
@@ -571,12 +580,14 @@ export async function renderPeople(db) {
         item.style.padding = '4px 0';
         
         const daysLabel = m.daysUntil === 0 ? 'TODAY' : `in ${m.daysUntil} day${m.daysUntil === 1 ? '' : 's'}`;
+        const dateStr = formatMilestoneDate(m.month, m.day, settings.dateFormat);
+        const ageLabel = formatAge(m);
         
         item.innerHTML = `
           <div style="font-size: 1.2rem;">${m.icon}</div>
           <div style="flex: 1;">
             <div style="font-weight: 500;">${m.name}</div>
-            <div style="font-size: 0.8rem; opacity: 0.6;">${m.type} · ${daysLabel}</div>
+            <div style="font-size: 0.8rem; opacity: 0.6;">${dateStr} · ${m.type}${ageLabel} · ${daysLabel}</div>
           </div>
         `;
         mList.appendChild(item);

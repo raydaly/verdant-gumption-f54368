@@ -9,41 +9,76 @@
 export function getMonthDay(dateVal) {
   if (!dateVal) return null;
   
+  // 1. Manually parse YYYY-MM-DD or MM-DD strings to avoid timezone shift
+  if (typeof dateVal === 'string') {
+    const parts = dateVal.split('-');
+    
+    // Case: YYYY-MM-DD (e.g., 1990-05-15)
+    if (parts.length === 3 && parts[0].length === 4) {
+      const [y, m, d] = parts.map(Number);
+      // Handle the "0000" or "1904" year unknown hack
+      const year = (y === 0 || y === 1904) ? null : y;
+      return { month: m - 1, day: d, year };
+    }
+    
+    // Case: MM-DD (e.g., 05-15)
+    if (parts.length === 2) {
+      const [m, d] = parts.map(Number);
+      return { month: m - 1, day: d, year: null };
+    }
+  }
+
+  // 2. Fallback for timestamps or weird formats
   let date;
   if (typeof dateVal === 'number' || /^\d+$/.test(dateVal)) {
     date = new Date(parseInt(dateVal));
   } else if (typeof dateVal === 'string') {
-    // Check for MM-DD (no year)
-    if (/^\d{1,2}-\d{1,2}$/.test(dateVal)) {
-      const [m, d] = dateVal.split('-').map(Number);
-      return { month: m - 1, day: d };
-    }
     date = new Date(dateVal);
   } else {
     return null;
   }
 
   if (isNaN(date.getTime())) return null;
-  return { month: date.getMonth(), day: date.getDate() };
+  return { month: date.getMonth(), day: date.getDate(), year: date.getFullYear() };
 }
 
 /**
  * Calculates days until the next occurrence of a month/day event.
+ * Normalizes to local midnight for accuracy.
  */
 export function getDaysUntil(month, day) {
   const now = new Date();
-  const currentYear = now.getFullYear();
+  // Today at local midnight
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
-  // Try this year
+  const currentYear = today.getFullYear();
+  
+  // Candidate for this year
   let next = new Date(currentYear, month, day);
   
-  // If it already passed this year, try next year
-  if (next < now && (now.getMonth() !== month || now.getDate() !== day)) {
+  // If it already passed this year, use next year
+  if (next < today) {
     next = new Date(currentYear + 1, month, day);
   }
   
-  const diff = next.getTime() - now.getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  const diff = next.getTime() - today.getTime();
+  // Round to nearest day to handle any DST shifts
+  return Math.round(diff / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Calculates the age at the next occurrence.
+ */
+function getAgeAtEvent(birthYear, eventMonth, eventDay) {
+  if (!birthYear) return null;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const currentYear = today.getFullYear();
+  
+  let eventThisYear = new Date(currentYear, eventMonth, eventDay);
+  let targetYear = (eventThisYear < today) ? currentYear + 1 : currentYear;
+  
+  return targetYear - birthYear;
 }
 
 /**
@@ -70,7 +105,8 @@ export function getUpcomingMilestones(contacts, daysLimit = 31) {
             icon: e.icon,
             month: md.month,
             day: md.day,
-            daysUntil: days
+            daysUntil: days,
+            age: getAgeAtEvent(md.year, md.month, md.day)
           });
         }
       }
@@ -100,7 +136,8 @@ export function getFullYearMilestones(contacts) {
           type: e.type,
           icon: e.icon,
           month: md.month,
-          day: md.day
+          day: md.day,
+          age: getAgeAtEvent(md.year, md.month, md.day)
         });
       }
     });
@@ -122,4 +159,16 @@ export function getFullYearMilestones(contacts) {
   });
 
   return months.filter(m => m.events.length > 0);
+}
+
+/**
+ * Formats a month/day according to settings.
+ */
+export function formatMilestoneDate(month, day, setting = 'default') {
+  if (setting === 'mdy') return `${month + 1}/${day}`;
+  if (setting === 'dmy') return `${day}/${month + 1}`;
+  if (setting === 'ymd') return `${month + 1}-${day}`;
+  
+  // Default: Use browser's short format without year (e.g., "May 15" or "15 May")
+  return new Date(2000, month, day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
