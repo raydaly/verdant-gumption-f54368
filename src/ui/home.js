@@ -190,7 +190,7 @@ export async function renderHome(db, version = currentVersion) {
 
     const sectionLabel = document.createElement('div');
     sectionLabel.className = 'home-section-label';
-    sectionLabel.textContent = 'Coming up';
+    sectionLabel.textContent = 'Radar';
     section.appendChild(sectionLabel);
 
     events.forEach(({ contact, type, daysUntil }) => {
@@ -241,7 +241,7 @@ export async function renderHome(db, version = currentVersion) {
 
   const dueSectionLabel = document.createElement('div');
   dueSectionLabel.className = 'home-section-label';
-  dueSectionLabel.textContent = due.length > 0 ? 'Time to reach out' : 'All caught up';
+  dueSectionLabel.textContent = due.length > 0 ? 'Tending your circle' : 'Circle is nourished';
   dueSection.appendChild(dueSectionLabel);
 
   if (due.length === 0) {

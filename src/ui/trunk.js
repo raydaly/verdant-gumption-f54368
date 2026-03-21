@@ -74,7 +74,7 @@ export async function renderTrunk(db) {
 
   const storageTitle = document.createElement('div');
   storageTitle.className = 'trunk-section-title';
-  storageTitle.textContent = 'Data Safety (Storage Status)';
+  storageTitle.textContent = 'Circle Safety (Local Status)';
   storageSection.appendChild(storageTitle);
 
   const storageMeta = document.createElement('div');
@@ -122,8 +122,8 @@ export async function renderTrunk(db) {
     const nudge = document.createElement('div');
     nudge.className = 'trunk-nudge';
     nudge.textContent = lastExport
-      ? `Last backup was ${daysSinceExport} days ago. Consider exporting soon.`
-      : 'You have not exported yet. Keep a backup of your data.';
+      ? `Your circle was last rooted ${daysSinceExport} days ago. Consider a fresh seedling.`
+      : 'You have not rooted your circle yet. Keep a seedling backup for safety.';
     content.appendChild(nudge);
   }
 
@@ -141,7 +141,7 @@ export async function renderTrunk(db) {
 
   const exportTitle = document.createElement('div');
   exportTitle.className = 'trunk-section-title';
-  exportTitle.textContent = 'Export (Seedling)';
+  exportTitle.textContent = 'Root your Circle (Seedling)';
 
   const exportMeta = document.createElement('div');
   exportMeta.className = 'trunk-section-meta';
@@ -150,7 +150,7 @@ export async function renderTrunk(db) {
   const exportBtn = document.createElement('button');
   exportBtn.type = 'button';
   exportBtn.className = 'trunk-btn';
-  exportBtn.textContent = 'Export all contacts & logs';
+  exportBtn.textContent = 'Root your Circle (Export JSON)';
   exportBtn.addEventListener('click', async () => {
     const contacts = await getAllContacts(db);
     const logs = await getAllLogs(db);
@@ -204,7 +204,7 @@ export async function renderTrunk(db) {
   const printBtn = document.createElement('button');
   printBtn.type = 'button';
   printBtn.className = 'trunk-btn trunk-btn--secondary';
-  printBtn.textContent = 'Print contact list';
+  printBtn.textContent = 'Print my Circle';
   printBtn.addEventListener('click', async () => {
     const contacts = await getAllContacts(db);
     const nonOwners = contacts
@@ -215,7 +215,7 @@ export async function renderTrunk(db) {
     printEl.className = 'print-contact-list';
 
     const title = document.createElement('h1');
-    title.textContent = 'My Contacts';
+    title.textContent = 'My Circle';
     printEl.appendChild(title);
 
     nonOwners.forEach(c => {
@@ -292,7 +292,7 @@ export async function renderTrunk(db) {
 
   const importTitle = document.createElement('div');
   importTitle.className = 'trunk-section-title';
-  importTitle.textContent = 'Import (Seedling)';
+  importTitle.textContent = 'Nourish your Circle (Import)';
 
   const importMeta = document.createElement('div');
   importMeta.className = 'trunk-section-meta';

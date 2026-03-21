@@ -399,7 +399,7 @@ export async function renderPeople(db) {
   header.className = 'view-header';
 
   const h1 = document.createElement('h1');
-  h1.textContent = 'People';
+  h1.textContent = ownerContact ? 'My Circle' : 'Shared Circle';
 
   const headerRight = document.createElement('div');
   headerRight.className = 'view-header-right';
