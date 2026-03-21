@@ -9,33 +9,46 @@
 export function getMonthDay(dateVal) {
   if (!dateVal) return null;
   
-  // 1. Manually parse YYYY-MM-DD or MM-DD strings to avoid timezone shift
-  if (typeof dateVal === 'string') {
-    const parts = dateVal.split('-');
-    
-    // Case: YYYY-MM-DD (e.g., 1990-05-15)
-    if (parts.length === 3 && parts[0].length === 4) {
-      const [y, m, d] = parts.map(Number);
-      // Handle the "0000" or "1904" year unknown hack
+  // 1. Convert to a trimmed string and strip time portion
+  let str = String(dateVal).trim();
+  if (!str) return null;
+
+  // Split on Space or 'T' to isolate the date part (e.g. 2024-03-20T00:00Z -> 2024-03-20)
+  const datePart = str.split(/[ T]/)[0];
+  const parts = datePart.split(/[-/]/);
+
+  // Case: YYYY-MM-DD or YYYY/MM/DD
+  if (parts.length === 3 && parts[0].length === 4) {
+    const [y, m, d] = parts.map(v => parseInt(v, 10));
+    if (!isNaN(m) && !isNaN(d)) {
       const year = (y === 0 || y === 1904) ? null : y;
       return { month: m - 1, day: d, year };
     }
-    
-    // Case: MM-DD (e.g., 05-15)
-    if (parts.length === 2) {
-      const [m, d] = parts.map(Number);
+  }
+
+  // Case: MM-DD or MM/DD
+  if (parts.length === 2) {
+    const [m, d] = parts.map(v => parseInt(v, 10));
+    if (!isNaN(m) && !isNaN(d)) {
       return { month: m - 1, day: d, year: null };
     }
   }
 
-  // 2. Fallback for timestamps or weird formats
+  // Case: MM/DD/YYYY or DD/MM/YYYY? Assume MM/DD/YYYY for US compatibility.
+  if (parts.length === 3 && (parts[2].length === 4 || parts[2].length === 2)) {
+    const [m, d, y] = parts.map(v => parseInt(v, 10));
+    if (!isNaN(m) && !isNaN(d)) {
+      const year = (y === 0 || y === 1904) ? null : (y < 100 ? 2000 + y : y);
+      return { month: m - 1, day: d, year };
+    }
+  }
+
+  // Fallback: Use browser parsing for timestamps or weird formats
   let date;
-  if (typeof dateVal === 'number' || /^\d+$/.test(dateVal)) {
-    date = new Date(parseInt(dateVal));
-  } else if (typeof dateVal === 'string') {
-    date = new Date(dateVal);
+  if (/^\d+$/.test(str)) {
+    date = new Date(parseInt(str, 10));
   } else {
-    return null;
+    date = new Date(str);
   }
 
   if (isNaN(date.getTime())) return null;
