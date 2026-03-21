@@ -59,10 +59,14 @@
         var banner = document.getElementById('sw-update-banner');
         banner.removeAttribute('hidden');
       });
+
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        window.location.reload();
+      });
     }
   </script>
 
-  <script>console.log("HTML loading v26");</script>
+  <script>console.log("HTML loading v37");</script>
   <script type="module" src="/src/ui/app.js"></script>
 </body>
 </html>
