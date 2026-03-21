@@ -291,6 +291,28 @@ export async function renderContactForm(db, contactId) {
 
   formBody.appendChild(datesSection);
 
+  // --- Notes ---
+  const notesSection = document.createElement('div');
+  notesSection.className = 'form-section';
+
+  const notesLabel = document.createElement('div');
+  notesLabel.className = 'form-section-label';
+  notesLabel.textContent = 'Notes';
+  notesSection.appendChild(notesLabel);
+
+  const notesField = document.createElement('div');
+  notesField.className = 'form-field';
+  const notesInput = document.createElement('textarea');
+  notesInput.className = 'form-input';
+  notesInput.style.minHeight = '100px';
+  notesInput.style.resize = 'vertical';
+  notesInput.placeholder = 'Background, connections, context…';
+  notesInput.value = existingContact?.notes || '';
+  notesInput.maxLength = 1000;
+  notesField.appendChild(notesInput);
+  notesSection.appendChild(notesField);
+  formBody.appendChild(notesSection);
+
   // --- Connection ---
   const connectionSection = document.createElement('div');
   connectionSection.className = 'form-section';
@@ -327,28 +349,6 @@ export async function renderContactForm(db, contactId) {
   });
   tagsSection.appendChild(tagInput);
   formBody.appendChild(tagsSection);
-
-  // --- Notes ---
-  const notesSection = document.createElement('div');
-  notesSection.className = 'form-section';
-
-  const notesLabel = document.createElement('div');
-  notesLabel.className = 'form-section-label';
-  notesLabel.textContent = 'Notes';
-  notesSection.appendChild(notesLabel);
-
-  const notesField = document.createElement('div');
-  notesField.className = 'form-field';
-  const notesInput = document.createElement('textarea');
-  notesInput.className = 'form-input';
-  notesInput.style.minHeight = '100px';
-  notesInput.style.resize = 'vertical';
-  notesInput.placeholder = 'Background, connections, context…';
-  notesInput.value = existingContact?.notes || '';
-  notesInput.maxLength = 1000;
-  notesField.appendChild(notesInput);
-  notesSection.appendChild(notesField);
-  formBody.appendChild(notesSection);
 
   // Assemble
   formView.appendChild(formHeader);

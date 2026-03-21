@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v37';
+var CACHE_NAME = 'greatuncle-v38';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
