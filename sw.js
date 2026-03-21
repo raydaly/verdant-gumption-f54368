@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v35';
+var CACHE_NAME = 'greatuncle-v36';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -14,6 +14,7 @@ var STATIC_ASSETS = [
   '/src/ui/router.js',
   '/src/ui/people.js',
   '/src/ui/contact-form.js',
+  '/src/ui/components/horizon-bar.js',
   '/src/ui/components/level-selector.js',
   '/src/ui/components/tag-input.js',
   '/src/ui/components/contact-profile.js',
@@ -21,6 +22,7 @@ var STATIC_ASSETS = [
   '/src/core/seedling.js',
   '/src/core/calendar.js',
   '/src/core/milestone-engine.js',
+  '/src/core/sanitizer.js',
   '/src/ui/home.js',
   '/src/ui/journal.js',
   '/src/ui/trunk.js',
