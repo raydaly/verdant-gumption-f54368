@@ -7,6 +7,7 @@ import { renderSettings } from './settings.js';
 import { renderAbout } from './about.js';
 import { renderShareReview } from './share-review.js';
 import { renderMilestoneCalendar } from './milestone-calendar.js';
+import { updateHorizonBar } from './components/horizon-bar.js';
 
 let _db = null;
 let _version = 'v-router-start';
@@ -79,6 +80,7 @@ async function render(view, params) {
   }
 }
 
+
 export async function navigate(view, params = {}, isPop = false) {
   if (!isPop) {
     stack.push({ view, params });
@@ -87,6 +89,11 @@ export async function navigate(view, params = {}, isPop = false) {
     }
   }
   await render(view, params);
+  
+  // Update global data-stewardship indicators
+  if (_db) {
+    updateHorizonBar(_db);
+  }
 }
 
 export function goBack() {

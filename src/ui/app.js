@@ -3,6 +3,7 @@ import { initRouter, navigate } from './router.js';
 import { renderOnboarding } from './onboarding.js';
 import { applyTheme } from './settings.js';
 import { getSettings } from '../storage/settings.js';
+import { updateHorizonBar } from './components/horizon-bar.js';
 
 let appVersion = 'v-app-start';
 
@@ -31,6 +32,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   appVersion = version;
 
   applyTheme((await getSettings(db)).theme);
+  
+  // Initial status update
+  if (db) {
+    updateHorizonBar(db);
+  }
 
   const isGallery = !hasOwner && hasContacts;
   let startView = isGallery ? 'people' : 'home';

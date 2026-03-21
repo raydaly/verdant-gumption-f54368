@@ -78,6 +78,22 @@ body {
   font-weight: 500;
 }
 
+#horizon-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 4px;
+  background-color: var(--color-action);
+  z-index: 9999;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Spacer for the bar if needed on scroll */
+body {
+  padding-top: 4px;
+}
+
 #sw-update-banner {
   background-color: var(--color-action);
   color: #fff;

@@ -12,6 +12,7 @@ import {
 import { exportSeedling, parseSeedling, encodeInvite, encodeGroup } from '../core/seedling.js';
 import { APP_CONSTANTS } from '../core/constants.js';
 import { navigate } from './router.js';
+import { updateHorizonBar } from './components/horizon-bar.js';
 
 function formatExportDate(ts) {
   if (!ts) return 'Never';
@@ -155,10 +156,12 @@ export async function renderTrunk(db) {
     const logs = await getAllLogs(db);
     const json = exportSeedling(contacts, logs);
     const filename = `greatuncle-${new Date().toISOString().slice(0, 10)}.json`;
+
     triggerDownload(json, filename);
     setLastExportedAt(Date.now());
     resetDeletedSinceExport();
     exportMeta.textContent = 'Last exported: ' + formatExportDate(Date.now());
+    updateHorizonBar(db);
   });
 
   exportSection.appendChild(exportTitle);
