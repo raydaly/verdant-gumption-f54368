@@ -2,6 +2,7 @@ import { openDB } from '../storage/db.js';
 import { getOwner, getAllContacts, saveContact } from '../storage/contacts.js';
 import { setPendingImportNudge } from '../storage/settings.js';
 import { decodeShareParam } from '../core/seedling.js';
+import { sanitizeString } from '../core/sanitizer.js';
 
 function normalizePhone(p) {
   if (!p) return '';
@@ -42,25 +43,24 @@ async function parseAndWriteImport(db, params) {
       if (!c.name || typeof c.name !== 'string') continue;
 
       // Sanitization Gate (Trust Pillar)
-      const safeName = c.name.replace(/</g, '').substring(0, 100).trim();
+      const safeName = sanitizeString(c.name, 100);
       if (!safeName) continue;
       
-      const safePhone = typeof c.phone === 'string' ? c.phone.replace(/</g, '').substring(0, 50).trim() : null;
-      let safeEmail = typeof c.email === 'string' ? c.email.replace(/</g, '').substring(0, 100).trim() : null;
+      const safePhone = sanitizeString(c.phone, 50);
+      let safeEmail = sanitizeString(c.email, 100);
       if (safeEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safeEmail)) {
         safeEmail = null;
       }
-      const safeAddress = typeof c.address === 'string' ? c.address.replace(/</g, '').substring(0, 200).trim() : null;
-      const safeZip = typeof c.zip_code === 'string' ? c.zip_code.replace(/</g, '').substring(0, 20).trim() : null;
+      const safeAddress = sanitizeString(c.address, 200);
+      const safeZip = sanitizeString(c.zip_code, 20);
+      const safeNotes = sanitizeString(c.notes, 1000);
       
       const validateDate = (d) => {
         if (!d) return null;
-        if (typeof d === 'number' && d > 0) return d; // Unix timestamp
+        if (typeof d === 'number' && d > 0) return d;
         if (typeof d !== 'string') return null;
-        const s = d.replace(/</g, '').trim();
-        // Allow YYYY-MM-DD or MM-DD (regex tests)
+        const s = d.replace(/[<>]/g, '').substring(0, 30).trim();
         if (/^(\d{4}-)?\d{1,2}-\d{1,2}$/.test(s)) return s;
-        // Also allow legacy unix string
         if (/^\d{10,14}$/.test(s)) return parseInt(s);
         return null;
       };
@@ -70,11 +70,10 @@ async function parseAndWriteImport(db, params) {
       const safePassing = validateDate(c.date_of_passing);
 
       const safeTags = (Array.isArray(c.tags) ? c.tags : [])
-        .filter(t => typeof t === 'string')
-        .map(t => t.replace(/</g, '').substring(0, 50).trim())
+        .map(t => sanitizeString(t, 50))
         .filter(t => t && (t.startsWith('@') || t.startsWith('#')));
 
-      const safeBatchTag = batchTag ? batchTag.replace(/</g, '').substring(0, 50).trim() : null;
+      const safeBatchTag = sanitizeString(batchTag, 50);
 
       c = { 
         ...c, 
@@ -86,7 +85,8 @@ async function parseAndWriteImport(db, params) {
         tags: safeTags,
         birthday: safeBirthday,
         anniversary: safeAnniversary,
-        date_of_passing: safePassing
+        date_of_passing: safePassing,
+        notes: safeNotes
       };
 
       const match = findMatch(c, existingContacts);

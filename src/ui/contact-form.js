@@ -6,6 +6,7 @@ import { createTagInput } from './components/tag-input.js';
 import { showToast } from './components/toast.js';
 import { showConfirmDialog } from './components/confirm-dialog.js';
 import { goBack, navigate } from './router.js';
+import { sanitizeString } from '../core/sanitizer.js';
 
 const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
 
@@ -327,6 +328,28 @@ export async function renderContactForm(db, contactId) {
   tagsSection.appendChild(tagInput);
   formBody.appendChild(tagsSection);
 
+  // --- Notes ---
+  const notesSection = document.createElement('div');
+  notesSection.className = 'form-section';
+
+  const notesLabel = document.createElement('div');
+  notesLabel.className = 'form-section-label';
+  notesLabel.textContent = 'Notes';
+  notesSection.appendChild(notesLabel);
+
+  const notesField = document.createElement('div');
+  notesField.className = 'form-field';
+  const notesInput = document.createElement('textarea');
+  notesInput.className = 'form-input';
+  notesInput.style.minHeight = '100px';
+  notesInput.style.resize = 'vertical';
+  notesInput.placeholder = 'Background, connections, context…';
+  notesInput.value = existingContact?.notes || '';
+  notesInput.maxLength = 1000;
+  notesField.appendChild(notesInput);
+  notesSection.appendChild(notesField);
+  formBody.appendChild(notesSection);
+
   // Assemble
   formView.appendChild(formHeader);
   formView.appendChild(formBody);
@@ -380,25 +403,16 @@ export async function renderContactForm(db, contactId) {
       return;
     }
 
-    let name = nameInput.value.trim();
-    if (!name) return;
-
-    // Sanitization Gate (Trust Pillar)
-    name = name.replace(/</g, '').substring(0, 100).trim();
+    let name = sanitizeString(nameInput.value, 100);
     if (!name) return;
 
     const originalAddress = existingContact?.address || null;
-    let newAddress = addressField.getInput().value.trim() || null;
-    if (newAddress) newAddress = newAddress.replace(/</g, '').substring(0, 200).trim();
+    let newAddress = sanitizeString(addressField.getInput().value, 200);
 
-    let safePhone = phoneField.getInput().value.trim() || null;
-    if (safePhone) safePhone = safePhone.replace(/</g, '').substring(0, 50).trim();
-
-    let safeEmail = emailField.getInput().value.trim() || null;
-    if (safeEmail) safeEmail = safeEmail.replace(/</g, '').substring(0, 100).trim();
-
-    let safeZip = zipField.getInput().value.trim() || null;
-    if (safeZip) safeZip = safeZip.replace(/</g, '').substring(0, 20).trim();
+    let safePhone = sanitizeString(phoneField.getInput().value, 50);
+    let safeEmail = sanitizeString(emailField.getInput().value, 100);
+    let safeZip = sanitizeString(zipField.getInput().value, 20);
+    let safeNotes = sanitizeString(notesInput.value, 1000);
 
     const systemTags = currentTags.filter(t => t.startsWith('&') || t.startsWith('!'));
     const nonLevelSystemTags = systemTags.filter(t => !LEVEL_TAGS.includes(t));
@@ -407,8 +421,7 @@ export async function renderContactForm(db, contactId) {
     if (!newSystemTags.includes('&dirty')) newSystemTags.push('&dirty');
 
     const safeUserTags = userTags
-      .filter(t => typeof t === 'string')
-      .map(t => t.replace(/</g, '').substring(0, 50).trim())
+      .map(t => sanitizeString(t, 50))
       .filter(t => t && (t.startsWith('@') || t.startsWith('#')));
 
     const finalTags = [...newSystemTags, ...safeUserTags];
@@ -428,7 +441,7 @@ export async function renderContactForm(db, contactId) {
       tags: finalTags,
       last_contacted: existingContact?.last_contacted || null,
       snooze_until: existingContact?.snooze_until || null,
-      notes: existingContact?.notes || null,
+      notes: safeNotes,
       created_at: existingContact?.created_at || Date.now(),
       updated_at: Date.now(),
     };

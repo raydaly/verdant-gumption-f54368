@@ -88,6 +88,26 @@ export async function showContactProfile(db, contact, onRefresh) {
 
   content.appendChild(journalBox);
 
+  // Notes
+  if (contact.notes) {
+    const notesBox = document.createElement('div');
+    notesBox.className = 'profile-journal-box';
+    notesBox.style.marginTop = '1rem';
+    
+    const notesLabel = document.createElement('div');
+    notesLabel.className = 'profile-section-label';
+    notesLabel.textContent = 'Background (Notes)';
+    notesBox.appendChild(notesLabel);
+
+    const notesText = document.createElement('div');
+    notesText.className = 'profile-log-comment';
+    notesText.style.whiteSpace = 'pre-line';
+    notesText.textContent = contact.notes;
+    notesBox.appendChild(notesText);
+
+    content.appendChild(notesBox);
+  }
+
   // Details & Tags
   const detailsBox = document.createElement('div');
   detailsBox.className = 'profile-details-box';

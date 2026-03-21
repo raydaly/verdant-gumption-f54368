@@ -13,6 +13,7 @@ import { exportSeedling, parseSeedling, encodeInvite, encodeGroup } from '../cor
 import { APP_CONSTANTS } from '../core/constants.js';
 import { navigate } from './router.js';
 import { updateHorizonBar } from './components/horizon-bar.js';
+import { sanitizeContact } from '../core/sanitizer.js';
 
 function formatExportDate(ts) {
   if (!ts) return 'Never';
@@ -315,8 +316,11 @@ export async function renderTrunk(db) {
     let contactCount = 0;
     let logCount = 0;
     for (const contact of importContacts) {
-      await saveContact(db, contact);
-      contactCount++;
+      const safe = sanitizeContact(contact);
+      if (safe) {
+        await saveContact(db, safe);
+        contactCount++;
+      }
     }
     for (const log of importLogs) {
       await addLog(db, log.contactId, log.timestamp, log.comment);
