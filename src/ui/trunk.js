@@ -9,7 +9,7 @@ import {
   getPendingImportNudge,
   getDeletedSinceExport,
 } from '../storage/settings.js';
-import { exportSeedling, parseSeedling, encodeInvite, encodeGroup, buildPayload } from '../core/seedling.js';
+import { exportSeedling, parseSeedling, encodeInvite, encodeGroup, buildPayload, ingestContacts, decodeShareParam } from '../core/seedling.js';
 import { APP_CONSTANTS } from '../core/constants.js';
 import { navigate } from './router.js';
 import { updateHorizonBar } from './components/horizon-bar.js';
@@ -900,9 +900,16 @@ export async function renderTrunk(db) {
         auditBox.innerHTML = '<div style="opacity: 0.8;">No new contacts found or everyone is already in your circle.</div>';
       }
     } catch (err) {
+      console.error('Nourish Sanctity Check failed:', err);
       auditBox.style.display = 'block';
       nourishBtn.style.display = 'none';
-      auditBox.innerHTML = '<div style="color: var(--color-error-text);">Wait, that code or JSON doesn\'t look quite right.</div>';
+      let msg = 'Wait, that code or JSON doesn\'t look quite right.';
+      if (err instanceof SyntaxError) {
+        msg = 'Invalid JSON: ' + err.message;
+      } else if (err.message && err.message.includes('atob')) {
+        msg = 'That doesn\'t seem to be a valid connection code (Base64 error).';
+      }
+      auditBox.innerHTML = `<div style="color: var(--color-error-text);">${msg}</div>`;
     }
   };
 
