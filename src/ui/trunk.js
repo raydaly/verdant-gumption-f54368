@@ -979,7 +979,7 @@ export async function renderTrunk(db) {
   content.appendChild(exportSection);
   content.appendChild(shareSection);
   content.appendChild(storageSection);
-  if (ownerRecord) content.appendChild(importSection);
+  content.appendChild(importSection);
   content.appendChild(diagSection);
   
   app.appendChild(content);
