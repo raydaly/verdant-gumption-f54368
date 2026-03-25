@@ -4,18 +4,18 @@
 
 ---
 
-## 🌱 The Owner's Journey: From Belonging to Sustaining
-Becoming an owner of your data is not a one-size-fits-all obligation. Greatuncle is designed to meet you exactly where you are in your social lifecycle, scaling from a quiet, private directory to a proactive generosity engine.
+## 🌱 The Owner's Journey: From Viewing to Sustaining
+Becoming an owner of your data is a transition from belonging to building. Greatuncle is designed to meet you exactly where you are in your social lifecycle, scaling from a quiet, private directory to a proactive generosity engine.
 
-### For the Keeper (The Living Record)
-Most people start here. Someone who loves you shares a link, and you open it to find a pre-populated record of the people who matter. You realize you belong to something bigger. If you only ever use Greatuncle to hold one or two groups—like a family, neighbors, or cousins—it remains a quiet, private spot. It ensures you never miss a birthday or anniversary, but it never demands your attention. The app doesn't ask you to be perfect; it just asks you to show up a little.
+### Phase 1: The Guest (Viewing)
+Most people start here. Someone who loves you shares a link, and you open it to find a pre-populated record of the people who matter. You realize you belong to something bigger. If you only ever use Greatuncle to hold one or two groups—like a family, neighbors, or cousins—it remains a quiet, private spot in **Guest Mode**. It ensures you never miss a birthday, but it never demands your attention.
 
-### For the Architect (Feeding the Roots)
-As your world expands and friends scatter, you may realize a quiet truth: *relationships don't die, they just stop being fed.* If you are ready to step up, you can turn on Greatuncle's engine to actively manage up to 150 people across multiple circles.
+### Phase 2: The Owner (Sustaining)
+Once you perform the **Stewardship Ritual** (saving a local backup), you transition into **Owner Mode**. You are no longer just a visitor in someone else's list; you are the sovereign keeper of your own data. You can now feed the roots of your world:
 
-- **Prevent the Drift**: Receive 1–3 daily suggestions to reach out to people before they become strangers.
-- **Honor Your Circles**: Organize your people into intimate and wider rings based on how often they need a touchpoint.
-- **Become the Source**: Create new groups and share them as a "First Gift" to others, passing on the legacy of connection.
+- **Active Management**: Turn on the engine to proactively manage up to 150 people across multiple circles.
+- **Prevent the Drift**: Receive daily suggestions to reach out to people before they become strangers.
+- **Become the Source**: Create your own new groups and share them as a "First Gift" to others, passing on the legacy of connection.
 
 ---
 
@@ -34,10 +34,10 @@ By helping you consciously balance these levels, Greatuncle ensures your closest
 ---
 
 ## 🛡️ Core Philosophy
-1. **Privacy First**: All data lives strictly in your browser (IndexedDB). No cloud, no tracking, and no central database.
-2. **Local-First**: The app is a PWA (Progressive Web App) that works offline and survives entirely as a "Digital Seedling" backup file.
-3. **The Stewardship Ritual**: To unlock editing (adding people, changing names), a guest must perform a backup. This transition from "Viewing" to "Downloading" is how a Guest becomes an Owner.
-4. **Zero-Permission**: No passwords, no accounts, and no "Log in with Google." You are the sole keeper of your data.
+1. **Privacy First**: All data lives strictly in your browser (IndexedDB). No cloud, no tracking.
+2. **Local-First**: The app is a PWA (Progressive Web App) that survives entirely as a "Seedling" backup file.
+3. **The Stewardship Ritual**: To unlock editing (adding people, changing names), a guest must perform a backup. This transition from **Viewing** to **Sustaining** is how a Guest becomes an **Owner**.
+4. **Zero-Permission**: No passwords, no accounts. You are the sole keeper of your data.
 
 ---
 
@@ -62,9 +62,6 @@ To keep performance high and share URLs as short as possible, the contact schema
 - `su`: Snooze until timestamp (Unix ms).
 - `ca` / `ua`: Created at / Updated at timestamps.
 
-> [!NOTE] 
-> **Automatic Migration**: If you are returning from an older version of Greatuncle, your data will be automatically migrated to this new optimized schema upon your first visit to ensure your share links and backups stay lean.
-
 ### Intimacy Layers (Dunbar Levels)
 - `&level5`: Your Inner Circle (Daily/Weekly).
 - `&level15`: Monthly touchpoints.
@@ -74,11 +71,15 @@ To keep performance high and share URLs as short as possible, the contact schema
 ---
 
 ## 📂 Project Structure
-- `index.html`: The main entry point and "Glass Box" UI.
-- `src/ui/`: All view-rendering logic (Home, People, Backup, etc.).
-- `src/core/`: The "Engine" for social rotation, levels, and contact ingestion.
-- `src/storage/`: IndexedDB wrappers for contacts, logs, and settings.
-- `archive/`: Legacy specs and philosophy documents for historical reference.
+- `src/ui/`: All view-rendering logic (One file per tab).
+  - `home.js`: **Home** Dashboard.
+  - `people.js`: **People** List & Filters.
+  - `journal.js`: **Journal** / Interaction History.
+  - `trunk.js`: **Backup** / Sharing Engine.
+  - `contact-form.js`, `settings.js`, `milestone-calendar.js`: Sub-views.
+- `src/core/`: The "Engine" (Rotation, Levels, Ingestion logic).
+- `src/storage/`: IndexedDB wrappers for persistence.
+- `archive/`: Legacy specs and philosophy documents.
 
 ---
-*Version: v41 (Current)*
+*Version: v42 (Current)*

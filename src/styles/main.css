@@ -1,26 +1,30 @@
 :root {
-  --color-bg: #F9F7F2;
-  --color-bg-card: #FDFCF9;
-  --color-bg-accent: #EBE6D9;
+  --color-bg: #F0EEE6;
+  --color-bg-card: #FFFFFF;
+  --color-bg-accent: #E0DDD0;
   --color-action: #4A6741;
   --color-amber: #D4A373;
   --color-text: #121212;
-  --color-text-muted: #555555;
+  --color-text-muted: #444444;
   --color-success: #2E7D32;
   --color-error: #D32F2F;
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #121212;
-    --color-bg-card: #1E1E1E;
-    --color-bg-accent: #2A2A2A;
+    --color-bg: #0D0D0D;
+    --color-bg-card: #222222;
+    --color-bg-accent: #333333;
     --color-action: #89A47E;
     --color-amber: #EBC095;
-    --color-text: #E5E1D8;
-    --color-text-muted: #999999;
+    --color-text: #F0EDE5;
+    --color-text-muted: #AAAAAA;
     --color-success: #81C784;
     --color-error: #E57373;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -32,7 +36,7 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   background-color: var(--color-bg);
   color: var(--color-text);
   min-height: 100dvh;
@@ -581,6 +585,42 @@ body {
   cursor: default;
 }
 
+.onboarding-picker-list {
+  max-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--color-bg-accent);
+  border-radius: 12px;
+  background: var(--color-bg-card);
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.onboarding-picker-item {
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid var(--color-bg-accent);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--color-text);
+  transition: background 0.1s ease;
+}
+
+.onboarding-picker-item:last-child {
+  border-bottom: none;
+}
+
+.onboarding-picker-item:hover, .onboarding-picker-item:active {
+  background: var(--color-bg-accent);
+}
+
 /* Home view */
 .home-section {
   margin-bottom: 1.5rem;
@@ -607,6 +647,7 @@ body {
   border-radius: 8px;
   padding: 0.75rem 0.5rem;
   text-align: center;
+  box-shadow: var(--shadow-sm);
 }
 
 .health-card-count {
@@ -726,6 +767,7 @@ body {
   border-radius: 8px;
   padding: 1rem;
   text-align: center;
+  box-shadow: var(--shadow-sm);
 }
 
 .stat-card-value {
@@ -784,6 +826,7 @@ body {
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1rem;
+  box-shadow: var(--shadow-md);
 }
 
 .trunk-section-title {
@@ -866,7 +909,11 @@ body {
   font-family: inherit;
 }
 
-/* Share review */
+.claim-banner {
+  box-shadow: var(--shadow-md);
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+}
 .share-review-meta {
   font-size: 0.875rem;
   color: var(--color-text-muted);
@@ -879,6 +926,7 @@ body {
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 0.75rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .share-review-name {
@@ -1034,7 +1082,12 @@ body {
 
 /* Settings view */
 .settings-section {
-  margin-bottom: 1.75rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-bg-accent);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-md);
 }
 
 .settings-section-title {
@@ -1482,7 +1535,7 @@ body[data-is-owned="false"] .contact-action-snooze {
   padding: 1.5rem;
   width: 100%;
   max-width: 360px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .confirm-dialog-title {

@@ -55,6 +55,7 @@ export async function performStewardshipRitual(db, onSuccess) {
     // Slight delay to let the user see the "started" feedback
     setTimeout(() => {
       renderOnboarding(db, () => {
+        sessionStorage.setItem('justBecameOwner', 'true');
         if (onSuccess) onSuccess();
         else window.location.reload();
       });

@@ -384,17 +384,17 @@ export async function renderPeople(db) {
   if (!ownerContact) {
     const claimBanner = document.createElement('div');
     claimBanner.className = 'claim-banner';
-    claimBanner.style.background = 'var(--color-bg-elevated)';
+    claimBanner.style.background = 'var(--color-bg-card)';
     claimBanner.style.padding = '16px';
-    claimBanner.style.borderBottom = '1px solid var(--color-border)';
+    claimBanner.style.border = '1px solid var(--color-bg-accent)';
     claimBanner.style.display = 'flex';
     claimBanner.style.flexDirection = 'column';
     claimBanner.style.gap = '16px';
 
     // Personalized banner text
-    let bannerTitle = "🎁 You've been gifted access to this address book and milestone calendar.";
+    let bannerTitle = "🎁 You've been gifted access to this address book and birthday calendar.";
     if (importMeta) {
-      const source = importMeta.groupName ? `the <strong>${importMeta.groupName}</strong> address book` : 'this address book';
+      const source = importMeta.groupName ? `the <strong>${importMeta.groupName}</strong> address book and birthday calendar` : 'this address book and birthday calendar';
       const from = importMeta.senderName ? ` by <strong>${importMeta.senderName}</strong>` : '';
       bannerTitle = `🎁 You've been gifted access to ${source}${from}.`;
     }
@@ -451,6 +451,42 @@ export async function renderPeople(db) {
       const sheetCancelBtn = sheetContent.querySelector('#sheet-cancel-btn');
       sheetCancelBtn.addEventListener('click', () => close());
     };
+  }
+
+  // --- Show Celebration if just became owner ---
+  if (sessionStorage.getItem('justBecameOwner') === 'true') {
+    sessionStorage.removeItem('justBecameOwner');
+    setTimeout(() => {
+      const content = document.createElement('div');
+      content.style.padding = '0.5rem 1.5rem 1.5rem';
+      content.style.textAlign = 'center';
+
+      content.innerHTML = `
+        <div style="font-size: 3.5rem; margin-bottom: 1rem;">🎊</div>
+        <h2 style="margin-top: 0; margin-bottom: 1rem; font-family: var(--font-serif); color: var(--color-action);">Welcome to New Owner</h2>
+        <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem;">
+          You've taken stewardship of your private circle. You are now the <strong>sovereign owner</strong> of your data.
+        </p>
+        
+        <div style="text-align: left; background: var(--color-bg-accent); padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem;">
+          <h3 style="margin-top: 0; font-size: 0.9rem; text-transform: uppercase; opacity: 0.7;">New Powers Unlocked:</h3>
+          <ul style="margin: 0.5rem 0; padding-left: 1.25rem; line-height: 1.6;">
+            <li><strong>Sustaining</strong>: Add, edit, or remove any record.</li>
+            <li><strong>Architecting</strong>: Create and share your own groups.</li>
+            <li><strong>Privacy</strong>: Everything stays 100% on your device.</li>
+          </ul>
+        </div>
+
+        <button id="celebration-close" class="trunk-btn" style="width: 100%;">Get Started</button>
+      `;
+
+      const { close } = showBottomSheet({
+        title: 'Taking Stewardship',
+        content: content
+      });
+
+      content.querySelector('#celebration-close').onclick = () => close();
+    }, 500);
   }
 
   // Header

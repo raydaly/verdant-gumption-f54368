@@ -446,18 +446,17 @@ export async function renderTrunk(db) {
 
     const codeActionRow = document.createElement('div');
     codeActionRow.style.display = 'flex';
+    codeActionRow.style.flexDirection = 'column'; // Stack buttons for better stability
     codeActionRow.style.gap = '8px';
     codeActionRow.style.marginTop = '0.5rem';
 
     const copyCodeBtn = document.createElement('button');
     copyCodeBtn.className = 'trunk-btn trunk-btn--secondary';
-    copyCodeBtn.style.flex = '1';
     copyCodeBtn.textContent = 'Copy Code';
     copyCodeBtn.disabled = true;
 
     const toggleViewBtn = document.createElement('button');
     toggleViewBtn.className = 'trunk-btn trunk-btn--secondary';
-    toggleViewBtn.style.flex = '0 0 auto';
     toggleViewBtn.textContent = 'View JSON';
     toggleViewBtn.disabled = true;
 
@@ -867,19 +866,35 @@ export async function renderTrunk(db) {
   let pendingImportRecords = [];
 
   const updateAuditPreview = async (val) => {
-    if (!val.trim()) {
+    let cleanVal = val.trim();
+    if (!cleanVal) {
       auditBox.style.display = 'none';
       nourishBtn.style.display = 'none';
       return;
     }
 
+    // Smart Link Extractor: pull out the code from the URL if a full link is pasted
+    if (cleanVal.includes('invite=')) {
+      const parts = cleanVal.split('?');
+      const query = parts[parts.length - 1];
+      const params = new URLSearchParams(query);
+      const invite = params.get('invite');
+      if (invite) cleanVal = invite;
+    } else if (cleanVal.includes('importGroup=')) {
+      const parts = cleanVal.split('?');
+      const query = parts[parts.length - 1];
+      const params = new URLSearchParams(query);
+      const grp = params.get('importGroup');
+      if (grp) cleanVal = grp;
+    }
+
     try {
       let payload;
       // Is it Base64?
-      if (val.trim().length > 50 && !val.trim().startsWith('{') && !val.trim().startsWith('[')) {
-        payload = decodeShareParam(val.trim());
+      if (cleanVal.length > 50 && !cleanVal.startsWith('{') && !cleanVal.startsWith('[')) {
+        payload = decodeShareParam(cleanVal);
       } else {
-        payload = JSON.parse(val.trim());
+        payload = JSON.parse(cleanVal);
       }
       
       const existingContacts = await getAllContacts(db);
@@ -892,12 +907,12 @@ export async function renderTrunk(db) {
         const names = contacts.map(c => c.n).join(', ');
         auditBox.innerHTML = `
           <div style="color: var(--color-success); font-weight: 500; margin-bottom: 0.25rem;">✅ Sanctity Check Passed</div>
-          <div style="font-size: 0.85rem; opacity: 0.8;">Safe to import <strong>${contacts.length}</strong> people: ${names}</div>
+          <div style="font-size: 0.85rem; color: var(--color-text-muted); font-weight: 500;">Safe to import <strong>${contacts.length}</strong> people: ${names}</div>
         `;
       } else {
         auditBox.style.display = 'block';
         nourishBtn.style.display = 'none';
-        auditBox.innerHTML = '<div style="opacity: 0.8;">No new contacts found or everyone is already in your circle.</div>';
+        auditBox.innerHTML = '<div style="color: var(--color-text-muted); font-weight: 500;">No new contacts found or everyone is already in your circle.</div>';
       }
     } catch (err) {
       console.error('Nourish Sanctity Check failed:', err);
