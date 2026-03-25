@@ -65,7 +65,7 @@ function isFilterActive(state) {
   return state.sort !== 'az' || state.layer !== null || state.group !== null;
 }
 
-function buildContactRow(contact, isOwner, db, onRefresh) {
+function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
   const li = document.createElement('li');
   li.className = 'contact-row';
 
@@ -150,28 +150,30 @@ function buildContactRow(contact, isOwner, db, onRefresh) {
       actions.appendChild(emailBtn);
     }
 
-    const connectedBtn = document.createElement('button');
-    connectedBtn.type = 'button';
-    connectedBtn.className = 'contact-action-btn contact-action-connected';
-    connectedBtn.textContent = 'Connected';
-    connectedBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showConnectedSheet(db, contact.id, onRefresh);
-    });
-    actions.appendChild(connectedBtn);
+    if (hasAppOwner) {
+      const connectedBtn = document.createElement('button');
+      connectedBtn.type = 'button';
+      connectedBtn.className = 'contact-action-btn contact-action-connected';
+      connectedBtn.textContent = 'Connected';
+      connectedBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showConnectedSheet(db, contact.id, onRefresh);
+      });
+      actions.appendChild(connectedBtn);
 
-    const snoozeBtn = document.createElement('button');
-    snoozeBtn.type = 'button';
-    snoozeBtn.className = 'contact-action-btn contact-action-snooze';
-    snoozeBtn.textContent = 'Snooze';
-    snoozeBtn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      const settings = await getSettings(db);
-      const snoozeUntil = Date.now() + getSnoozeMs(settings);
-      await saveContact(db, { ...contact, snooze_until: snoozeUntil, updated_at: Date.now() });
-      if (onRefresh) onRefresh();
-    });
-    actions.appendChild(snoozeBtn);
+      const snoozeBtn = document.createElement('button');
+      snoozeBtn.type = 'button';
+      snoozeBtn.className = 'contact-action-btn contact-action-snooze';
+      snoozeBtn.textContent = 'Snooze';
+      snoozeBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const settings = await getSettings(db);
+        const snoozeUntil = Date.now() + getSnoozeMs(settings);
+        await saveContact(db, { ...contact, snooze_until: snoozeUntil, updated_at: Date.now() });
+        if (onRefresh) onRefresh();
+      });
+      actions.appendChild(snoozeBtn);
+    }
 
     li.appendChild(actions);
   }
@@ -212,7 +214,7 @@ function renderList(ul, contacts, ownerContact, db, onRefresh) {
   }
   contacts.forEach(c => {
     const isOwner = ownerContact && c.id === ownerContact.id;
-    ul.appendChild(buildContactRow(c, isOwner, db, onRefresh));
+    ul.appendChild(buildContactRow(c, isOwner, db, onRefresh, !!ownerContact));
   });
 }
 
@@ -363,35 +365,92 @@ export async function renderPeople(db) {
 
   const allContacts = await getAllContacts(db);
   const ownerContact = allContacts.find(c => (c.tags || []).includes('&owner'));
+  document.body.setAttribute('data-is-owned', !!ownerContact);
+  
   const nonOwnerCount = allContacts.filter(c => !(c.tags || []).includes('&owner')).length;
+  console.log('Architect status:', ownerContact ? 'Claimed' : 'Gallery mode');
 
   const sortedAll = applyFilterSort(allContacts, filterState);
 
   app.innerHTML = '';
 
+  // Check for import metadata to personalize the gallery experience
+  let importMeta = null;
+  try {
+    const raw = sessionStorage.getItem('lastImportMeta');
+    if (raw) importMeta = JSON.parse(raw);
+  } catch (e) {}
+
   if (!ownerContact) {
     const claimBanner = document.createElement('div');
     claimBanner.className = 'claim-banner';
     claimBanner.style.background = 'var(--color-bg-elevated)';
-    claimBanner.style.padding = '12px 16px';
+    claimBanner.style.padding = '16px';
     claimBanner.style.borderBottom = '1px solid var(--color-border)';
     claimBanner.style.display = 'flex';
     claimBanner.style.flexDirection = 'column';
-    claimBanner.style.gap = '12px';
+    claimBanner.style.gap = '16px';
+
+    // Personalized banner text
+    let bannerTitle = "🎁 You've been gifted access to this address book and milestone calendar.";
+    if (importMeta) {
+      const source = importMeta.groupName ? `the <strong>${importMeta.groupName}</strong> address book` : 'this address book';
+      const from = importMeta.senderName ? ` by <strong>${importMeta.senderName}</strong>` : '';
+      bannerTitle = `🎁 You've been gifted access to ${source}${from}.`;
+    }
 
     const text = document.createElement('p');
-    text.textContent = 'You are viewing a shared circle. Claim your circle to unlock connection tracking and editing.';
+    text.innerHTML = `<strong>${bannerTitle}</strong> Browse freely, call, text, or email anyone. To edit contacts or create groups, <strong>save a private backup first</strong> — it takes seconds and keeps your data 100% on your device. <a href="#" id="about-link-claim" style="color: var(--color-link); text-decoration: underline; font-weight: 500;">Learn how it works.</a>`;
     text.style.margin = '0';
-    text.style.fontSize = '0.9rem';
+    text.style.fontSize = '0.95rem';
+    text.style.lineHeight = '1.45';
 
     const claimBtn = document.createElement('button');
     claimBtn.className = 'trunk-btn trunk-btn--primary';
-    claimBtn.textContent = 'Claim Circle';
-    claimBtn.onclick = () => performStewardshipRitual(db);
+    claimBtn.textContent = 'Option: Save a Backup to Start Editing';
+    claimBtn.style.cursor = 'pointer';
+    claimBtn.addEventListener('click', async () => {
+      console.log('Claim button clicked. Initiating stewardship ritual.');
+      try {
+        const success = await performStewardshipRitual(db);
+        console.log('Ritual result:', success ? 'Success' : 'User cancelled or failed');
+      } catch (err) {
+        console.error('Ritual execution error:', err);
+      }
+    });
 
     claimBanner.appendChild(text);
     claimBanner.appendChild(claimBtn);
     app.appendChild(claimBanner);
+
+    const aboutLink = text.querySelector('#about-link-claim');
+    aboutLink.onclick = (e) => {
+      e.preventDefault();
+      const sheetContent = document.createElement('div');
+      sheetContent.style.cssText = 'display:flex;flex-direction:column;gap:1rem;font-size:0.95rem;line-height:1.55;';
+      sheetContent.innerHTML = `
+        <p style="margin:0">${importMeta?.senderName || 'Someone who cares about you'} shared their address book with you. Here's what you have:</p>
+        <p style="margin:0">📒 <strong>Address Book</strong> — Browse, call, text, or email anyone in the list.</p>
+        <p style="margin:0">🎂 <strong>Milestone Calendar</strong> — Birthdays and anniversaries for the whole year, at a glance.</p>
+        <p style="margin:0">🔐 <strong>About your data:</strong> This address book lives only in your browser — there is no account, no cloud, no automatic backup. <strong>Only you can save it.</strong> If you clear your browser or switch from your phone to your laptop without saving, it's gone.</p>
+        <p style="margin:0">✏️ <strong>Save a backup to unlock editing.</strong> The backup is a text file you can keep anywhere — your Files app, a notebook like Notion or Apple Notes, email it to yourself, or save it to Google Drive or iCloud. It unlocks adding contacts, editing, creating groups, and smart reminders to help you stay in touch.</p>
+        <p style="margin:0;font-style:italic">🎁 And once it's yours, you become a Greatuncle too — able to share the gift and pass groups on to anyone you choose.</p>
+        <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:0.5rem;">
+          <button class="trunk-btn trunk-btn--primary" id="sheet-claim-btn" style="width:100%; cursor:pointer;">Option: Save a Backup to Start Editing</button>
+          <button class="trunk-btn trunk-btn--secondary" id="sheet-cancel-btn" style="width:100%; cursor:pointer;">Cancel</button>
+        </div>
+      `;
+      const { close } = showBottomSheet({ title: 'Your Gift Access', content: sheetContent });
+      
+      const sheetClaimBtn = sheetContent.querySelector('#sheet-claim-btn');
+      sheetClaimBtn.addEventListener('click', async () => {
+        close();
+        await performStewardshipRitual(db);
+      });
+
+      const sheetCancelBtn = sheetContent.querySelector('#sheet-cancel-btn');
+      sheetCancelBtn.addEventListener('click', () => close());
+    };
   }
 
   // Header
@@ -399,7 +458,15 @@ export async function renderPeople(db) {
   header.className = 'view-header';
 
   const h1 = document.createElement('h1');
-  h1.textContent = ownerContact ? 'My Circle' : 'Shared Circle';
+  if (ownerContact) {
+    h1.textContent = 'My Circle';
+  } else if (importMeta && importMeta.groupName) {
+    h1.textContent = `The ${importMeta.groupName} Circle`;
+  } else if (importMeta && importMeta.senderName) {
+    h1.textContent = `${importMeta.senderName}'s Circle`;
+  } else {
+    h1.textContent = 'Shared Circle';
+  }
 
   const headerRight = document.createElement('div');
   headerRight.className = 'view-header-right';
@@ -452,29 +519,58 @@ export async function renderPeople(db) {
   gearBtn.textContent = '⚙️';
   gearBtn.addEventListener('click', () => navigate('settings'));
 
-  if (filterState.group) {
-    const shareBtn = document.createElement('button');
-    shareBtn.type = 'button';
-    shareBtn.className = 'header-icon-btn';
-    shareBtn.title = `Share ${filterState.group} group`;
-    shareBtn.textContent = '📤';
-    shareBtn.addEventListener('click', async () => {
-      const contactsInGroup = sortedAll.filter(c => (c.tags || []).includes(filterState.group));
-      const groupCode = encodeGroup(contactsInGroup, filterState.group);
-      const shareUrl = `${window.location.origin}/?importGroup=${groupCode}`;
-      
-      if (navigator.share) {
-        await navigator.share({
-          title: `GreatUncle Circle: ${filterState.group}`,
-          text: `Here is the ${filterState.group} contact list.`,
-          url: shareUrl
-        });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        alert('Share link copied to clipboard!');
+  // Sharing helper
+  const shareAction = async (tag = null) => {
+    let shareUrl;
+    const base = `${window.location.origin}${window.location.pathname}`;
+
+    if (tag) {
+      const contactsInGroup = allContacts.filter(c => (c.tags || []).includes(tag) && !(c.tags || []).includes('&owner'));
+      const groupCode = encodeGroup(contactsInGroup, tag);
+      shareUrl = `${base}?importGroup=${groupCode}`;
+    } else {
+      // Full circle share
+      const allNonOwners = allContacts.filter(c => !(c.tags || []).includes('&owner'));
+      const groupCode = encodeGroup(allNonOwners, 'Shared Circle');
+      shareUrl = `${base}?importGroup=${groupCode}`;
+    }
+    
+    const subject = tag ? `GreatUncle Group: ${tag}` : 'GreatUncle Circle';
+    const text = tag ? `Here is the ${tag} contact list.` : 'Check out this GreatUncle circle contact list.';
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: subject, text: text, url: shareUrl });
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.log('Web share failed, fallback to clipboard');
       }
-    });
-    headerRight.appendChild(shareBtn);
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Share link copied to clipboard!');
+    } catch (err) {
+      // Final fallback for restricted environments
+      const tempInput = document.createElement('input');
+      tempInput.value = shareUrl;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      alert('Share link copied to clipboard!');
+    }
+  };
+
+  if (filterState.group || !ownerContact) {
+    const headerShareBtn = document.createElement('button');
+    headerShareBtn.type = 'button';
+    headerShareBtn.className = 'header-icon-btn';
+    headerShareBtn.title = filterState.group ? `Share ${filterState.group} group` : 'Share this circle';
+    headerShareBtn.textContent = '📤';
+    headerShareBtn.onclick = () => shareAction(filterState.group);
+    headerRight.appendChild(headerShareBtn);
   }
 
   const calBtn = document.createElement('button');
@@ -516,7 +612,7 @@ export async function renderPeople(db) {
   shareBtn.className = 'filter-btn filter-btn--share';
   shareBtn.setAttribute('aria-label', 'Share this group');
   shareBtn.textContent = '⬆️ Share';
-  shareBtn.hidden = !filterState.group; // only show when a @group filter is active
+  shareBtn.hidden = !filterState.group; // only show when a @group filter is active (Gallery sharing is handled in header)
 
   searchRow.appendChild(searchInput);
   searchRow.appendChild(filterBtn);
@@ -598,70 +694,36 @@ export async function renderPeople(db) {
     }
   }
 
-  // FAB
-  const fab = document.createElement('button');
-  fab.type = 'button';
-  fab.className = 'add-contact-fab';
-  fab.textContent = '+';
-  fab.setAttribute('aria-label', 'Add contact');
-  fab.addEventListener('click', () => {
-    if (!ownerContact) {
-      performStewardshipRitual(db, () => navigate('contact-form', {}));
-    } else {
+  // FAB (Only for Architect/Owner)
+  if (ownerContact) {
+    const fab = document.createElement('button');
+    fab.type = 'button';
+    fab.className = 'add-contact-fab';
+    fab.textContent = '+';
+    fab.setAttribute('aria-label', 'Add contact');
+    fab.addEventListener('click', () => {
       navigate('contact-form', {});
-    }
-  });
-  app.appendChild(fab);
+    });
+    app.appendChild(fab);
+  }
 
   // Filter button handler
   filterBtn.addEventListener('click', () => {
     showFilterSheet(allContacts, filterBtn, ul, ownerContact, () => {
       const active = isFilterActive(filterState);
       filterBtn.className = 'filter-btn' + (active ? ' filter-btn--active' : '');
-      // Only show Share when a named @group is active
+      // Update share button visibility (Gallery shares from header)
       shareBtn.hidden = !filterState.group;
-      if (filterState.group) {
-        shareBtn.textContent = `⬆️ Share ${filterState.group}`;
-      } else {
-        shareBtn.textContent = '⬆️ Share';
-      }
+      shareBtn.textContent = filterState.group ? `⬆️ Share ${filterState.group}` : '⬆️ Share';
       currentContacts = applyFilterSort(allContacts, filterState);
       renderList(ul, currentContacts, ownerContact, db, onRefresh);
     });
   });
 
-  // Share button handler — active when a @group filter or @tag search is active
-  shareBtn.addEventListener('click', async () => {
+  // Share button handler
+  shareBtn.addEventListener('click', () => {
     const tag = filterState.group || shareBtn.dataset.shareTag;
-    if (!tag) return; // safety guard
-
-    const groupContacts = allContacts.filter(c =>
-      !(c.tags || []).includes('&owner') && (c.tags || []).includes(tag)
-    );
-    if (groupContacts.length === 0) return;
-
-    const encoded = encodeGroup(groupContacts, tag);
-    const base = window.location.origin + window.location.pathname;
-    const url = `${base}?importGroup=${encodeURIComponent(encoded)}`;
-
-    const subject = `Greatuncle group: ${tag}`;
-    const body = `Here are my ${tag} contacts from Greatuncle:\n\n${url}`;
-    const groupEmails = groupContacts.map(c => c.email).filter(Boolean);
-
-    // Mobile: native share sheet
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: subject, text: body });
-        return;
-      } catch (err) {
-        if (err.name === 'AbortError') return;
-        console.log('Web share failed, fallback to mailto');
-      }
-    }
-
-    // Desktop: open mailto in new tab so app stays open
-    const toField = groupEmails.join(',');
-    window.open(`mailto:${toField}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+    shareAction(tag);
   });
 
   // Live search
@@ -671,11 +733,9 @@ export async function renderPeople(db) {
 
     if (!query) {
       currentContacts = base;
-      renderList(ul, currentContacts, ownerContact, db, onRefresh);
-      // Reset share button to filter-state-only
-      const hasGroupFilter = !!filterState.group;
-      shareBtn.hidden = !hasGroupFilter;
-      shareBtn.textContent = hasGroupFilter ? `⬆️ Share ${filterState.group}` : '⬆️ Share';
+      // Reset share button to filter-state-only (Gallery shares from header)
+      shareBtn.hidden = !filterState.group;
+      shareBtn.textContent = filterState.group ? `⬆️ Share ${filterState.group}` : '⬆️ Share';
       return;
     }
 
@@ -709,10 +769,9 @@ export async function renderPeople(db) {
         delete shareBtn.dataset.shareTag;
       }
     } else {
-      // Non-group search — hide Share unless filter overlay has a group active
-      const hasGroupFilter = !!filterState.group;
-      shareBtn.hidden = !hasGroupFilter;
-      if (hasGroupFilter) {
+      // Non-group search — hide row share button (Gallery shares from header)
+      shareBtn.hidden = !filterState.group;
+      if (filterState.group) {
         shareBtn.textContent = `⬆️ Share ${filterState.group}`;
       }
       delete shareBtn.dataset.shareTag;

@@ -1,4 +1,5 @@
 import { saveContact, getAllContacts } from '../storage/contacts.js';
+import { generateId } from '../core/utils.js';
 
 export function renderOnboarding(db, onComplete) {
   const app = document.getElementById('app');
@@ -13,7 +14,7 @@ export function renderOnboarding(db, onComplete) {
 
   const tagline = document.createElement('p');
   tagline.className = 'onboarding-tagline';
-  tagline.textContent = 'Stay connected with the people who matter most.';
+  tagline.textContent = 'Smart reminders to help you stay in touch.';
 
   const nameInput = document.createElement('input');
   nameInput.type = 'text';
@@ -52,7 +53,7 @@ export function renderOnboarding(db, onComplete) {
 
     const now = Date.now();
     const owner = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       name,
       phone: null,
       email,
@@ -92,10 +93,19 @@ export function renderOnboarding(db, onComplete) {
     onComplete();
   });
 
+  const privacyNote = document.createElement('p');
+  privacyNote.className = 'onboarding-privacy-note';
+  privacyNote.style.fontSize = '0.85rem';
+  privacyNote.style.opacity = '0.7';
+  privacyNote.style.marginTop = '0.5rem';
+  privacyNote.style.lineHeight = '1.4';
+  privacyNote.textContent = 'Your name and email stay strictly on your device. Only you can choose to share them with others if you ever gift a group to someone else.';
+
   screen.appendChild(title);
   screen.appendChild(tagline);
   screen.appendChild(nameInput);
   screen.appendChild(emailInput);
+  screen.appendChild(privacyNote);
   screen.appendChild(submitBtn);
   app.appendChild(screen);
 

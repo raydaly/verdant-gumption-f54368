@@ -118,10 +118,42 @@ export async function renderShareReview(db) {
   const content = document.createElement('div');
   content.className = 'view-content';
 
-  const meta = document.createElement('p');
-  meta.className = 'share-review-meta';
-  meta.textContent = 'Decide how to handle these incoming contacts.';
-  content.appendChild(meta);
+  let importMeta = null;
+  try {
+    const rawMeta = sessionStorage.getItem('lastImportMeta');
+    if (rawMeta) importMeta = JSON.parse(rawMeta);
+  } catch(e) {}
+
+  if (importMeta) {
+    const welcomeCard = document.createElement('div');
+    welcomeCard.className = 'share-review-card';
+    welcomeCard.style.backgroundColor = 'var(--color-bg-elevated)';
+    welcomeCard.style.padding = '1.25rem';
+    welcomeCard.style.marginBottom = '1.5rem';
+    welcomeCard.style.border = '2px solid var(--color-primary)';
+    welcomeCard.style.borderRadius = 'var(--radius-l)';
+    
+    let greeting = 'Welcome!';
+    if (importMeta.recipientName) {
+      greeting = `Hi ${importMeta.recipientName},`;
+    }
+
+    const milestoneTxt = importMeta.hasMilestones ? ' and milestone (birthday) calendar' : '';
+    const groupTxt = importMeta.groupName ? ` the ${importMeta.groupName} address book` : ' these contacts';
+    
+    welcomeCard.innerHTML = `
+      <h2 style="margin-top: 0; margin-bottom: 0.5rem; font-family: var(--font-serif); color: var(--color-primary);">${greeting}</h2>
+      <p style="margin-bottom: 0; font-size: 1.05rem; line-height: 1.5;">
+        <strong>${importMeta.senderName}</strong> has shared${groupTxt}${milestoneTxt} with you. Here are the members:
+      </p>
+    `;
+    content.appendChild(welcomeCard);
+  } else {
+    const metaTxt = document.createElement('p');
+    metaTxt.className = 'share-review-meta';
+    metaTxt.textContent = 'Decide which of these contacts to add to your private circle.';
+    content.appendChild(metaTxt);
+  }
 
   // Auto-suggest bulk tag based on common incoming group tags
   const groupCounts = {};

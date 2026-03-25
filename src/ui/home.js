@@ -247,7 +247,7 @@ export async function renderHome(db, version = currentVersion) {
   if (due.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'empty-state';
-    empty.textContent = 'No one is due for a check-in right now.';
+    empty.textContent = 'No one is due for a check-in. Your smart reminders will appear here when it is time to stay in touch.';
     dueSection.appendChild(empty);
   } else {
     due.forEach(({ contact, daysOverdue }) => {

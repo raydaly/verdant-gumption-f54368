@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v38';
+var CACHE_NAME = 'greatuncle-v41';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -67,17 +67,16 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
 
+  // NETWORK-FIRST: always fetch fresh from network, update cache, fall back to cache if offline
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      if (cached) return cached;
-
-      return fetch(event.request).then(function (response) {
-        var responseClone = response.clone();
-        caches.open(CACHE_NAME).then(function (cache) {
-          cache.put(event.request, responseClone);
-        });
-        return response;
+    fetch(event.request).then(function (response) {
+      var responseClone = response.clone();
+      caches.open(CACHE_NAME).then(function (cache) {
+        cache.put(event.request, responseClone);
       });
+      return response;
+    }).catch(function () {
+      return caches.match(event.request);
     })
   );
 });

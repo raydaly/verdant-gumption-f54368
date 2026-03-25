@@ -4,6 +4,7 @@ import { navigate } from '../router.js';
 import { exportToCalendar } from '../../core/calendar.js';
 import { performStewardshipRitual } from '../stewardship.js';
 import { getOwner } from '../../storage/contacts.js';
+import { formatPhone } from '../../core/utils.js';
 
 /**
  * Renders the Connection Sheet (Contact Profile) for a specific contact.
@@ -11,6 +12,9 @@ import { getOwner } from '../../storage/contacts.js';
 export async function showContactProfile(db, contact, onRefresh) {
   const content = document.createElement('div');
   content.className = 'profile-sheet';
+
+  // Check ownership early — used in multiple sections
+  const owner = await getOwner(db);
 
   // Last Journal Entry
   const allLogs = await getAllLogs(db);
@@ -60,7 +64,17 @@ export async function showContactProfile(db, contact, onRefresh) {
   journalLabel.textContent = 'Last Interaction';
   journalBox.appendChild(journalLabel);
 
-  if (lastLog) {
+  if (!owner) {
+    // Gallery mode — show teaser instead of empty journal
+    const teaser = document.createElement('div');
+    teaser.className = 'profile-log-empty';
+    teaser.innerHTML = `🔒 <a href="#" class="btn-link" style="text-decoration:underline;">Save a backup</a> to log interactions and track your connection history.`;
+    teaser.querySelector('a').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await performStewardshipRitual(db);
+    });
+    journalBox.appendChild(teaser);
+  } else if (lastLog) {
     const logDate = new Date(lastLog.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
     const logEntry = document.createElement('div');
     logEntry.className = 'profile-last-log';
@@ -111,7 +125,30 @@ export async function showContactProfile(db, contact, onRefresh) {
   // Details & Tags
   const detailsBox = document.createElement('div');
   detailsBox.className = 'profile-details-box';
-  
+
+  // Readable contact details
+  const detailFields = [
+    { label: '📞 Phone', value: contact.phone ? formatPhone(contact.phone) : null },
+    { label: '📧 Email', value: contact.email },
+    { label: '📍 Address', value: contact.address },
+    { label: '🎂 Birthday', value: contact.birthday ? new Date(contact.birthday).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) : null },
+    { label: '💍 Anniversary', value: contact.anniversary ? new Date(contact.anniversary).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) : null },
+  ];
+
+  const hasDetails = detailFields.some(f => f.value);
+  if (hasDetails) {
+    const detailList = document.createElement('div');
+    detailList.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;font-size:0.9rem;';
+    detailFields.forEach(({ label, value }) => {
+      if (!value) return;
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:0.5rem;align-items:flex-start;';
+      row.innerHTML = `<span style="color:var(--color-text-muted);min-width:7rem;">${label}</span><span style="word-break:break-word;">${value}</span>`;
+      detailList.appendChild(row);
+    });
+    detailsBox.appendChild(detailList);
+  }
+
   const visibleTags = (contact.tags || []).filter(t => t.startsWith('@') || t.startsWith('#'));
   if (visibleTags.length > 0) {
     const tagsContainer = document.createElement('div');
@@ -125,24 +162,18 @@ export async function showContactProfile(db, contact, onRefresh) {
     detailsBox.appendChild(tagsContainer);
   }
 
-  const editBtn = document.createElement('button');
-  editBtn.className = 'trunk-btn trunk-btn--secondary';
-  editBtn.style.marginTop = '1.5rem';
-  editBtn.style.width = '100%';
-  editBtn.textContent = 'Edit Profile';
-  editBtn.addEventListener('click', async () => {
-    const owner = await getOwner(db);
-    if (!owner) {
-      performStewardshipRitual(db, () => {
-        close();
-        navigate('contact-form', { contactId: contact.id });
-      });
-    } else {
+  if (owner) {
+    const editBtn = document.createElement('button');
+    editBtn.className = 'trunk-btn trunk-btn--secondary';
+    editBtn.style.marginTop = '1.5rem';
+    editBtn.style.width = '100%';
+    editBtn.textContent = 'Edit Profile';
+    editBtn.addEventListener('click', () => {
       close();
       navigate('contact-form', { contactId: contact.id });
-    }
-  });
-  detailsBox.appendChild(editBtn);
+    });
+    detailsBox.appendChild(editBtn);
+  }
   
   content.appendChild(detailsBox);
 

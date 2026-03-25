@@ -7,6 +7,7 @@ import { showToast } from './components/toast.js';
 import { showConfirmDialog } from './components/confirm-dialog.js';
 import { goBack, navigate } from './router.js';
 import { sanitizeString } from '../core/sanitizer.js';
+import { generateId } from '../core/utils.js';
 
 const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
 
@@ -427,7 +428,7 @@ export async function renderContactForm(db, contactId) {
     const finalTags = [...newSystemTags, ...safeUserTags];
 
     const contact = {
-      id: existingContact?.id || crypto.randomUUID(),
+      id: existingContact?.id || generateId(),
       name,
       phone: safePhone,
       email: safeEmail,
