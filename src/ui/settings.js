@@ -101,10 +101,10 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
   profileTitle.textContent = 'My Profile';
   profileSection.appendChild(profileTitle);
 
-  const nameField = makeField('Name', 'text', owner?.name);
-  const phoneField = makeField('Phone', 'tel', owner?.phone);
-  const emailField = makeField('Email', 'email', owner?.email);
-  const tagsField = makeField('Tags (@group #topic)', 'text', owner?.tags?.filter(t => !t.startsWith('&')).join(' '));
+  const nameField = makeField('Name', 'text', owner?.n);
+  const phoneField = makeField('Phone', 'tel', owner?.ph);
+  const emailField = makeField('Email', 'email', owner?.em);
+  const tagsField = makeField('Tags (@group #topic)', 'text', owner?.t?.filter(t => !t.startsWith('&')).join(' '));
   tagsField.getInput().placeholder = 'e.g. @family #inner';
 
   const saveProfileBtn = document.createElement('button');
@@ -134,14 +134,14 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
 
     const updated = {
       ...owner,
-      name: safeName,
-      phone: safePhone,
-      email: safeEmail,
-      tags: [
-        ...(owner.tags || []).filter(t => t.startsWith('&')),
+      n: safeName,
+      ph: safePhone,
+      em: safeEmail,
+      t: [
+        ...(owner.t || []).filter(t => t.startsWith('&')),
         ...safeUserTags
       ],
-      updated_at: Date.now(),
+      ua: Date.now(),
     };
     await saveContact(db, updated);
     saveProfileBtn.textContent = 'Saved ✓';
@@ -324,7 +324,7 @@ function renderVisionTab(db, container, allContacts) {
   ];
 
   layers.forEach(layer => {
-    const count = allContacts.filter(c => (c.tags || []).includes(layer.tag)).length;
+    const count = allContacts.filter(c => (c.t || []).includes(layer.tag)).length;
     const percent = Math.min(100, (count / layer.limit) * 100);
     const isOver = count > layer.limit;
 
@@ -348,7 +348,7 @@ function renderVisionTab(db, container, allContacts) {
   // Tag Directory
   const tagCounts = {};
   allContacts.forEach(contact => {
-    (contact.tags || []).forEach(tag => {
+    (contact.t || []).forEach(tag => {
       if (!tag.startsWith('&')) {
         tagCounts[tag] = (tagCounts[tag] || 0) + 1;
       }

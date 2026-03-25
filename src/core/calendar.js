@@ -4,7 +4,7 @@
 export function exportToCalendar(contact, activity = "Connection") {
   if (!contact) return;
 
-  const title = `${activity}: ${contact.name}`;
+  const title = `${activity}: ${contact.n}`;
   const description = `${activity} via Greatuncle.`;
 
   const start = new Date();
@@ -34,7 +34,7 @@ export function exportToCalendar(contact, activity = "Connection") {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.setAttribute('download', `${contact.name.replace(/\s+/g, '_')}_${activity.replace(/\s+/g, '_')}.ics`);
+  link.setAttribute('download', `${(contact.n || 'Contact').replace(/\s+/g, '_')}_${activity.replace(/\s+/g, '_')}.ics`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

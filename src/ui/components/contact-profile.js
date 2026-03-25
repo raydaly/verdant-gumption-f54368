@@ -29,10 +29,10 @@ export async function showContactProfile(db, contact, onRefresh) {
   actionRow.className = 'profile-action-row';
 
   const actions = [
-    { label: 'Call', icon: '📞', href: contact.phone ? `tel:${contact.phone}` : null },
-    { label: 'Text', icon: '💬', href: contact.phone ? `sms:${contact.phone}` : null },
-    { label: 'Email', icon: '📧', href: contact.email ? `mailto:${contact.email}` : null },
-    { label: 'Map', icon: '📍', href: contact.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.address)}` : null },
+    { label: 'Call', icon: '📞', href: contact.ph ? `tel:${contact.ph}` : null },
+    { label: 'Text', icon: '💬', href: contact.ph ? `sms:${contact.ph}` : null },
+    { label: 'Email', icon: '📧', href: contact.em ? `mailto:${contact.em}` : null },
+    { label: 'Map', icon: '📍', href: contact.ad ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contact.ad)}` : null },
   ];
 
   actions.forEach(act => {
@@ -90,7 +90,7 @@ export async function showContactProfile(db, contact, onRefresh) {
     moreBtn.textContent = 'View full history →';
     moreBtn.addEventListener('click', () => {
       close();
-      navigate('journal', { search: contact.name });
+      navigate('journal', { search: contact.n });
     });
     journalBox.appendChild(moreBtn);
   } else {
@@ -103,7 +103,7 @@ export async function showContactProfile(db, contact, onRefresh) {
   content.appendChild(journalBox);
 
   // Notes
-  if (contact.notes) {
+  if (contact.no) {
     const notesBox = document.createElement('div');
     notesBox.className = 'profile-journal-box';
     notesBox.style.marginTop = '1rem';
@@ -116,7 +116,7 @@ export async function showContactProfile(db, contact, onRefresh) {
     const notesText = document.createElement('div');
     notesText.className = 'profile-log-comment';
     notesText.style.whiteSpace = 'pre-line';
-    notesText.textContent = contact.notes;
+    notesText.textContent = contact.no;
     notesBox.appendChild(notesText);
 
     content.appendChild(notesBox);
@@ -128,11 +128,11 @@ export async function showContactProfile(db, contact, onRefresh) {
 
   // Readable contact details
   const detailFields = [
-    { label: '📞 Phone', value: contact.phone ? formatPhone(contact.phone) : null },
-    { label: '📧 Email', value: contact.email },
-    { label: '📍 Address', value: contact.address },
-    { label: '🎂 Birthday', value: contact.birthday ? new Date(contact.birthday).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) : null },
-    { label: '💍 Anniversary', value: contact.anniversary ? new Date(contact.anniversary).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) : null },
+    { label: '📞 Phone', value: contact.ph ? formatPhone(contact.ph) : null },
+    { label: '📧 Email', value: contact.em },
+    { label: '📍 Address', value: contact.ad },
+    { label: '🎂 Birthday', value: contact.bd ? (contact.bd.startsWith('0000-') ? contact.bd.split('-').slice(1).join('-') : new Date(contact.bd).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })) : null },
+    { label: '💍 Anniversary', value: contact.av ? (contact.av.startsWith('0000-') ? contact.av.split('-').slice(1).join('-') : new Date(contact.av).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })) : null },
   ];
 
   const hasDetails = detailFields.some(f => f.value);
@@ -149,7 +149,7 @@ export async function showContactProfile(db, contact, onRefresh) {
     detailsBox.appendChild(detailList);
   }
 
-  const visibleTags = (contact.tags || []).filter(t => t.startsWith('@') || t.startsWith('#'));
+  const visibleTags = (contact.t || []).filter(t => t.startsWith('@') || t.startsWith('#'));
   if (visibleTags.length > 0) {
     const tagsContainer = document.createElement('div');
     tagsContainer.className = 'profile-tags';
@@ -178,7 +178,7 @@ export async function showContactProfile(db, contact, onRefresh) {
   content.appendChild(detailsBox);
 
   const { close } = showBottomSheet({
-    title: contact.name,
+    title: contact.n,
     content
   });
 }

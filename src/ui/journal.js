@@ -102,7 +102,7 @@ export async function renderJournal(db, params = {}) {
   const [logs, contacts] = await Promise.all([getAllLogs(db), getAllContacts(db)]);
 
   const nameMap = {};
-  contacts.forEach(c => { nameMap[c.id] = c.name; });
+  contacts.forEach(c => { nameMap[c.id] = c.n; });
 
   app.innerHTML = '';
   // Header

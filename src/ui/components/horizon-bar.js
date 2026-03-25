@@ -21,7 +21,7 @@ export async function updateHorizonBar(db) {
   
   // Count dirty contacts efficiently-ish 
   // (We could use the index, but for < 150 contacts, filter is fine)
-  const dirtyCount = allContacts.filter(c => (c.tags || []).includes('&dirty')).length;
+  const dirtyCount = allContacts.filter(c => (c.t || []).includes('&dirty')).length;
   const totalVolatility = dirtyCount + deletedSinceExport.length;
 
   const daysSinceExport = lastExport 

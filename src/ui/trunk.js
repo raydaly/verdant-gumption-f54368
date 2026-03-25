@@ -91,14 +91,14 @@ export async function renderTrunk(db) {
   // Collect all @group tags
   const groupTags = [];
   allContacts.forEach(c => {
-    (c.tags || []).filter(t => t.startsWith('@')).forEach(t => {
+    (c.t || []).filter(t => t.startsWith('@')).forEach(t => {
       if (!groupTags.includes(t)) groupTags.push(t);
     });
   });
   groupTags.sort();
 
-  const ownerRecord = allContacts.find(c => (c.tags || []).includes('&owner'));
-  const senderName = ownerRecord ? ownerRecord.name : 'Someone';
+  const ownerRecord = allContacts.find(c => (c.t || []).includes('&owner'));
+  const senderName = ownerRecord ? ownerRecord.n : 'Someone';
 
   const shareRow = document.createElement('div');
   shareRow.className = 'trunk-share-group';
@@ -152,11 +152,11 @@ export async function renderTrunk(db) {
 
   const personList = document.createElement('datalist');
   personList.id = 'share-people-list';
-  const nonOwners = allContacts.filter(c => !(c.tags || []).includes('&owner'));
-  nonOwners.sort((a, b) => a.name.localeCompare(b.name));
+  const nonOwners = allContacts.filter(c => !(c.t || []).includes('&owner'));
+  nonOwners.sort((a, b) => (a.n || '').localeCompare(b.n || ''));
   nonOwners.forEach(c => {
     const opt = document.createElement('option');
-    opt.value = c.name;
+    opt.value = c.n;
     personList.appendChild(opt);
   });
 
@@ -198,7 +198,7 @@ export async function renderTrunk(db) {
   datalist.id = 'share-recipients-list';
   nonOwners.forEach(c => {
     const opt = document.createElement('option');
-    opt.value = c.name;
+    opt.value = c.n;
     datalist.appendChild(opt);
   });
   
@@ -213,7 +213,7 @@ export async function renderTrunk(db) {
     const mode = shareModeSelect.value;
     if (mode === 'group' && groupSelect.value) return 'group:' + groupSelect.value;
     if (mode === 'person' && personSearch.value) {
-      const p = nonOwners.find(c => c.name.toLowerCase() === personSearch.value.toLowerCase());
+      const p = nonOwners.find(c => (c.n || '').toLowerCase() === personSearch.value.toLowerCase());
       if (p) return 'contact:' + p.id;
     }
     return null;
@@ -239,7 +239,7 @@ export async function renderTrunk(db) {
     if (val.startsWith('group:')) {
       const tag = val.slice(6);
       const groupContacts = allContacts.filter(c =>
-        !(c.tags || []).includes('&owner') && (c.tags || []).includes(tag)
+        !(c.t || []).includes('&owner') && (c.t || []).includes(tag)
       );
       if (groupContacts.length === 0) return;
       payload = buildPayload('group', { groupTag: tag, contacts: groupContacts }, senderName, recipientName);
@@ -288,7 +288,7 @@ export async function renderTrunk(db) {
 
     if (val.startsWith('group:')) {
       const tag = val.slice(6);
-      suggestedMembers = allContacts.filter(c => !(c.tags || []).includes('&owner') && (c.tags || []).includes(tag));
+      suggestedMembers = allContacts.filter(c => !(c.t || []).includes('&owner') && (c.t || []).includes(tag));
       
       if (suggestedMembers.length > 40) {
         sizeWarning.style.display = 'block';
@@ -330,7 +330,7 @@ export async function renderTrunk(db) {
     };
 
     suggestedMembers.forEach(m => {
-      recipientChips.appendChild(createChip(m.name));
+      recipientChips.appendChild(createChip(m.n));
     });
 
     const otherBtn = createChip('Someone else...', true);
@@ -364,8 +364,8 @@ export async function renderTrunk(db) {
     const recipientName = recipientInput.value.trim() || null;
     let recipientEmail = null;
     if (recipientName) {
-      const rec = allContacts.find(c => c.name.toLowerCase() === recipientName.toLowerCase());
-      if (rec && rec.email) recipientEmail = rec.email;
+      const rec = allContacts.find(c => (c.n || '').toLowerCase() === recipientName.toLowerCase());
+      if (rec && rec.em) recipientEmail = rec.em;
     }
 
     let encoded, subject, body;
@@ -374,7 +374,7 @@ export async function renderTrunk(db) {
     if (val.startsWith('group:')) {
       const tag = val.slice(6);
       const groupContacts = allContacts.filter(c =>
-        !(c.tags || []).includes('&owner') && (c.tags || []).includes(tag)
+        !(c.t || []).includes('&owner') && (c.t || []).includes(tag)
       );
       if (groupContacts.length === 0) return;
       encoded = encodeGroup(groupContacts, tag, senderName, recipientName);
@@ -384,7 +384,7 @@ export async function renderTrunk(db) {
       body = `I'm using Greatuncle to stay connected with the people who matter most. It's a private, local-first app for staying in touch. When you click, you'll get instant access to the address book and a shared birthday/milestone calendar for our (${tag}) group. No login, no cloud, just connection.\n\nIf you have any concerns let me know. Obviously I use it and would not have shared it with you unless I thought it was safe and private.\n\n${url}`;
       
       // Collect emails for fallback mailto
-      groupEmails = groupContacts.map(c => c.email).filter(Boolean);
+      groupEmails = groupContacts.map(c => c.em).filter(Boolean);
       
     } else if (val.startsWith('contact:')) {
       const contactId = val.slice(8);
@@ -393,8 +393,8 @@ export async function renderTrunk(db) {
       encoded = encodeInvite(contact, senderName, recipientName);
       const base = window.location.origin + window.location.pathname;
       const url = `${base}?invite=${encodeURIComponent(encoded)}`;
-      subject = `Greatuncle Contact: ${contact.name}`;
-      body = `I'm using Greatuncle to stay connected with the people who matter most. It's a private, local-first app for staying in touch. I'd like to share ${contact.name}'s contact info with you. When you click, you'll get instant access to their details and milestone info. No login, no cloud, just connection.\n\nIf you have any concerns let me know. Obviously I use it and would not have shared it with you unless I thought it was safe and private.\n\n${url}`;
+      subject = `Greatuncle Contact: ${contact.n}`;
+      body = `I'm using Greatuncle to stay connected with the people who matter most. It's a private, local-first app for staying in touch. I'd like to share ${contact.n}'s contact info with you. When you click, you'll get instant access to their details and milestone info. No login, no cloud, just connection.\n\nIf you have any concerns let me know. Obviously I use it and would not have shared it with you unless I thought it was safe and private.\n\n${url}`;
     } else {
       return;
     }
@@ -683,8 +683,8 @@ export async function renderTrunk(db) {
   printBtn.addEventListener('click', async () => {
     const contacts = await getAllContacts(db);
     const nonOwners = contacts
-      .filter(c => !(c.tags || []).includes('&owner'))
-      .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+      .filter(c => !(c.t || []).includes('&owner'))
+      .sort((a, b) => (a.n || '').toLowerCase().localeCompare((b.n || '').toLowerCase()));
 
     const printEl = document.createElement('div');
     printEl.className = 'print-contact-list';
@@ -699,13 +699,13 @@ export async function renderTrunk(db) {
 
       const name = document.createElement('div');
       name.className = 'print-contact-name';
-      name.textContent = c.name;
+      name.textContent = c.n;
 
       const details = document.createElement('div');
       details.className = 'print-contact-details';
       
-      const visibleTags = (c.tags || []).filter(t => t.startsWith('@') || t.startsWith('#'));
-      const parts = [c.phone, c.email, c.address].filter(Boolean);
+      const visibleTags = (c.t || []).filter(t => t.startsWith('@') || t.startsWith('#'));
+      const parts = [c.ph, c.em, c.ad].filter(Boolean);
       
       let detailsText = parts.join(' · ');
       if (visibleTags.length > 0) {
@@ -889,7 +889,7 @@ export async function renderTrunk(db) {
       if (contacts.length > 0) {
         auditBox.style.display = 'block';
         nourishBtn.style.display = 'block';
-        const names = contacts.map(c => c.name).join(', ');
+        const names = contacts.map(c => c.n).join(', ');
         auditBox.innerHTML = `
           <div style="color: var(--color-success); font-weight: 500; margin-bottom: 0.25rem;">✅ Sanctity Check Passed</div>
           <div style="font-size: 0.85rem; opacity: 0.8;">Safe to import <strong>${contacts.length}</strong> people: ${names}</div>
@@ -946,7 +946,7 @@ export async function renderTrunk(db) {
   const diagBasic = document.createElement('div');
   diagBasic.className = 'trunk-diagnostics';
   diagBasic.innerHTML =
-    `Architect: ${ownerRecord ? ownerRecord.name : '<b>Not Claimed (Gallery Mode)</b>'}<br>` +
+    `Architect: ${ownerRecord ? ownerRecord.n : '<b>Not Claimed (Gallery Mode)</b>'}<br>` +
     `Contacts: ${allContacts.length}<br>` +
     `Interactions logged: ${allLogs.length}`;
 
@@ -954,9 +954,9 @@ export async function renderTrunk(db) {
   diagDetail.className = 'trunk-diagnostics diag-detail';
   diagDetail.hidden = true;
 
-  const dirtyCount = allContacts.filter(c => (c.tags || []).includes('&dirty')).length;
+  const dirtyCount = allContacts.filter(c => (c.t || []).includes('&dirty')).length;
   const deletedIds = getDeletedSinceExport();
-  const nonOwnerCount = allContacts.filter(c => !(c.tags || []).includes('&owner')).length;
+  const nonOwnerCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
   diagDetail.innerHTML =
     `Claim status: ${ownerRecord ? 'Active' : 'Awaiting claim'}<br>` +
     `Non-owner contacts: ${nonOwnerCount}<br>` +

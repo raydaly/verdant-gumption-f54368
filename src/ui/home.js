@@ -39,7 +39,7 @@ async function showGatheringMode(db, dueItems, onDone) {
 
     const lbl = document.createElement('label');
     lbl.htmlFor = checkId;
-    lbl.textContent = contact.name;
+    lbl.textContent = contact.n;
 
     row.appendChild(checkbox);
     row.appendChild(lbl);
@@ -82,7 +82,7 @@ async function showGatheringMode(db, dueItems, onDone) {
       await addLog(db, contactId, now, comment);
       const contact = contacts.find(c => c.id === contactId);
       if (contact) {
-        await saveContact(db, { ...contact, last_contacted: now });
+        await saveContact(db, { ...contact, lc: now });
       }
     }
 
@@ -206,12 +206,13 @@ export async function renderHome(db, version = currentVersion) {
 
       const name = document.createElement('div');
       name.className = 'event-name';
-      name.textContent = contact.name;
+      name.textContent = contact.n;
 
       const date = document.createElement('div');
       date.className = 'event-date';
-      const age = (settings.showAge && contact[type]) ? (() => {
-          const md = getMonthDay(contact[type]);
+      const key = type === 'birthday' ? 'bd' : 'av';
+      const age = (settings.showAge && contact[key]) ? (() => {
+          const md = getMonthDay(contact[key]);
           const eventAge = md ? (new Date(new Date().getFullYear() + (md.month < new Date().getMonth() || (md.month === new Date().getMonth() && md.day < new Date().getDate()) ? 1 : 0), md.month, md.day).getFullYear() - md.year) : null;
           if (!eventAge || eventAge < 0) return '';
           const suffix = (eventAge % 10 === 1 && eventAge !== 11) ? 'st' : 
@@ -257,12 +258,12 @@ export async function renderHome(db, version = currentVersion) {
       const info = document.createElement('div');
       info.className = 'due-row-info';
 
-      const isLegacy = (contact.tags || []).includes('&legacy');
+      const isLegacy = (contact.t || []).includes('&legacy');
       if (isLegacy) row.classList.add('due-row--legacy');
 
       const name = document.createElement('div');
       name.className = 'due-row-name';
-      name.textContent = contact.name;
+      name.textContent = contact.n;
 
       if (isLegacy) {
         const dove = document.createElement('span');
@@ -289,7 +290,7 @@ export async function renderHome(db, version = currentVersion) {
       metaText.textContent = formatDaysOverdue(daysOverdue);
       meta.appendChild(metaText);
 
-      const visibleTags = (contact.tags || []).filter(t => t.startsWith('@') || t.startsWith('#'));
+      const visibleTags = (contact.t || []).filter(t => t.startsWith('@') || t.startsWith('#'));
       if (visibleTags.length > 0) {
         const spacer = document.createElement('span');
         spacer.textContent = ' · ';
@@ -327,7 +328,7 @@ export async function renderHome(db, version = currentVersion) {
       snoozeBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const snoozeUntil = Date.now() + getSnoozeMs(settings);
-        await saveContact(db, { ...contact, snooze_until: snoozeUntil, updated_at: Date.now() });
+        await saveContact(db, { ...contact, su: snoozeUntil, ua: Date.now() });
         renderHome(db);
       });
 

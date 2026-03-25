@@ -151,11 +151,11 @@ export async function renderContactForm(db, contactId) {
   }
 
   const isEdit = !!existingContact;
-  const isOwner = isEdit && (existingContact.tags || []).includes('&owner');
+  const isOwner = isEdit && (existingContact.t || []).includes('&owner');
   const title = isEdit ? 'Edit Contact' : 'New Contact';
   const settings = await getSettings(db);
 
-  let currentTags = existingContact ? [...(existingContact.tags || [])] : [];
+  let currentTags = existingContact ? [...(existingContact.t || [])] : [];
   let currentLevelTag = currentTags.find(t => LEVEL_TAGS.includes(t)) || null;
 
   const formView = document.createElement('div');
@@ -212,11 +212,11 @@ export async function renderContactForm(db, contactId) {
     return field;
   }
 
-  const nameField = makeTextField('Name', 'text', existingContact?.name);
-  const phoneField = makeTextField('Phone', 'tel', existingContact?.phone);
-  const emailField = makeTextField('Email', 'email', existingContact?.email);
-  const addressField = makeTextField('Address', 'text', existingContact?.address);
-  const zipField = makeTextField('Zip code', 'text', existingContact?.zip_code);
+  const nameField = makeTextField('Name', 'text', existingContact?.n);
+  const phoneField = makeTextField('Phone', 'tel', existingContact?.ph);
+  const emailField = makeTextField('Email', 'email', existingContact?.em);
+  const addressField = makeTextField('Address', 'text', existingContact?.ad);
+  const zipField = makeTextField('Zip code', 'text', existingContact?.zp);
 
   const nameInput = nameField.getInput();
   nameInput.setAttribute('autocomplete', 'name');
@@ -279,14 +279,14 @@ export async function renderContactForm(db, contactId) {
   datesLabel.textContent = 'Dates';
   datesSection.appendChild(datesLabel);
 
-  const birthdayField = buildDateField('Birthday', existingContact?.birthday || null);
-  const anniversaryField = buildDateField('Anniversary', existingContact?.anniversary || null);
+  const birthdayField = buildDateField('Birthday', existingContact?.bd || null);
+  const anniversaryField = buildDateField('Anniversary', existingContact?.av || null);
   datesSection.appendChild(birthdayField);
   datesSection.appendChild(anniversaryField);
 
   let dateOfPassingField = null;
   if (settings.trackLegacy) {
-    dateOfPassingField = buildDateField('Date of passing', existingContact?.date_of_passing || null);
+    dateOfPassingField = buildDateField('Date of passing', existingContact?.dp || null);
     datesSection.appendChild(dateOfPassingField);
   }
 
@@ -308,7 +308,7 @@ export async function renderContactForm(db, contactId) {
   notesInput.style.minHeight = '100px';
   notesInput.style.resize = 'vertical';
   notesInput.placeholder = 'Background, connections, context…';
-  notesInput.value = existingContact?.notes || '';
+  notesInput.value = existingContact?.no || '';
   notesInput.maxLength = 1000;
   notesField.appendChild(notesInput);
   notesSection.appendChild(notesField);
@@ -368,7 +368,7 @@ export async function renderContactForm(db, contactId) {
     deleteBtn.addEventListener('click', () => {
       showConfirmDialog({
         title: 'Delete contact',
-        message: `Delete ${existingContact.name}? This will remove them from your circle.`,
+        message: `Delete ${existingContact.n}? This will remove them from your circle.`,
         onConfirm: async () => {
           // Snapshot before deletion for undo
           const deletedContact = { ...existingContact };
@@ -407,7 +407,7 @@ export async function renderContactForm(db, contactId) {
     let name = sanitizeString(nameInput.value, 100);
     if (!name) return;
 
-    const originalAddress = existingContact?.address || null;
+    const originalAddress = existingContact?.ad || null;
     let newAddress = sanitizeString(addressField.getInput().value, 200);
 
     let safePhone = sanitizeString(phoneField.getInput().value, 50);
@@ -429,22 +429,22 @@ export async function renderContactForm(db, contactId) {
 
     const contact = {
       id: existingContact?.id || generateId(),
-      name,
-      phone: safePhone,
-      email: safeEmail,
-      address: newAddress,
-      zip_code: safeZip,
-      birthday: birthdayField.getValue(),
-      anniversary: anniversaryField.getValue(),
-      date_of_passing: dateOfPassingField
+      n: name,
+      ph: safePhone,
+      em: safeEmail,
+      ad: newAddress,
+      zp: safeZip,
+      bd: birthdayField.getValue(),
+      av: anniversaryField.getValue(),
+      dp: dateOfPassingField
         ? dateOfPassingField.getValue()
-        : (existingContact?.date_of_passing ?? null),
-      tags: finalTags,
-      last_contacted: existingContact?.last_contacted || null,
-      snooze_until: existingContact?.snooze_until || null,
-      notes: safeNotes,
-      created_at: existingContact?.created_at || Date.now(),
-      updated_at: Date.now(),
+        : (existingContact?.dp ?? null),
+      t: finalTags,
+      lc: existingContact?.lc || null,
+      su: existingContact?.su || null,
+      no: safeNotes,
+      ca: existingContact?.ca || Date.now(),
+      ua: Date.now(),
     };
 
     await saveContact(db, contact);
@@ -453,18 +453,18 @@ export async function renderContactForm(db, contactId) {
     if (isEdit && originalAddress && newAddress !== originalAddress) {
       const allContacts = await getAllContacts(db);
       const candidates = allContacts.filter(c =>
-        c.address === originalAddress && c.id !== contact.id
+        c.ad === originalAddress && c.id !== contact.id
       );
       if (candidates.length > 0) {
-        const names = candidates.map(c => c.name).join(', ');
+        const names = candidates.map(c => c.n).join(', ');
         const confirmed = window.confirm(
           `Also update address for ${names}?`
         );
         if (confirmed) {
           for (const c of candidates) {
-            const updatedTags = [...(c.tags || [])];
+            const updatedTags = [...(c.t || [])];
             if (!updatedTags.includes('&dirty')) updatedTags.push('&dirty');
-            await saveContact(db, { ...c, address: newAddress, tags: updatedTags, updated_at: Date.now() });
+            await saveContact(db, { ...c, ad: newAddress, t: updatedTags, ua: Date.now() });
           }
         }
       }

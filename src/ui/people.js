@@ -29,33 +29,33 @@ function applyFilterSort(contacts, state) {
   let result = [...contacts];
 
   if (state.layer) {
-    result = result.filter(c => (c.tags || []).includes(state.layer));
+    result = result.filter(c => (c.t || []).includes(state.layer));
   }
 
   if (state.group) {
-    result = result.filter(c => (c.tags || []).includes(state.group));
+    result = result.filter(c => (c.t || []).includes(state.group));
   }
 
   switch (state.sort) {
     case 'za':
-      result.sort((a, b) => b.name.toLowerCase().localeCompare(a.name.toLowerCase()));
+      result.sort((a, b) => (b.n || '').toLowerCase().localeCompare((a.n || '').toLowerCase()));
       break;
     case 'recent':
       result.sort((a, b) => {
-        if (!a.last_contacted) return 1;
-        if (!b.last_contacted) return -1;
-        return new Date(b.last_contacted) - new Date(a.last_contacted);
+        if (!a.lc) return 1;
+        if (!b.lc) return -1;
+        return new Date(b.lc) - new Date(a.lc);
       });
       break;
     case 'oldest':
       result.sort((a, b) => {
-        if (!a.last_contacted) return 1;
-        if (!b.last_contacted) return -1;
-        return new Date(a.last_contacted) - new Date(b.last_contacted);
+        if (!a.lc) return 1;
+        if (!b.lc) return -1;
+        return new Date(a.lc) - new Date(b.lc);
       });
       break;
     default: // 'az'
-      result.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+      result.sort((a, b) => (a.n || '').toLowerCase().localeCompare((b.n || '').toLowerCase()));
   }
 
   return result;
@@ -74,7 +74,7 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
 
   const nameRow = document.createElement('div');
   nameRow.className = 'contact-row-name';
-  nameRow.textContent = contact.name;
+  nameRow.textContent = contact.n;
 
   if (isOwner) {
     const badge = document.createElement('span');
@@ -83,7 +83,7 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
     nameRow.appendChild(badge);
   }
 
-  const isLegacy = (contact.tags || []).includes('&legacy');
+  const isLegacy = (contact.t || []).includes('&legacy');
   if (isLegacy) {
     li.classList.add('contact-row--legacy');
     const dove = document.createElement('span');
@@ -95,7 +95,7 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
   const meta = document.createElement('div');
   meta.className = 'contact-row-meta';
 
-  const visibleTags = (contact.tags || []).filter(t => t.startsWith('@') || t.startsWith('#'));
+  const visibleTags = (contact.t || []).filter(t => t.startsWith('@') || t.startsWith('#'));
   visibleTags.forEach(tag => {
     const pill = document.createElement('span');
     pill.className = 'layer-badge';
@@ -119,10 +119,10 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
     const actions = document.createElement('div');
     actions.className = 'contact-row-actions';
 
-    if (contact.phone) {
+    if (contact.ph) {
       const smsBtn = document.createElement('a');
       smsBtn.className = 'contact-action-btn';
-      smsBtn.href = `sms:${contact.phone}`;
+      smsBtn.href = `sms:${contact.ph}`;
       smsBtn.textContent = '💬';
       smsBtn.setAttribute('aria-label', 'Send SMS');
       smsBtn.setAttribute('title', 'Send SMS');
@@ -131,7 +131,7 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
 
       const callBtn = document.createElement('a');
       callBtn.className = 'contact-action-btn';
-      callBtn.href = `tel:${contact.phone}`;
+      callBtn.href = `tel:${contact.ph}`;
       callBtn.textContent = '📞';
       callBtn.setAttribute('aria-label', 'Call');
       callBtn.setAttribute('title', 'Call');
@@ -139,10 +139,10 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
       actions.appendChild(callBtn);
     }
 
-    if (contact.email) {
+    if (contact.em) {
       const emailBtn = document.createElement('a');
       emailBtn.className = 'contact-action-btn';
-      emailBtn.href = `mailto:${contact.email}`;
+      emailBtn.href = `mailto:${contact.em}`;
       emailBtn.textContent = '📧';
       emailBtn.setAttribute('aria-label', 'Send email');
       emailBtn.setAttribute('title', 'Send email');
@@ -169,7 +169,7 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
         e.stopPropagation();
         const settings = await getSettings(db);
         const snoozeUntil = Date.now() + getSnoozeMs(settings);
-        await saveContact(db, { ...contact, snooze_until: snoozeUntil, updated_at: Date.now() });
+        await saveContact(db, { ...contact, su: snoozeUntil, ua: Date.now() });
         if (onRefresh) onRefresh();
       });
       actions.appendChild(snoozeBtn);
@@ -296,7 +296,7 @@ function showFilterSheet(allContacts, filterBtn, ul, ownerContact, applyCallback
   // Group filter section
   const allGroups = [];
   allContacts.forEach(c => {
-    (c.tags || []).filter(t => t.startsWith('@')).forEach(t => {
+    (c.t || []).filter(t => t.startsWith('@')).forEach(t => {
       if (!allGroups.includes(t)) allGroups.push(t);
     });
   });
@@ -364,10 +364,10 @@ export async function renderPeople(db) {
   app.innerHTML = '<div class="view-loading"><div class="view-loading-spinner"></div><span>Scanning your circle...</span></div>';
 
   const allContacts = await getAllContacts(db);
-  const ownerContact = allContacts.find(c => (c.tags || []).includes('&owner'));
+  const ownerContact = allContacts.find(c => (c.t || []).includes('&owner'));
   document.body.setAttribute('data-is-owned', !!ownerContact);
   
-  const nonOwnerCount = allContacts.filter(c => !(c.tags || []).includes('&owner')).length;
+  const nonOwnerCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
   console.log('Architect status:', ownerContact ? 'Claimed' : 'Gallery mode');
 
   const sortedAll = applyFilterSort(allContacts, filterState);
@@ -479,8 +479,8 @@ export async function renderPeople(db) {
   printBtn.addEventListener('click', async () => {
     const contacts = await getAllContacts(db);
     const nonOwners = contacts
-      .filter(c => !(c.tags || []).includes('&owner'))
-      .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+      .filter(c => !(c.t || []).includes('&owner'))
+      .sort((a, b) => (a.n || '').toLowerCase().localeCompare((b.n || '').toLowerCase()));
 
     const printEl = document.createElement('div');
     printEl.className = 'print-contact-list';
@@ -495,11 +495,11 @@ export async function renderPeople(db) {
 
       const name = document.createElement('div');
       name.className = 'print-contact-name';
-      name.textContent = c.name;
+      name.textContent = c.n;
 
       const details = document.createElement('div');
       details.className = 'print-contact-details';
-      const parts = [c.phone, c.email, c.address].filter(Boolean);
+      const parts = [c.ph, c.em, c.ad].filter(Boolean);
       details.textContent = parts.join(' · ');
 
       row.appendChild(name);
@@ -525,12 +525,12 @@ export async function renderPeople(db) {
     const base = `${window.location.origin}${window.location.pathname}`;
 
     if (tag) {
-      const contactsInGroup = allContacts.filter(c => (c.tags || []).includes(tag) && !(c.tags || []).includes('&owner'));
+      const contactsInGroup = allContacts.filter(c => (c.t || []).includes(tag) && !(c.t || []).includes('&owner'));
       const groupCode = encodeGroup(contactsInGroup, tag);
       shareUrl = `${base}?importGroup=${groupCode}`;
     } else {
       // Full circle share
-      const allNonOwners = allContacts.filter(c => !(c.tags || []).includes('&owner'));
+      const allNonOwners = allContacts.filter(c => !(c.t || []).includes('&owner'));
       const groupCode = encodeGroup(allNonOwners, 'Shared Circle');
       shareUrl = `${base}?importGroup=${groupCode}`;
     }
@@ -745,10 +745,10 @@ export async function renderPeople(db) {
 
     if (query.startsWith('#') || query.startsWith('@')) {
       filtered = base.filter(c =>
-        (c.tags || []).some(t => t.toLowerCase().startsWith(query))
+        (c.t || []).some(t => t.toLowerCase().startsWith(query))
       );
     } else {
-      filtered = base.filter(c => c.name.toLowerCase().includes(query));
+      filtered = base.filter(c => (c.n || '').toLowerCase().includes(query));
     }
 
     currentContacts = filtered;
@@ -758,7 +758,7 @@ export async function renderPeople(db) {
     if (isPureGroupTag) {
       // Find exact tag match from actual contacts
       const exactTag = allContacts
-        .flatMap(c => c.tags || [])
+        .flatMap(c => c.t || [])
         .find(t => t.toLowerCase() === query);
       if (exactTag) {
         shareBtn.hidden = false;

@@ -102,9 +102,9 @@ export function getUpcomingMilestones(contacts, daysLimit = 31) {
   
   contacts.forEach(c => {
     const events = [
-      { type: 'Birthday', icon: '🎂', val: c.birthday },
-      { type: 'Anniversary', icon: '💍', val: c.anniversary },
-      { type: 'Legacy', icon: '🌿', val: c.date_of_passing }
+      { type: 'Birthday', icon: '🎂', val: c.bd },
+      { type: 'Anniversary', icon: '💍', val: c.av },
+      { type: 'Legacy', icon: '🌿', val: c.dp }
     ];
 
     events.forEach(e => {
@@ -113,7 +113,7 @@ export function getUpcomingMilestones(contacts, daysLimit = 31) {
         const days = getDaysUntil(md.month, md.day);
         if (days >= 0 && days <= daysLimit) {
           milestones.push({
-            name: c.name,
+            name: c.n,
             type: e.type,
             icon: e.icon,
             month: md.month,
@@ -136,16 +136,16 @@ export function getFullYearMilestones(contacts) {
   const all = [];
   contacts.forEach(c => {
     const events = [
-      { type: 'Birthday', icon: '🎂', val: c.birthday },
-      { type: 'Anniversary', icon: '💍', val: c.anniversary },
-      { type: 'Legacy', icon: '🌿', val: c.date_of_passing }
+      { type: 'Birthday', icon: '🎂', val: c.bd },
+      { type: 'Anniversary', icon: '💍', val: c.av },
+      { type: 'Legacy', icon: '🌿', val: c.dp }
     ];
 
     events.forEach(e => {
       const md = getMonthDay(e.val);
       if (md) {
         all.push({
-          name: c.name,
+          name: c.n,
           type: e.type,
           icon: e.icon,
           month: md.month,

@@ -1,7 +1,7 @@
 import { getAllContacts, saveContact, deleteContact } from '../storage/contacts.js';
 import { navigate } from './router.js';
 
-const DIFF_FIELDS = ['phone', 'email', 'address', 'zip_code', 'birthday', 'anniversary'];
+const DIFF_FIELDS = ['ph', 'em', 'ad', 'zp', 'bd', 'av'];
 
 function normalizePhone(p) {
   if (!p) return '';
@@ -17,7 +17,7 @@ export async function renderShareReview(db) {
   app.innerHTML = '';
 
   const allContacts = await getAllContacts(db);
-  const pending = allContacts.filter(c => (c.tags || []).includes('&share'));
+  const pending = allContacts.filter(c => (c.t || []).includes('&share'));
 
   if (pending.length === 0) {
     navigate('people');
@@ -60,7 +60,7 @@ export async function renderShareReview(db) {
       if (match) {
         // If there are zero conflicts, we can auto-accept
         let hasConflict = false;
-        const updates = { tags: new Set(match.tags || []) };
+        const updates = { t: new Set(match.t || []) };
         for (const f of DIFF_FIELDS) {
           if (p[f] && match[f] && p[f].toString() !== match[f].toString()) {
             hasConflict = true; 
@@ -72,7 +72,7 @@ export async function renderShareReview(db) {
         }
 
         if (!hasConflict) {
-          const merged = { ...match, ...updates, tags: [...updates.tags, '&dirty'], updated_at: Date.now() };
+          const merged = { ...match, ...updates, t: [...updates.t, '&dirty'], ua: Date.now() };
           await saveContact(db, merged);
           count++;
         }
@@ -96,12 +96,12 @@ export async function renderShareReview(db) {
     
     if (confirm(`Add all ${newOnes.length} new people to your circle?`)) {
       for (const p of newOnes) {
-        const incomingTags = (p.tags || []).filter(t => !t.startsWith('&'));
+        const incomingTags = (p.t || []).filter(t => !t.startsWith('&'));
         const tags = new Set(incomingTags);
         if (suggestedTag) tags.add(suggestedTag);
         tags.add('&dirty');
         
-        const saved = { ...p, tags: [...tags], updated_at: Date.now() };
+        const saved = { ...p, t: [...tags], ua: Date.now() };
         delete saved.matchedId;
         await saveContact(db, saved);
       }
@@ -158,7 +158,7 @@ export async function renderShareReview(db) {
   // Auto-suggest bulk tag based on common incoming group tags
   const groupCounts = {};
   pending.forEach(p => {
-    (p.tags || []).filter(t => t.startsWith('@')).forEach(tag => {
+    (p.t || []).filter(t => t.startsWith('@')).forEach(tag => {
       groupCounts[tag] = (groupCounts[tag] || 0) + 1;
     });
   });
@@ -174,7 +174,7 @@ export async function renderShareReview(db) {
   for (const pendingContact of pending) {
     const matchedId = pendingContact.matchedId;
     const existingContact = matchedId ? allContacts.find(c => c.id === matchedId) : null;
-    const isDuplicate = (pendingContact.tags || []).includes('&duplicate');
+    const isDuplicate = (pendingContact.t || []).includes('&duplicate');
 
     const card = document.createElement('div');
     card.className = 'share-review-card';
@@ -182,7 +182,7 @@ export async function renderShareReview(db) {
     // Name
     const nameRow = document.createElement('div');
     nameRow.className = 'share-review-name';
-    nameRow.textContent = pendingContact.name;
+    nameRow.textContent = pendingContact.n;
     if (isDuplicate) {
       const badge = document.createElement('span');
       badge.className = 'share-review-badge';
@@ -193,7 +193,7 @@ export async function renderShareReview(db) {
 
     const detailsRow = document.createElement('div');
     detailsRow.className = 'share-review-details';
-    const parts = [pendingContact.phone, pendingContact.email].filter(Boolean);
+    const parts = [pendingContact.ph, pendingContact.em].filter(Boolean);
     detailsRow.textContent = parts.join(' · ') || '(no contact info)';
     card.appendChild(detailsRow);
 
@@ -226,7 +226,13 @@ export async function renderShareReview(db) {
             
             const fieldLabel = document.createElement('div');
             fieldLabel.className = 'share-review-diff-label';
-            fieldLabel.textContent = formatField(field);
+            const displayField = field === 'ph' ? 'Phone' : 
+                               field === 'em' ? 'Email' :
+                               field === 'ad' ? 'Address' :
+                               field === 'zp' ? 'Zip Code' :
+                               field === 'bd' ? 'Birthday' :
+                               field === 'av' ? 'Anniversary' : 'Unknown';
+            fieldLabel.textContent = displayField;
             conflictRow.appendChild(fieldLabel);
 
             const options = document.createElement('div');
@@ -281,7 +287,7 @@ export async function renderShareReview(db) {
     tagInput.type = 'text';
     tagInput.className = 'share-review-tag-input';
     tagInput.placeholder = '@group (optional)';
-    const existingGroup = (pendingContact.tags || []).find(t => t.startsWith('@')) || suggestedTag;
+    const existingGroup = (pendingContact.t || []).find(t => t.startsWith('@')) || suggestedTag;
     tagInput.value = existingGroup;
     card.appendChild(tagInput);
 
@@ -306,7 +312,7 @@ export async function renderShareReview(db) {
     if (isDuplicate && existingContact) {
       actionBtn.textContent = 'Update Existing';
       actionBtn.onclick = async () => {
-        const updated = { ...existingContact, updated_at: Date.now() };
+        const updated = { ...existingContact, ua: Date.now() };
         
         // Apply merge choices (conflicts) and smart merges
         for (const [field, choice] of Object.entries(mergeChoices)) {
@@ -317,13 +323,13 @@ export async function renderShareReview(db) {
 
         // Apply new tag if typed
         const userTag = tagInput.value.trim();
-        const tags = new Set(updated.tags || []);
+        const tags = new Set(updated.t || []);
         if (userTag) {
           const finalTag = userTag.startsWith('@') ? userTag : `@${userTag}`;
           tags.add(finalTag);
         }
         if (!tags.has('&dirty')) tags.add('&dirty');
-        updated.tags = [...tags];
+        updated.t = [...tags];
 
         await saveContact(db, updated);
         await deleteContact(db, pendingContact.id);
@@ -334,7 +340,7 @@ export async function renderShareReview(db) {
       actionBtn.textContent = 'Add to Circle';
       actionBtn.onclick = async () => {
         const userTag = tagInput.value.trim();
-        const incomingTags = (pendingContact.tags || []).filter(t => !t.startsWith('&'));
+        const incomingTags = (pendingContact.t || []).filter(t => !t.startsWith('&'));
         const tags = new Set(incomingTags);
         
         if (userTag) {
@@ -343,12 +349,12 @@ export async function renderShareReview(db) {
         }
         tags.add('&dirty');
 
-        const saved = { ...pendingContact, tags: [...tags], updated_at: Date.now() };
+        const saved = { ...pendingContact, t: [...tags], ua: Date.now() };
         delete saved.matchedId;
         
         try {
           await saveContact(db, saved);
-          alert('Saved ' + saved.name + ' to Circle!');
+          alert('Saved ' + saved.n + ' to Circle!');
           card.remove();
           await checkEmpty(db);
         } catch (err) {
@@ -367,7 +373,7 @@ export async function renderShareReview(db) {
 
   async function checkEmpty(db) {
     const remaining = await getAllContacts(db);
-    const stillPending = remaining.filter(c => (c.tags || []).includes('&share'));
+    const stillPending = remaining.filter(c => (c.t || []).includes('&share'));
     if (stillPending.length === 0) {
       navigate('people');
     }

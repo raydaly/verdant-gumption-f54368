@@ -38,26 +38,33 @@ export function sanitizeString(val, maxLength = 200) {
 export function sanitizeContact(c) {
   if (!c || typeof c !== 'object') return null;
 
-  let email = sanitizeString(c.email, 100);
+  let em = sanitizeString(c.em, 100);
   // Basic email validity check
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    email = null;
+  if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+    em = null;
   }
 
-  return {
-    ...c,
-    name: sanitizeString(c.name, 100) || 'Unnamed Contact',
-    phone: sanitizeString(c.phone, 50),
-    email,
-    address: sanitizeString(c.address, 200),
-    zip_code: sanitizeString(c.zip_code, 20),
-    notes: sanitizeString(c.notes, 1000), // Limit notes to 1000 chars
-    birthday: validateDate(c.birthday),
-    anniversary: validateDate(c.anniversary),
-    date_of_passing: validateDate(c.date_of_passing),
+  const res = {
+    id: c.id,
+    n: sanitizeString(c.n, 100) || 'Unnamed Contact',
+    ph: sanitizeString(c.ph, 50),
+    em,
+    ad: sanitizeString(c.ad, 200),
+    zp: sanitizeString(c.zp, 20),
+    no: sanitizeString(c.no, 1000), // Limit notes to 1000 chars
+    bd: validateDate(c.bd),
+    av: validateDate(c.av),
+    dp: validateDate(c.dp),
+    lc: c.lc || null,
+    su: c.su || null,
+    ca: c.ca || null,
+    ua: c.ua || null,
     // Tags are sanitized as an array
-    tags: (Array.isArray(c.tags) ? c.tags : []) 
-      .map(t => sanitizeString(t, 50))
-      .filter(t => t && (t.startsWith('@') || t.startsWith('#') || t.startsWith('&') || t.startsWith('!')))
+    t: (Array.isArray(c.t) ? c.t : [])
+      .map(tag => sanitizeString(tag, 50))
+      .filter(tag => tag && (tag.startsWith('@') || tag.startsWith('#') || tag.startsWith('&') || tag.startsWith('!')))
   };
+  
+  // Clean up any other fields if we want specific output only
+  return res;
 }

@@ -14,7 +14,7 @@ export async function renderMilestoneCalendar(db) {
     getAllContacts(db),
     getSettings(db)
   ]);
-  const nonOwnerContacts = allContacts.filter(c => !(c.tags || []).includes('&owner'));
+  const nonOwnerContacts = allContacts.filter(c => !(c.t || []).includes('&owner'));
   const milestonesByMonth = getFullYearMilestones(nonOwnerContacts);
 
   app.innerHTML = '';

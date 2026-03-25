@@ -41,6 +41,38 @@ By helping you consciously balance these levels, Greatuncle ensures your closest
 
 ---
 
+## 📁 Data Resiliency & Portability (Seedling Format)
+Greatuncle is built for portability. The internal data structure and backup format (Seedling) are intentionally human-readable to ensure your community data is never trapped in a proprietary black box. 
+
+To keep performance high and share URLs as short as possible, the contact schema uses the following abbreviated field names:
+
+### Contact Fields
+- `id`: Unique identifier (UUID).
+- `n`: Full Display Name.
+- `ph`: Phone Number.
+- `em`: Email Address.
+- `ad`: Physical Address.
+- `zp`: Zip / Postal Code.
+- `bd`: Birthday (`YYYY-MM-DD` or `MM-DD`).
+- `av`: Anniversary (`YYYY-MM-DD` or `MM-DD`).
+- `dp`: Date of Passing (`YYYY-MM-DD` or `MM-DD`).
+- `t`: Array of Smart Hashtags (`@group`, `#topic`, `&level`, `!action`).
+- `no`: Private Notes (up to 1,000 characters).
+- `lc`: Last contacted timestamp (Unix ms).
+- `su`: Snooze until timestamp (Unix ms).
+- `ca` / `ua`: Created at / Updated at timestamps.
+
+> [!NOTE] 
+> **Automatic Migration**: If you are returning from an older version of Greatuncle, your data will be automatically migrated to this new optimized schema upon your first visit to ensure your share links and backups stay lean.
+
+### Intimacy Layers (Dunbar Levels)
+- `&level5`: Your Inner Circle (Daily/Weekly).
+- `&level15`: Monthly touchpoints.
+- `&level50`: Quarterly touchpoints (Dinner Party Friends).
+- `&level150`: Annual touchpoints (Active Horizon).
+
+---
+
 ## 📂 Project Structure
 - `index.html`: The main entry point and "Glass Box" UI.
 - `src/ui/`: All view-rendering logic (Home, People, Backup, etc.).

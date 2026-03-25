@@ -41,7 +41,7 @@ export function getOwner(db) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(APP_CONSTANTS.STORE_CONTACTS, 'readonly');
     const store = tx.objectStore(APP_CONSTANTS.STORE_CONTACTS);
-    const index = store.index('tags');
+    const index = store.index('t');
     const req = index.openCursor(IDBKeyRange.only(APP_CONSTANTS.OWNER_TAG));
     req.onsuccess = (event) => {
       const cursor = event.target.result;

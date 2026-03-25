@@ -18,12 +18,12 @@ async function parseAndWriteImport(db, params) {
     const { contacts } = ingestContacts(payload, existingContacts);
     
     // Stash metadata for a warm welcome screen
-    if (payload.senderName || payload.group || payload.contact) {
+    if (payload.sn || payload.senderName || payload.g || payload.group || payload.c || payload.contact) {
       sessionStorage.setItem('lastImportMeta', JSON.stringify({
-        senderName: payload.senderName || 'Someone',
-        recipientName: payload.recipientName || '',
-        groupName: payload.group || (payload.contact ? payload.contact.name : ''),
-        hasMilestones: !!payload.hasMilestones
+        senderName: payload.sn || payload.senderName || 'Someone',
+        recipientName: payload.rn || payload.recipientName || '',
+        groupName: payload.g || payload.group || (payload.c ? payload.c.n : (payload.contact ? payload.contact.name : '')),
+        hasMilestones: !!(payload.hm || payload.hasMilestones)
       }));
     }
 
@@ -49,6 +49,7 @@ async function parseAndWriteImport(db, params) {
 
 export async function boot() {
   const db = await openDB();
+
   const params = new URLSearchParams(window.location.search);
   const hasUrlParams = params.has('invite') || params.has('importGroup');
 

@@ -1,6 +1,6 @@
 export const APP_CONSTANTS = Object.freeze({
   DB_NAME: 'greatuncle',
-  DB_VERSION: 2,
+  DB_VERSION: 4,
   STORE_CONTACTS: 'contacts',
   STORE_LOGS: 'logs',
   STORE_SETTINGS: 'settings',

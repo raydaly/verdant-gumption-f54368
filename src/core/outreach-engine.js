@@ -8,7 +8,7 @@ const LEVEL_DAYS = {
 };
 
 function isOwner(contact) {
-  return (contact.tags || []).includes('&owner');
+  return (contact.t || []).includes('&owner');
 }
 
 function getLevelTag(tags) {
@@ -22,13 +22,13 @@ export function getDueContacts(contacts, today = new Date()) {
   for (const c of contacts) {
     if (isOwner(c)) continue;
 
-    const levelTag = getLevelTag(c.tags);
+    const levelTag = getLevelTag(c.t);
     if (!levelTag) continue;
 
-    if (c.snooze_until && c.snooze_until > now) continue;
+    if (c.su && c.su > now) continue;
 
     const frequency = LEVEL_DAYS[levelTag];
-    const lastMs = c.last_contacted || c.created_at || now;
+    const lastMs = c.lc || c.ca || now;
     const daysSince = (now - lastMs) / 86400000;
     const daysOverdue = daysSince - frequency;
     const urgency = daysOverdue / frequency;
@@ -56,12 +56,12 @@ export function getAnchorEvents(contacts, today = new Date(), lookAheadDays = 30
   for (const c of contacts) {
     if (isOwner(c)) continue;
 
-    for (const field of ['birthday', 'anniversary']) {
+    for (const field of ['bd', 'av']) {
       const stored = c[field];
       if (!stored) continue;
 
       let month, day;
-      if (stored.startsWith('0000-')) {
+      if (typeof stored === 'string' && stored.startsWith('0000-')) {
         const parts = stored.split('-');
         month = parseInt(parts[1], 10) - 1;
         day = parseInt(parts[2], 10);
@@ -79,7 +79,7 @@ export function getAnchorEvents(contacts, today = new Date(), lookAheadDays = 30
 
       const daysUntil = Math.round((eventDate.getTime() - todayMs) / 86400000);
       if (daysUntil >= 0 && daysUntil <= lookAheadDays) {
-        events.push({ contact: c, type: field, date: eventDate, daysUntil });
+        events.push({ contact: c, type: field === 'bd' ? 'birthday' : 'anniversary', date: eventDate, daysUntil });
       }
     }
   }
@@ -98,15 +98,15 @@ export function checkGatheringRules(rules, today = new Date()) {
 }
 
 export function getConnectionHealth(contacts) {
-  const eligible = contacts.filter(c => !isOwner(c) && getLevelTag(c.tags));
+  const eligible = contacts.filter(c => !isOwner(c) && getLevelTag(c.t));
   if (eligible.length === 0) return { upToDate: 0, overdue: 0, total: 0, pct: 100 };
 
   const now = Date.now();
   let upToDate = 0;
 
   for (const c of eligible) {
-    const freq = LEVEL_DAYS[getLevelTag(c.tags)];
-    const lastMs = c.last_contacted || 0;
+    const freq = LEVEL_DAYS[getLevelTag(c.t)];
+    const lastMs = c.lc || 0;
     if ((now - lastMs) / 86400000 <= freq) upToDate++;
   }
 

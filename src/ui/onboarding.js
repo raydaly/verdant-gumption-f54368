@@ -54,20 +54,20 @@ export function renderOnboarding(db, onComplete) {
     const now = Date.now();
     const owner = {
       id: generateId(),
-      name,
-      phone: null,
-      email,
-      address: null,
-      zip_code: null,
-      birthday: null,
-      anniversary: null,
-      date_of_passing: null,
-      tags: ['&owner'],
-      last_contacted: null,
-      snooze_until: null,
-      notes: null,
-      created_at: now,
-      updated_at: now,
+      n: name,
+      ph: null,
+      em: email,
+      ad: null,
+      zp: null,
+      bd: null,
+      av: null,
+      dp: null,
+      t: ['&owner'],
+      lc: null,
+      su: null,
+      no: null,
+      ca: now,
+      ua: now,
     };
 
     await saveContact(db, owner);
@@ -76,9 +76,9 @@ export function renderOnboarding(db, onComplete) {
     if (email) {
       const allContacts = await getAllContacts(db);
       const matches = allContacts.filter(c =>
-        !(c.tags || []).includes('&owner') &&
-        c.email && c.email.toLowerCase() === email.toLowerCase() &&
-        (c.tags || []).includes('&dirty')
+        !(c.t || []).includes('&owner') &&
+        c.em && c.em.toLowerCase() === email.toLowerCase() &&
+        (c.t || []).includes('&dirty')
       );
       if (matches.length > 0) {
         const nudge = document.createElement('p');
