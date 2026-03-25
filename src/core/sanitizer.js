@@ -58,6 +58,6 @@ export function sanitizeContact(c) {
     // Tags are sanitized as an array
     tags: (Array.isArray(c.tags) ? c.tags : []) 
       .map(t => sanitizeString(t, 50))
-      .filter(t => t && (t.startsWith('@') || t.startsWith('#')))
+      .filter(t => t && (t.startsWith('@') || t.startsWith('#') || t.startsWith('&') || t.startsWith('!')))
   };
 }

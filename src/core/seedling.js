@@ -8,7 +8,7 @@ export function exportSeedling(contacts, logs) {
     exported_at: Date.now(),
     contacts: activeContacts,
     logs: filteredLogs,
-  }, null, 2);
+  }, (key, value) => value === null ? undefined : value, 2);
 }
 
 export function parseSeedling(jsonString) {
@@ -164,7 +164,9 @@ export function findMatch(incoming, existingContacts) {
 export function ingestContacts(payload, existingContacts) {
   if (!payload) return { contacts: [], hadDuplicates: false };
 
-  const incomingContacts = payload.contacts || (payload.contact ? [payload.contact] : []);
+  const incomingContacts = Array.isArray(payload) 
+    ? payload 
+    : (payload.contacts || (payload.contact ? [payload.contact] : []));
   const batchTag = payload.group ? sanitizeString(payload.group, 50) : null;
   
   const results = [];

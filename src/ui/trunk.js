@@ -876,7 +876,7 @@ export async function renderTrunk(db) {
     try {
       let payload;
       // Is it Base64?
-      if (val.trim().length > 50 && !val.trim().startsWith('{')) {
+      if (val.trim().length > 50 && !val.trim().startsWith('{') && !val.trim().startsWith('[')) {
         payload = decodeShareParam(val.trim());
       } else {
         payload = JSON.parse(val.trim());
