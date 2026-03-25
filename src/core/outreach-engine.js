@@ -51,8 +51,8 @@ export function getDueContacts(contacts, today = new Date()) {
 export function getAnchorEvents(contacts, today = new Date(), lookAheadDays = 30) {
   const todayMs = today.getTime();
   const year = today.getFullYear();
-  const events = [];
-
+  const allEvents = [];
+  
   for (const c of contacts) {
     if (isOwner(c)) continue;
 
@@ -79,12 +79,29 @@ export function getAnchorEvents(contacts, today = new Date(), lookAheadDays = 30
 
       const daysUntil = Math.round((eventDate.getTime() - todayMs) / 86400000);
       if (daysUntil >= 0 && daysUntil <= lookAheadDays) {
-        events.push({ contact: c, type: field === 'bd' ? 'birthday' : 'anniversary', date: eventDate, daysUntil });
+        allEvents.push({ contact: { ...c }, type: field === 'bd' ? 'birthday' : 'anniversary', date: eventDate, daysUntil });
       }
     }
   }
 
-  return events.sort((a, b) => a.daysUntil - b.daysUntil);
+  const grouped = [];
+  const map = new Map();
+  allEvents.forEach(e => {
+    if (e.type === 'anniversary') {
+      const key = `${e.date.getTime()}_anniversary`;
+      if (map.has(key)) {
+        const existing = map.get(key);
+        existing.contact.n += ` and ${e.contact.n}`;
+      } else {
+        map.set(key, e);
+        grouped.push(e);
+      }
+    } else {
+      grouped.push(e);
+    }
+  });
+
+  return grouped.sort((a, b) => a.daysUntil - b.daysUntil);
 }
 
 export function getSnoozeMs(settings) {

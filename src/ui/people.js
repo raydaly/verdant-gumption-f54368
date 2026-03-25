@@ -12,10 +12,10 @@ import { getUpcomingMilestones, formatMilestoneDate } from '../core/milestone-en
 const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
 
 const LAYER_LABELS = {
-  '&level5':   'Hearth',
-  '&level15':  'Table',
-  '&level50':  'Neighborhood',
-  '&level150': 'Horizon',
+  '&level5':   'Level 5 (Weekly)',
+  '&level15':  'Level 15 (Monthly)',
+  '&level50':  'Level 50 (Quarterly)',
+  '&level150': 'Level 150 (Annually)',
 };
 
 // Module-level filter state — persists across in-session navigation

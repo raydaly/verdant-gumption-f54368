@@ -98,7 +98,7 @@ function getAgeAtEvent(birthYear, eventMonth, eventDay) {
  * Returns a list of milestones for the next 31 days.
  */
 export function getUpcomingMilestones(contacts, daysLimit = 31) {
-  const milestones = [];
+  const all = [];
   
   contacts.forEach(c => {
     const events = [
@@ -112,7 +112,7 @@ export function getUpcomingMilestones(contacts, daysLimit = 31) {
       if (md) {
         const days = getDaysUntil(md.month, md.day);
         if (days >= 0 && days <= daysLimit) {
-          milestones.push({
+          all.push({
             name: c.n,
             type: e.type,
             icon: e.icon,
@@ -126,7 +126,28 @@ export function getUpcomingMilestones(contacts, daysLimit = 31) {
     });
   });
 
-  return milestones.sort((a, b) => a.daysUntil - b.daysUntil);
+  // Grouping logic for Anniversaries
+  const grouped = [];
+  const map = new Map();
+
+  all.forEach(e => {
+    // Only group anniversaries for now to follow user preference
+    if (e.type === 'Anniversary') {
+      const key = `${e.month}_${e.day}_${e.type}`;
+      if (map.has(key)) {
+        const existing = map.get(key);
+        existing.name += ` and ${e.name}`;
+      } else {
+        const clone = { ...e };
+        map.set(key, clone);
+        grouped.push(clone);
+      }
+    } else {
+      grouped.push(e);
+    }
+  });
+
+  return grouped.sort((a, b) => a.daysUntil - b.daysUntil);
 }
 
 /**
@@ -163,8 +184,22 @@ export function getFullYearMilestones(contacts) {
     events: []
   }));
 
+  const groupedMap = new Map();
+
   all.forEach(e => {
-    months[e.month].events.push(e);
+    if (e.type === 'Anniversary') {
+      const key = `${e.month}_${e.day}_${e.type}`;
+      if (groupedMap.has(key)) {
+        const existing = groupedMap.get(key);
+        existing.name += ` and ${e.name}`;
+      } else {
+        const clone = { ...e };
+        groupedMap.set(key, clone);
+        months[e.month].events.push(clone);
+      }
+    } else {
+      months[e.month].events.push(e);
+    }
   });
 
   months.forEach(m => {

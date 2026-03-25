@@ -1,11 +1,11 @@
 {
   "name": "claude-code",
-  "version": "1.0.0",
+  "version": "v42",
   "description": "",
   "main": "sw.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx serve -s . -p 3000",
+    "dev": "npx serve -s . -p 3001",
     "shipit": "npx netlify-cli deploy --prod --dir=."
   },
   "keywords": [],

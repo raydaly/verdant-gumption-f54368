@@ -76,9 +76,44 @@ export async function renderTrunk(db) {
   content.className = 'view-content';
   let shareBtn; // Declare early for closure access
 
-  // Share section (Moved to top)
+  // Share section (Pre-declare for Heritage Card scroll reference)
   const shareSection = document.createElement('div');
   shareSection.className = 'trunk-section';
+
+  // Heritage (First Gift) Section
+  const heritageCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
+  
+  if (heritageCount > 0) {
+    const heritageSection = document.createElement('div');
+    heritageSection.className = 'trunk-section trunk-section--heritage';
+
+    const hTitle = document.createElement('div');
+    hTitle.className = 'trunk-section-title';
+    hTitle.style.color = 'var(--color-action)';
+    hTitle.textContent = 'Become the Source of Connection';
+
+    const hMeta = document.createElement('div');
+    hMeta.className = 'trunk-section-meta';
+    hMeta.innerHTML = `
+      A shared circle is a legacy in the making. You've nourished your world with <strong>${heritageCount} people</strong>. Now, you can pass on that blessing.
+      <br><br>
+      <em>"Become the Source: Create new groups and share them as a 'First Gift' to others, passing on the legacy of connection."</em>
+    `;
+
+    const giftBtn = document.createElement('button');
+    giftBtn.className = 'trunk-btn';
+    giftBtn.style.background = 'var(--color-amber)';
+    giftBtn.style.color = '#121212';
+    giftBtn.textContent = '🎁 Pass on the Gift';
+    giftBtn.addEventListener('click', () => {
+      shareSection.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    heritageSection.appendChild(hTitle);
+    heritageSection.appendChild(hMeta);
+    heritageSection.appendChild(giftBtn);
+    content.appendChild(heritageSection);
+  }
 
   const shareTitle = document.createElement('div');
   shareTitle.className = 'trunk-section-title';
@@ -978,10 +1013,10 @@ export async function renderTrunk(db) {
 
   const dirtyCount = allContacts.filter(c => (c.t || []).includes('&dirty')).length;
   const deletedIds = getDeletedSinceExport();
-  const nonOwnerCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
+  const totalNonOwners = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
   diagDetail.innerHTML =
     `Claim status: ${ownerRecord ? 'Active' : 'Awaiting claim'}<br>` +
-    `Non-owner contacts: ${nonOwnerCount}<br>` +
+    `Non-owner contacts: ${totalNonOwners}<br>` +
     `Modified since last export: ${dirtyCount}<br>` +
     `Deleted since last export: ${deletedIds.length}<br>` +
     `Cache name: ${APP_CONSTANTS.CACHE_NAME}`;

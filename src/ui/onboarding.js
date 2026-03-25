@@ -229,7 +229,7 @@ function showManualEntry(db, container, onComplete) {
 
   const privacyNote = document.createElement('p');
   privacyNote.className = 'onboarding-privacy-note';
-  privacyNote.textContent = 'Your name and email stay strictly on your device. Only you can choose to share them.';
+  privacyNote.innerHTML = 'Your name and email stay strictly on your device.<br>Only you can choose to share them.';
 
   container.appendChild(title);
   container.appendChild(tagline);

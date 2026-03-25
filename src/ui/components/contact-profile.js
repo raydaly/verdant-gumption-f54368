@@ -6,12 +6,47 @@ import { performStewardshipRitual } from '../stewardship.js';
 import { getOwner } from '../../storage/contacts.js';
 import { formatPhone } from '../../core/utils.js';
 
+import { getMonthDay } from '../../core/milestone-engine.js';
+import { getSettings } from '../../storage/settings.js';
+
 /**
  * Renders the Connection Sheet (Contact Profile) for a specific contact.
  */
 export async function showContactProfile(db, contact, onRefresh) {
   const content = document.createElement('div');
   content.className = 'profile-sheet';
+
+  const settings = await getSettings(db);
+
+  const getOrdinalSuffix = (num) => {
+    if (num % 10 === 1 && num % 100 !== 11) return 'st';
+    if (num % 10 === 2 && num % 100 !== 12) return 'nd';
+    if (num % 10 === 3 && num % 100 !== 13) return 'rd';
+    return 'th';
+  };
+
+  const formatSafeDate = (val) => {
+    if (!val) return null;
+    const md = getMonthDay(val);
+    if (!md) return null;
+    
+    const d = new Date(2000, md.month, md.day);
+    let displayStr = d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+
+    // Calculate milestone number if year exists
+    if (md.year && settings.showAge !== false) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      let eventYear = (new Date(currentYear, md.month, md.day) < now) ? currentYear : currentYear;
+      // Wait, people usually just want the count for the CURRENT calendar year milestone
+      const milestoneNum = currentYear - md.year;
+      if (milestoneNum > 0) {
+        displayStr += ` (${milestoneNum}${getOrdinalSuffix(milestoneNum)})`;
+      }
+    }
+
+    return displayStr;
+  };
 
   // Check ownership early — used in multiple sections
   const owner = await getOwner(db);
@@ -131,8 +166,8 @@ export async function showContactProfile(db, contact, onRefresh) {
     { label: '📞 Phone', value: contact.ph ? formatPhone(contact.ph) : null },
     { label: '📧 Email', value: contact.em },
     { label: '📍 Address', value: contact.ad },
-    { label: '🎂 Birthday', value: contact.bd ? (contact.bd.startsWith('0000-') ? contact.bd.split('-').slice(1).join('-') : new Date(contact.bd).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })) : null },
-    { label: '💍 Anniversary', value: contact.av ? (contact.av.startsWith('0000-') ? contact.av.split('-').slice(1).join('-') : new Date(contact.av).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })) : null },
+    { label: '🎂 Birthday', value: formatSafeDate(contact.bd) },
+    { label: '💍 Anniversary', value: formatSafeDate(contact.av) },
   ];
 
   const hasDetails = detailFields.some(f => f.value);
