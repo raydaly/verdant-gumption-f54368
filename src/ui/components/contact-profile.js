@@ -3,8 +3,9 @@ import { getAllLogs } from '../../storage/logs.js';
 import { navigate } from '../router.js';
 import { exportToCalendar } from '../../core/calendar.js';
 import { performStewardshipRitual } from '../stewardship.js';
-import { getOwner } from '../../storage/contacts.js';
+import { saveContact, getOwner } from '../../storage/contacts.js';
 import { formatPhone } from '../../core/utils.js';
+import { getSnoozeMs } from '../../core/outreach-engine.js';
 
 import { getMonthDay } from '../../core/milestone-engine.js';
 import { getSettings } from '../../storage/settings.js';
@@ -88,6 +89,21 @@ export async function showContactProfile(db, contact, onRefresh) {
   });
   actionRow.appendChild(calBtn);
 
+  // Snooze Button (Only for Owners)
+  if (owner) {
+    const snoozeBtn = document.createElement('button');
+    snoozeBtn.className = 'profile-action-btn';
+    snoozeBtn.innerHTML = `<span>⏳</span><label>Snooze</label>`;
+    snoozeBtn.addEventListener('click', async () => {
+      const ms = getSnoozeMs(settings);
+      const snoozeUntil = Date.now() + ms;
+      await saveContact(db, { ...contact, su: snoozeUntil, ua: Date.now() });
+      if (onRefresh) onRefresh();
+      close();
+    });
+    actionRow.appendChild(snoozeBtn);
+  }
+
   content.appendChild(actionRow);
 
   // Journal Preview
@@ -165,7 +181,7 @@ export async function showContactProfile(db, contact, onRefresh) {
   const detailFields = [
     { label: '📞 Phone', value: contact.ph ? formatPhone(contact.ph) : null },
     { label: '📧 Email', value: contact.em },
-    { label: '📍 Address', value: contact.ad },
+    { label: '📍 Address', value: contact.ad ? `${contact.ad}${contact.zp ? ' ' + contact.zp : ''}` : (contact.zp || null) },
     { label: '🎂 Birthday', value: formatSafeDate(contact.bd) },
     { label: '💍 Anniversary', value: formatSafeDate(contact.av) },
   ];

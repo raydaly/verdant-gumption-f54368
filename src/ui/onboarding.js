@@ -165,10 +165,14 @@ function showConfirmationForm(db, contact, container, onComplete) {
   container.appendChild(tagline);
   container.appendChild(nameInput);
   container.appendChild(emailInput);
+  container.appendChild(bdInput);
+  container.appendChild(avInput);
   container.appendChild(submitBtn);
 }
 
 function showManualEntry(db, container, onComplete) {
+  container.innerHTML = ''; // Clear existing content if any
+
   const title = document.createElement('h1');
   title.className = 'onboarding-title';
   title.textContent = 'Taking Stewardship';
@@ -189,6 +193,16 @@ function showManualEntry(db, container, onComplete) {
   emailInput.placeholder = 'Your email (optional)';
   emailInput.autocomplete = 'email';
 
+  const bdInput = document.createElement('input');
+  bdInput.type = 'date';
+  bdInput.className = 'form-input onboarding-field';
+  bdInput.placeholder = 'Your birthday (optional)';
+
+  const avInput = document.createElement('input');
+  avInput.type = 'date';
+  avInput.className = 'form-input onboarding-field';
+  avInput.placeholder = 'Your anniversary (optional)';
+
   const submitBtn = document.createElement('button');
   submitBtn.type = 'button';
   submitBtn.className = 'onboarding-submit-btn';
@@ -203,6 +217,8 @@ function showManualEntry(db, container, onComplete) {
     let name = nameInput.value.trim();
     if (!name) return;
     let email = emailInput.value.trim() || null;
+    let birthday = bdInput.value || null;
+    let anniversary = avInput.value || null;
 
     const now = Date.now();
     const owner = {
@@ -212,8 +228,8 @@ function showManualEntry(db, container, onComplete) {
       em: email,
       ad: null,
       zp: null,
-      bd: null,
-      av: null,
+      bd: birthday,
+      av: anniversary,
       dp: null,
       t: ['&owner'],
       lc: null,

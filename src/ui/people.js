@@ -5,6 +5,7 @@ import { navigate } from './router.js';
 import { showBottomSheet } from './components/bottom-sheet.js';
 import { showConnectedSheet } from './components/connected-sheet.js';
 import { showContactProfile } from './components/contact-profile.js';
+import { showToast } from './components/toast.js';
 import { encodeInvite, encodeGroup } from '../core/seedling.js';
 import { performStewardshipRitual } from './stewardship.js';
 import { getUpcomingMilestones, formatMilestoneDate } from '../core/milestone-engine.js';
@@ -19,21 +20,33 @@ const LAYER_LABELS = {
 };
 
 // Module-level filter state — persists across in-session navigation
-let filterState = { sort: 'az', layer: null, group: null };
+let filterState = { 
+  sort: 'az', 
+  layers: [], // Array for multi-select
+  groups: [], // Array for multi-select
+  stewardshipMode: false 
+};
 
-function getLayerTag(tags) {
-  return LEVEL_TAGS.find(t => tags.includes(t)) || null;
-}
+// ... (ALL_LAYERS and getLayerTag handled above)
 
 function applyFilterSort(contacts, state) {
   let result = [...contacts];
 
-  if (state.layer) {
-    result = result.filter(c => (c.t || []).includes(state.layer));
+  // Apply Layer Filter (OR logic within layers)
+  if (state.layers.length > 0) {
+    result = result.filter(c => {
+      const cTag = getLayerTag(c.t);
+      if (state.layers.includes('none') && !cTag) return true;
+      return state.layers.includes(cTag);
+    });
   }
 
-  if (state.group) {
-    result = result.filter(c => (c.t || []).includes(state.group));
+  // Apply Group Filter (OR logic within groups)
+  if (state.groups.length > 0) {
+    result = result.filter(c => {
+      const tags = c.t || [];
+      return state.groups.some(g => tags.includes(g));
+    });
   }
 
   switch (state.sort) {
@@ -61,13 +74,41 @@ function applyFilterSort(contacts, state) {
   return result;
 }
 
+// Full definition including "None" for sorting
+const ALL_LAYERS = [
+  { tag: null, label: 'Unsorted' },
+  { tag: '&level5', label: 'Level 5 (Weekly)' },
+  { tag: '&level15', label: 'Level 15 (Monthly)' },
+  { tag: '&level50', label: 'Level 50 (Quarterly)' },
+  { tag: '&level150', label: 'Level 150 (Annually)' },
+];
+
+function getLayerTag(tags) {
+  return LEVEL_TAGS.find(t => (tags || []).includes(t)) || null;
+}
+
 function isFilterActive(state) {
-  return state.sort !== 'az' || state.layer !== null || state.group !== null;
+  return state.sort !== 'az' || state.layers.length > 0 || state.groups.length > 0;
 }
 
 function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
+  const stewardshipMode = filterState.stewardshipMode;
   const li = document.createElement('li');
   li.className = 'contact-row';
+  if (stewardshipMode) {
+    li.classList.add('contact-row--stewardship');
+    li.draggable = true;
+    li.dataset.contactId = contact.id;
+    
+    li.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('contactId', contact.id);
+      li.classList.add('dragging');
+    });
+    
+    li.addEventListener('dragend', () => {
+      li.classList.remove('dragging');
+    });
+  }
 
   const info = document.createElement('div');
   info.className = 'contact-row-info';
@@ -103,9 +144,52 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
     meta.appendChild(pill);
   });
 
+  if (stewardshipMode) {
+     // Show current layer as a badge if not already tagged
+     const currentTag = getLayerTag(contact.t);
+     if (currentTag && visibleTags.length === 0) {
+        const layerBadge = document.createElement('span');
+        layerBadge.className = 'layer-badge';
+        layerBadge.style.borderColor = 'var(--color-action)';
+        layerBadge.textContent = LAYER_LABELS[currentTag];
+        meta.appendChild(layerBadge);
+     }
+  }
+
   info.appendChild(nameRow);
   info.appendChild(meta);
   li.appendChild(info);
+
+  if (stewardshipMode && !isOwner) {
+    const assignGroup = document.createElement('div');
+    assignGroup.className = 'layer-assign-group';
+    
+    const FREQUENCIES = { '&level5': '5', '&level15': '10', '&level50': '35', '&level150': '100' };
+    LEVEL_TAGS.forEach(tag => {
+      const btn = document.createElement('button');
+      btn.className = 'layer-assign-btn';
+      if ((contact.t || []).includes(tag)) btn.classList.add('layer-assign-btn--active');
+      btn.textContent = FREQUENCIES[tag];
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const oldTags = [...(contact.t || [])];
+        const tags = (contact.t || []).filter(t => !LEVEL_TAGS.includes(t));
+        if (!btn.classList.contains('layer-assign-btn--active')) {
+          tags.push(tag);
+        }
+        await saveContact(db, { ...contact, t: tags, ua: Date.now() });
+        const numStr = FREQUENCIES[tag];
+        const levelLabel = numStr === '100' ? 'Annually' : numStr === '35' ? 'Quarterly' : (numStr === '10' ? 'Monthly' : 'Weekly');
+        showToast(`Moved ${contact.n} to ${levelLabel}`, async () => {
+          await saveContact(db, { ...contact, t: oldTags, ua: Date.now() });
+          onRefresh();
+        });
+        if (onRefresh) onRefresh();
+      });
+      assignGroup.appendChild(btn);
+    });
+    li.appendChild(assignGroup);
+  }
 
   li.addEventListener('click', () => {
     if (isOwner) {
@@ -115,7 +199,7 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
     }
   });
 
-  if (!isOwner) {
+  if (!isOwner && !stewardshipMode) {
     const actions = document.createElement('div');
     actions.className = 'contact-row-actions';
 
@@ -160,19 +244,6 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
         showConnectedSheet(db, contact.id, onRefresh);
       });
       actions.appendChild(connectedBtn);
-
-      const snoozeBtn = document.createElement('button');
-      snoozeBtn.type = 'button';
-      snoozeBtn.className = 'contact-action-btn contact-action-snooze';
-      snoozeBtn.textContent = 'Snooze';
-      snoozeBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const settings = await getSettings(db);
-        const snoozeUntil = Date.now() + getSnoozeMs(settings);
-        await saveContact(db, { ...contact, su: snoozeUntil, ua: Date.now() });
-        if (onRefresh) onRefresh();
-      });
-      actions.appendChild(snoozeBtn);
     }
 
     li.appendChild(actions);
@@ -201,7 +272,7 @@ function renderList(ul, contacts, ownerContact, db, onRefresh) {
       clearBtn.textContent = 'Clear all filters';
       clearBtn.onclick = () => {
         if (searchInput) searchInput.value = '';
-        filterState = { sort: 'az', layer: null, group: null };
+        filterState = { ...filterState, sort: 'az', layer: null, group: null };
         onRefresh();
       };
       empty.appendChild(clearBtn);
@@ -212,10 +283,66 @@ function renderList(ul, contacts, ownerContact, db, onRefresh) {
     ul.appendChild(empty);
     return;
   }
-  contacts.forEach(c => {
-    const isOwner = ownerContact && c.id === ownerContact.id;
-    ul.appendChild(buildContactRow(c, isOwner, db, onRefresh, !!ownerContact));
-  });
+
+  // If stewardship mode or a specific sort is NOT 'az', let's group by layer
+  const shouldGroup = filterState.stewardshipMode;
+
+  if (shouldGroup) {
+    ALL_LAYERS.forEach(layer => {
+      const layerContacts = contacts.filter(c => {
+        const cTag = getLayerTag(c.t);
+        return cTag === layer.tag;
+      });
+
+      if (layerContacts.length === 0 && !filterState.stewardshipMode) return;
+
+      const header = document.createElement('div');
+      header.className = 'group-header';
+      header.innerHTML = `
+        <span>${layer.label}</span>
+        <span class="group-header-count">${layerContacts.length}</span>
+      `;
+
+      // Drag and Drop Targets
+      header.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        header.classList.add('drop-active');
+      });
+      header.addEventListener('dragleave', () => {
+        header.classList.remove('drop-active');
+      });
+      header.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        header.classList.remove('drop-active');
+        const contactId = e.dataTransfer.getData('contactId');
+        const contact = contacts.find(c => c.id === contactId);
+        if (contact) {
+          const oldTags = [...(contact.t || [])];
+          const tags = (contact.t || []).filter(t => !LEVEL_TAGS.includes(t));
+          if (layer.tag) tags.push(layer.tag);
+          await saveContact(db, { ...contact, t: tags, ua: Date.now() });
+          showToast(`Moved ${contact.n} to ${layer.label}`, async () => {
+             await saveContact(db, { ...contact, t: oldTags, ua: Date.now() });
+             onRefresh();
+          });
+          onRefresh();
+        }
+      });
+
+      ul.appendChild(header);
+
+      layerContacts.forEach(c => {
+        const isOwner = ownerContact && c.id === ownerContact.id;
+        ul.appendChild(buildContactRow(c, isOwner, db, onRefresh, !!ownerContact));
+      });
+    });
+  } else {
+    // Normal flat list
+    contacts.forEach(c => {
+      const isOwner = ownerContact && c.id === ownerContact.id;
+      ul.appendChild(buildContactRow(c, isOwner, db, onRefresh, !!ownerContact));
+    });
+  }
 }
 
 function showFilterSheet(allContacts, filterBtn, ul, ownerContact, applyCallback) {
@@ -268,24 +395,47 @@ function showFilterSheet(allContacts, filterBtn, ul, ownerContact, applyCallback
 
   const allLayerBtn = document.createElement('button');
   allLayerBtn.type = 'button';
-  allLayerBtn.className = 'pill-btn' + (!filterState.layer ? ' pill-btn--active' : '');
+  allLayerBtn.className = 'pill-btn' + (filterState.layers.length === 0 ? ' pill-btn--active' : '');
   allLayerBtn.textContent = 'All';
   allLayerBtn.addEventListener('click', () => {
     layerRow.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('pill-btn--active'));
     allLayerBtn.classList.add('pill-btn--active');
-    filterState.layer = null;
+    filterState.layers = [];
   });
   layerRow.appendChild(allLayerBtn);
+
+  const noneBtn = document.createElement('button');
+  noneBtn.type = 'button';
+  noneBtn.className = 'pill-btn' + (filterState.layers.includes('none') ? ' pill-btn--active' : '');
+  noneBtn.textContent = 'Unsorted';
+  noneBtn.addEventListener('click', () => {
+    allLayerBtn.classList.remove('pill-btn--active');
+    if (filterState.layers.includes('none')) {
+      filterState.layers = filterState.layers.filter(l => l !== 'none');
+      noneBtn.classList.remove('pill-btn--active');
+    } else {
+      filterState.layers.push('none');
+      noneBtn.classList.add('pill-btn--active');
+    }
+    if (filterState.layers.length === 0) allLayerBtn.classList.add('pill-btn--active');
+  });
+  layerRow.appendChild(noneBtn);
 
   Object.entries(LAYER_LABELS).forEach(([tag, label]) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'pill-btn' + (filterState.layer === tag ? ' pill-btn--active' : '');
+    btn.className = 'pill-btn' + (filterState.layers.includes(tag) ? ' pill-btn--active' : '');
     btn.textContent = label;
     btn.addEventListener('click', () => {
-      layerRow.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('pill-btn--active'));
-      btn.classList.add('pill-btn--active');
-      filterState.layer = tag;
+      allLayerBtn.classList.remove('pill-btn--active');
+      if (filterState.layers.includes(tag)) {
+        filterState.layers = filterState.layers.filter(l => l !== tag);
+        btn.classList.remove('pill-btn--active');
+      } else {
+        filterState.layers.push(tag);
+        btn.classList.add('pill-btn--active');
+      }
+      if (filterState.layers.length === 0) allLayerBtn.classList.add('pill-btn--active');
     });
     layerRow.appendChild(btn);
   });
@@ -315,24 +465,30 @@ function showFilterSheet(allContacts, filterBtn, ul, ownerContact, applyCallback
 
     const allGroupBtn = document.createElement('button');
     allGroupBtn.type = 'button';
-    allGroupBtn.className = 'pill-btn' + (!filterState.group ? ' pill-btn--active' : '');
+    allGroupBtn.className = 'pill-btn' + (filterState.groups.length === 0 ? ' pill-btn--active' : '');
     allGroupBtn.textContent = 'All';
     allGroupBtn.addEventListener('click', () => {
       groupRow.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('pill-btn--active'));
       allGroupBtn.classList.add('pill-btn--active');
-      filterState.group = null;
+      filterState.groups = [];
     });
     groupRow.appendChild(allGroupBtn);
 
     allGroups.forEach(tag => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'pill-btn' + (filterState.group === tag ? ' pill-btn--active' : '');
+      btn.className = 'pill-btn' + (filterState.groups.includes(tag) ? ' pill-btn--active' : '');
       btn.textContent = tag;
       btn.addEventListener('click', () => {
-        groupRow.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('pill-btn--active'));
-        btn.classList.add('pill-btn--active');
-        filterState.group = tag;
+        allGroupBtn.classList.remove('pill-btn--active');
+        if (filterState.groups.includes(tag)) {
+          filterState.groups = filterState.groups.filter(g => g !== tag);
+          btn.classList.remove('pill-btn--active');
+        } else {
+          filterState.groups.push(tag);
+          btn.classList.add('pill-btn--active');
+        }
+        if (filterState.groups.length === 0) allGroupBtn.classList.add('pill-btn--active');
       });
       groupRow.appendChild(btn);
     });
@@ -556,23 +712,29 @@ export async function renderPeople(db) {
   gearBtn.addEventListener('click', () => navigate('settings'));
 
   // Sharing helper
-  const shareAction = async (tag = null) => {
+  const shareAction = async () => {
     let shareUrl;
     const base = `${window.location.origin}${window.location.pathname}`;
+    const allNonOwners = allContacts.filter(c => !(c.t || []).includes('&owner'));
+    const isFiltering = isFilterActive(filterState);
 
-    if (tag) {
-      const contactsInGroup = allContacts.filter(c => (c.t || []).includes(tag) && !(c.t || []).includes('&owner'));
-      const groupCode = encodeGroup(contactsInGroup, tag);
+    if (isFiltering) {
+      // Share currently visible filtered contacts
+      const filtered = applyFilterSort(allNonOwners, filterState);
+      let title = 'Filtered Circle';
+      if (filterState.groups.length === 1) title = filterState.groups[0];
+      else if (filterState.layers.length === 1) title = LAYER_LABELS[filterState.layers[0]] || 'Unsorted';
+      
+      const groupCode = encodeGroup(filtered, title);
       shareUrl = `${base}?importGroup=${groupCode}`;
     } else {
       // Full circle share
-      const allNonOwners = allContacts.filter(c => !(c.t || []).includes('&owner'));
       const groupCode = encodeGroup(allNonOwners, 'Shared Circle');
       shareUrl = `${base}?importGroup=${groupCode}`;
     }
     
-    const subject = tag ? `GreatUncle Group: ${tag}` : 'GreatUncle Circle';
-    const text = tag ? `Here is the ${tag} contact list.` : 'Check out this GreatUncle circle contact list.';
+    const subject = 'GreatUncle Circle';
+    const text = 'Check out this GreatUncle contact list.';
 
     if (navigator.share) {
       try {
@@ -599,13 +761,13 @@ export async function renderPeople(db) {
     }
   };
 
-  if (filterState.group || !ownerContact) {
+  if (filterState.groups.length > 0 || !ownerContact) {
     const headerShareBtn = document.createElement('button');
     headerShareBtn.type = 'button';
     headerShareBtn.className = 'header-icon-btn';
-    headerShareBtn.title = filterState.group ? `Share ${filterState.group} group` : 'Share this circle';
+    headerShareBtn.title = filterState.groups.length > 0 ? `Share ${filterState.groups.join(', ')}` : 'Share this circle';
     headerShareBtn.textContent = '📤';
-    headerShareBtn.onclick = () => shareAction(filterState.group);
+    headerShareBtn.onclick = () => shareAction();
     headerRight.appendChild(headerShareBtn);
   }
 
@@ -648,10 +810,23 @@ export async function renderPeople(db) {
   shareBtn.className = 'filter-btn filter-btn--share';
   shareBtn.setAttribute('aria-label', 'Share this group');
   shareBtn.textContent = '⬆️ Share';
-  shareBtn.hidden = !filterState.group; // only show when a @group filter is active (Gallery sharing is handled in header)
+  shareBtn.hidden = filterState.groups.length === 0;
+
+  const stewBtn = document.createElement('button');
+  stewBtn.type = 'button';
+  stewBtn.className = 'stewardship-toggle' + (filterState.stewardshipMode ? ' stewardship-toggle--active' : '');
+  stewBtn.title = 'Stewardship Mode (Sort into levels)';
+  stewBtn.textContent = '🌿';
+  stewBtn.onclick = () => {
+    filterState.stewardshipMode = !filterState.stewardshipMode;
+    // When entering stewardship mode, clear individual layer filters to show the whole landscape
+    if (filterState.stewardshipMode) filterState.layers = []; 
+    onRefresh();
+  };
 
   searchRow.appendChild(searchInput);
   searchRow.appendChild(filterBtn);
+  searchRow.appendChild(stewBtn);
   searchRow.appendChild(shareBtn);
   content.appendChild(searchRow);
 
@@ -749,17 +924,15 @@ export async function renderPeople(db) {
       const active = isFilterActive(filterState);
       filterBtn.className = 'filter-btn' + (active ? ' filter-btn--active' : '');
       // Update share button visibility (Gallery shares from header)
-      shareBtn.hidden = !filterState.group;
-      shareBtn.textContent = filterState.group ? `⬆️ Share ${filterState.group}` : '⬆️ Share';
+      shareBtn.hidden = filterState.groups.length === 0;
+      shareBtn.textContent = filterState.groups.length > 0 ? `⬆️ Share Selected` : '⬆️ Share';
       currentContacts = applyFilterSort(allContacts, filterState);
       renderList(ul, currentContacts, ownerContact, db, onRefresh);
     });
   });
 
-  // Share button handler
   shareBtn.addEventListener('click', () => {
-    const tag = filterState.group || shareBtn.dataset.shareTag;
-    shareAction(tag);
+    shareAction();
   });
 
   // Live search
@@ -770,8 +943,8 @@ export async function renderPeople(db) {
     if (!query) {
       currentContacts = base;
       // Reset share button to filter-state-only (Gallery shares from header)
-      shareBtn.hidden = !filterState.group;
-      shareBtn.textContent = filterState.group ? `⬆️ Share ${filterState.group}` : '⬆️ Share';
+      shareBtn.hidden = filterState.groups.length === 0;
+      shareBtn.textContent = filterState.groups.length > 0 ? `⬆️ Share Selected` : '⬆️ Share';
       return;
     }
 

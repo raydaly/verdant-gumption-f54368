@@ -107,6 +107,9 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
   const tagsField = makeField('Tags (@group #topic)', 'text', owner?.t?.filter(t => !t.startsWith('&')).join(' '));
   tagsField.getInput().placeholder = 'e.g. @family #inner';
 
+  const birthdayField = makeField('Birthday', 'date', owner?.bd);
+  const anniversaryField = makeField('Anniversary', 'date', owner?.av);
+
   const saveProfileBtn = document.createElement('button');
   saveProfileBtn.className = 'trunk-btn';
   saveProfileBtn.textContent = 'Save profile';
@@ -137,6 +140,8 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
       n: safeName,
       ph: safePhone,
       em: safeEmail,
+      bd: birthdayField.getInput().value || null,
+      av: anniversaryField.getInput().value || null,
       t: [
         ...(owner.t || []).filter(t => t.startsWith('&')),
         ...safeUserTags
@@ -151,6 +156,8 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
   profileSection.appendChild(nameField);
   profileSection.appendChild(phoneField);
   profileSection.appendChild(emailField);
+  profileSection.appendChild(birthdayField);
+  profileSection.appendChild(anniversaryField);
   profileSection.appendChild(tagsField);
   profileSection.appendChild(saveProfileBtn);
   container.appendChild(profileSection);

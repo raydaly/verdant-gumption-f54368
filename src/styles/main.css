@@ -2027,3 +2027,96 @@ body[data-is-owned="false"] .contact-action-snooze {
   margin: 2rem 0;
   padding: 0 1rem;
 }
+
+/* Stewardship Mode & Drag-Drop */
+.stewardship-toggle {
+  background: none;
+  border: 1px solid var(--color-bg-accent);
+  border-radius: 8px;
+  padding: 0.6rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  background: var(--color-bg-card);
+  transition: all 0.2s ease;
+}
+
+.stewardship-toggle--active {
+  background: var(--color-action);
+  color: white;
+  border-color: var(--color-action);
+}
+
+.group-header {
+  position: sticky;
+  top: 0;
+  background: var(--color-bg);
+  padding: 1rem 0 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-bg-accent);
+  z-index: 10;
+  margin-top: 0.5rem;
+}
+
+.group-header-count {
+  background: var(--color-bg-accent);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+}
+
+.group-header.drop-active {
+  background: var(--color-bg-accent);
+  color: var(--color-action);
+  outline: 2px dashed var(--color-action);
+}
+
+.contact-row[draggable="true"] {
+  cursor: grab;
+}
+
+.contact-row.dragging {
+  opacity: 0.4;
+  background: var(--color-bg-accent);
+}
+
+.layer-assign-group {
+  display: flex;
+  gap: 4px;
+}
+
+.layer-assign-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-bg-accent);
+  background: var(--color-bg-card);
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.layer-assign-btn:hover {
+  border-color: var(--color-action);
+  color: var(--color-action);
+}
+
+.layer-assign-btn--active {
+  background: var(--color-action);
+  color: white;
+  border-color: var(--color-action);
+}
+
+.contact-row--stewardship {
+  padding: 0.5rem 0;
+}
