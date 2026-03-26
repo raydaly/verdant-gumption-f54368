@@ -879,6 +879,14 @@ export async function renderTrunk(db) {
   pasteArea.placeholder = 'Paste Connection Code or raw JSON here…';
   pasteArea.rows = 4;
   importSection.appendChild(pasteArea);
+  
+  const convertorLink = document.createElement('div');
+  convertorLink.className = 'trunk-section-meta';
+  convertorLink.style.marginTop = '0.4rem';
+  convertorLink.style.fontSize = '0.75rem';
+  convertorLink.style.opacity = '0.7';
+  convertorLink.innerHTML = `💡 Need to transform a CSV or VCard? Use the <a href="/tools/contact_convertor.html" target="_blank" style="color:var(--color-primary);text-decoration:underline;">Contact Convertor</a>.`;
+  importSection.appendChild(convertorLink);
 
   const auditBox = document.createElement('div');
   auditBox.className = 'trunk-section-meta';
