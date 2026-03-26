@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v44';
+var CACHE_NAME = 'greatuncle-v45';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -66,7 +66,8 @@ self.addEventListener('activate', function (event) {
 
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
-  if (event.request.url.includes('/tools/')) return;
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/tools/')) return;
 
   // NETWORK-FIRST: always fetch fresh from network, update cache, fall back to cache if offline
   event.respondWith(
