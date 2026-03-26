@@ -74,6 +74,7 @@
             <button class="pill-opt" data-format="csv">CSV</button>
             <button class="pill-opt" data-format="vcf">vCard</button>
             <button class="pill-opt" data-format="md">Directory</button>
+            <button class="pill-opt" data-format="b64">Code</button>
           </div>
         </div>
       </div>
@@ -247,9 +248,22 @@
         output = toVCF(data);
       } else if (selectedFormat === 'md') {
         output = toMD(data);
+      } else if (selectedFormat === 'b64') {
+        output = toCode(data);
+        downloadBtn.style.display = 'none';
       }
 
       outputPre.textContent = output;
+    }
+
+    function toCode(data) {
+      // Wrap in standard transfer payload v2
+      const payload = {
+        v: 2,
+        c: data
+      };
+      const json = JSON.stringify(payload);
+      return btoa(unescape(encodeURIComponent(json)));
     }
 
     function toCSV(data) {
