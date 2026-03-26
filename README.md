@@ -82,4 +82,4 @@ To keep performance high and share URLs as short as possible, the contact schema
 - `archive/`: Legacy specs and philosophy documents.
 
 ---
-*Version: v42 (Current)*
+*Version: v43 (Current)*
