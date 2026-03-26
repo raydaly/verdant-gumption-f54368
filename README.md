@@ -86,4 +86,4 @@ You can feed your raw contact data to an AI like Claude or ChatGPT to automatica
 - `archive/`: Legacy specs and philosophy documents.
 
 ---
-*Version: v43 (Current)*
+*Version: v44 (Current)*

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Greatuncle 🌿 | Ingest Helper</title>
+  <link rel="stylesheet" href="../src/styles/main.css">
+  <style>
+    body { padding: 2rem 1rem; max-width: 800px; margin: 0 auto; background: var(--color-bg); min-height: 100vh; }
+    .tool-header { margin-bottom: 2rem; border-bottom: 1px solid var(--color-bg-accent); padding-bottom: 1rem; }
+    .tool-title { font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+    .tool-subtitle { opacity: 0.6; font-size: 0.9rem; margin-top: 0.5rem; }
+    
+    .ingest-box { background: var(--color-bg-card); border: 1px solid var(--color-bg-accent); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-hearth); }
+    .ingest-area { width: 100%; height: 200px; background: rgba(0,0,0,0.05); border: 2px dashed var(--color-bg-accent); border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.85rem; resize: vertical; margin-bottom: 1rem; transition: border-color 0.2s ease; }
+    .ingest-area:focus { border-color: var(--color-action); outline: none; }
+    
+    .mapping-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .mapping-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: 0.4rem; }
+    
+    .preview-box { margin-top: 2rem; }
+    .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+    .preview-count { background: var(--color-bg-accent); padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; }
+    
+    .preview-list { height: 300px; overflow-y: auto; border: 1px solid var(--color-bg-accent); border-radius: 8px; background: var(--color-bg-card); list-style: none; padding: 0.5rem; }
+    .preview-item { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; }
+    .preview-item:last-child { border: none; }
+    .preview-item-name { font-weight: 500; font-size: 0.9rem; }
+    .preview-item-meta { font-size: 0.75rem; opacity: 0.5; font-family: monospace; }
+    
+    .output-box { margin-top: 2rem; background: #222; color: #eee; border-radius: 8px; padding: 1rem; position: relative; }
+    .output-pre { font-size: 0.75rem; white-space: pre-wrap; margin: 0; max-height: 200px; overflow-y: auto; }
+    .copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: var(--color-action); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer; }
+    
+    .pill-select { display: flex; gap: 4px; margin-top: 0.5rem; }
+    .pill-opt { border: 1px solid var(--color-bg-accent); background: none; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; }
+    .pill-opt--active { background: var(--color-action); color: white; border-color: var(--color-action); }
+  </style>
+</head>
+<body>
+
+  <header class="tool-header">
+    <h1 class="tool-title">🌿 Greatuncle Ingest Helper</h1>
+    <p class="tool-subtitle">Transform CSV, JSON, or text into a Greatuncle Seedling file.</p>
+  </header>
+
+  <main>
+    <section class="ingest-box">
+      <div class="mapping-label">1. Paste Data (CSV with headers or JSON Array)</div>
+      <textarea id="ingestArea" class="ingest-area" placeholder="Name, Phone, Email, Address, Zip...&#10;Alice, 555-0101, alice@example.com...&#10;Bob, 555-0202, bob@example.com..."></textarea>
+      
+      <div class="mapping-grid">
+        <div class="field-item">
+          <div class="mapping-label">2. Assign Dunbar Level</div>
+          <div id="levelSelector" class="pill-select">
+            <button class="pill-opt" data-tag="&level5">5</button>
+            <button class="pill-opt" data-tag="&level15">15</button>
+            <button class="pill-opt pill-opt--active" data-tag="&level50">50</button>
+            <button class="pill-opt" data-tag="&level150">150</button>
+          </div>
+        </div>
+        <div class="field-item">
+          <div class="mapping-label">3. Apply Shared Group (Optional)</div>
+          <input type="text" id="groupTag" class="form-input" placeholder="e.g. @family" style="padding: 6px 12px; margin-top: 4px;">
+        </div>
+      </div>
+
+      <button id="processBtn" class="trunk-btn trunk-btn--primary">Analyze Data</button>
+    </section>
+
+    <section id="previewBox" class="preview-box" style="display:none;">
+      <div class="preview-header">
+        <div style="font-weight:600">People Detected</div>
+        <span id="previewCount" class="preview-count">0 People</span>
+      </div>
+      <ul id="previewList" class="preview-list"></ul>
+      
+      <div id="outputBox" class="output-box">
+        <button id="copyBtn" class="copy-btn">Copy JSON</button>
+        <pre id="outputPre" class="output-pre"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const ingestArea = document.getElementById('ingestArea');
+    const processBtn = document.getElementById('processBtn');
+    const previewBox = document.getElementById('previewBox');
+    const previewList = document.getElementById('previewList');
+    const previewCount = document.getElementById('previewCount');
+    const outputPre = document.getElementById('outputPre');
+    const copyBtn = document.getElementById('copyBtn');
+    const groupTag = document.getElementById('groupTag');
+    const levelSelector = document.getElementById('levelSelector');
+
+    let selectedLevel = '&level50';
+    let currentData = [];
+
+    // Level Selection
+    levelSelector.querySelectorAll('.pill-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        levelSelector.querySelectorAll('.pill-opt').forEach(b => b.classList.remove('pill-opt--active'));
+        btn.classList.add('pill-opt--active');
+        selectedLevel = btn.dataset.tag;
+        if (currentData.length > 0) processData();
+      });
+    });
+
+    processBtn.onclick = processData;
+
+    function processData() {
+      const raw = ingestArea.value.trim();
+      if (!raw) return;
+
+      let items = [];
+      try {
+        if (raw.startsWith('[') || raw.startsWith('{')) {
+          items = JSON.parse(raw);
+          if (!Array.isArray(items)) items = [items];
+        } else {
+          items = parseCSV(raw);
+        }
+      } catch (err) {
+        alert("Failed to parse data: " + err.message);
+        return;
+      }
+
+      currentData = items.map(item => mapToGreatuncle(item));
+      renderPreview(currentData);
+    }
+
+    function parseCSV(text) {
+      const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+      if (lines.length < 2) return [];
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      return lines.slice(1).map(line => {
+        const values = line.split(',').map(v => v.trim());
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = values[index] || "";
+        });
+        return obj;
+      });
+    }
+
+    function mapToGreatuncle(item) {
+      const mapped = {
+        n: findKey(item, ['name', 'full name', 'contact', 'n', 'display name']),
+        ph: findKey(item, ['phone', 'tel', 'mobile', 'ph', 'cell']),
+        em: findKey(item, ['email', 'e-mail', 'em']),
+        ad: findKey(item, ['address', 'street', 'ad', 'location']),
+        zp: findKey(item, ['zip', 'zipcode', 'postal', 'zp']),
+        bd: findKey(item, ['birthday', 'birth', 'bd']),
+        av: findKey(item, ['anniversary', 'av']),
+        no: findKey(item, ['notes', 'note', 'comment', 'no']),
+        t: []
+      };
+
+      // Apply Dunbar Level
+      mapped.t.push(selectedLevel);
+      
+      // Apply Group Tag
+      const gTag = groupTag.value.trim().toLowerCase();
+      if (gTag) {
+        const finalG = gTag.startsWith('@') ? gTag : '@' + gTag;
+        mapped.t.push(finalG);
+      }
+
+      // Cleanup undefined fields
+      Object.keys(mapped).forEach(key => {
+        if (mapped[key] === null || mapped[key] === undefined || mapped[key] === "") {
+          if (key !== 't') delete mapped[key];
+        }
+      });
+
+      return mapped;
+    }
+
+    function findKey(obj, variations) {
+      for (const key in obj) {
+        if (variations.includes(key.toLowerCase().trim())) return obj[key];
+      }
+      return null;
+    }
+
+    function renderPreview(data) {
+      previewBox.style.display = 'block';
+      previewList.innerHTML = '';
+      previewCount.textContent = `${data.length} People Detected`;
+
+      data.forEach(p => {
+        const li = document.createElement('li');
+        li.className = 'preview-item';
+        li.innerHTML = `
+          <span class="preview-item-name">${p.n || "<i>Unknown Name</i>"}</span>
+          <span class="preview-item-meta">${p.ph || p.em || ""}</span>
+        `;
+        previewList.appendChild(li);
+      });
+
+      outputPre.textContent = JSON.stringify(data, null, 2);
+    }
+
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(outputPre.textContent);
+      const original = copyBtn.textContent;
+      copyBtn.textContent = 'Copied! ✓';
+      copyBtn.style.background = '#28a745';
+      setTimeout(() => {
+        copyBtn.textContent = original;
+        copyBtn.style.background = 'var(--color-action)';
+      }, 2000);
+    };
+  </script>
+</body>
+</html>
