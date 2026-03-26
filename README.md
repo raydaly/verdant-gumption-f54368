@@ -45,7 +45,7 @@ By helping you consciously balance these levels, Greatuncle ensures your closest
 
 Greatuncle is built for portability. The internal data structure and backup format (Seedling) are intentionally human-readable to ensure your community data is never trapped in a proprietary black box. 
 
-You can feed your raw contact data to an AI like Claude or ChatGPT to automatically transform it into this format for easy importing.
+🛠️ **Auxiliary Tools**: In the `/tools/` directory, you’ll find the [**Contact Convertor**](/tools/contact_convertor.html). It supports six distinct export formats—including CSV for spreadsheets and vCard for mobile sync—ensuring your data is never trapped in one place.
 
 > [!TIP]
 > **View the full [AI Import Specification](import_spec.md)** for more details on mapping legacy data to Greatuncle's abbreviated JSON format.
