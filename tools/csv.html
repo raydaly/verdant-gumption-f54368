@@ -63,6 +63,16 @@
           <div class="mapping-label">3. Apply Shared Group (Optional)</div>
           <input type="text" id="groupTag" class="form-input" placeholder="e.g. @family" style="padding: 6px 12px; margin-top: 4px;">
         </div>
+        <div class="field-item">
+          <div class="mapping-label">4. Export Format</div>
+          <div id="formatSelector" class="pill-select" style="flex-wrap: wrap;">
+            <button class="pill-opt pill-opt--active" data-format="array">Nourish</button>
+            <button class="pill-opt" data-format="package">Backup</button>
+            <button class="pill-opt" data-format="csv">CSV</button>
+            <button class="pill-opt" data-format="vcf">vCard</button>
+            <button class="pill-opt" data-format="md">Directory</button>
+          </div>
+        </div>
       </div>
 
       <button id="processBtn" class="trunk-btn trunk-btn--primary">Analyze Data</button>
@@ -76,8 +86,11 @@
       <ul id="previewList" class="preview-list"></ul>
       
       <div id="outputBox" class="output-box">
-        <button id="copyBtn" class="copy-btn">Copy JSON</button>
-        <pre id="outputPre" class="output-pre"></pre>
+        <div style="display:flex; gap:8px; position: absolute; top: 0.5rem; right: 0.5rem;">
+          <button id="downloadBtn" class="copy-btn" style="position:static; display:none;">Download</button>
+          <button id="copyBtn" class="copy-btn" style="position:static;">Copy</button>
+        </div>
+        <pre id="outputPre" class="output-pre" style="margin-top:1.5rem;"></pre>
       </div>
     </section>
   </main>
@@ -90,10 +103,13 @@
     const previewCount = document.getElementById('previewCount');
     const outputPre = document.getElementById('outputPre');
     const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
     const groupTag = document.getElementById('groupTag');
     const levelSelector = document.getElementById('levelSelector');
+    const formatSelector = document.getElementById('formatSelector');
 
     let selectedLevel = '&level50';
+    let selectedFormat = 'array';
     let currentData = [];
 
     // Level Selection
@@ -106,6 +122,16 @@
       });
     });
 
+    // Format Selection
+    formatSelector.querySelectorAll('.pill-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        formatSelector.querySelectorAll('.pill-opt').forEach(b => b.classList.remove('pill-opt--active'));
+        btn.classList.add('pill-opt--active');
+        selectedFormat = btn.dataset.format;
+        if (currentData.length > 0) renderPreview(currentData);
+      });
+    });
+
     processBtn.onclick = processData;
 
     function processData() {
@@ -115,8 +141,14 @@
       let items = [];
       try {
         if (raw.startsWith('[') || raw.startsWith('{')) {
-          items = JSON.parse(raw);
-          if (!Array.isArray(items)) items = [items];
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            items = parsed;
+          } else if (parsed.c || parsed.contacts) {
+            items = parsed.c || parsed.contacts;
+          } else {
+            items = [parsed];
+          }
         } else {
           items = parseCSV(raw);
         }
@@ -198,14 +230,82 @@
         `;
         previewList.appendChild(li);
       });
+      let output = "";
+      downloadBtn.style.display = 'block';
 
-      outputPre.textContent = JSON.stringify(data, null, 2);
+      if (selectedFormat === 'array') {
+        output = JSON.stringify(data, null, 2);
+        downloadBtn.style.display = 'none';
+      } else if (selectedFormat === 'package') {
+        output = JSON.stringify({ v: 4, ea: Date.now(), c: data, l: [] }, null, 2);
+      } else if (selectedFormat === 'csv') {
+        output = toCSV(data);
+      } else if (selectedFormat === 'vcf') {
+        output = toVCF(data);
+      } else if (selectedFormat === 'md') {
+        output = toMD(data);
+      }
+
+      outputPre.textContent = output;
     }
+
+    function toCSV(data) {
+      const headers = ['n', 'ph', 'em', 'ad', 'zp', 'bd', 'av', 'no', 't'];
+      const rows = [headers.join(',')];
+      data.forEach(p => {
+        const line = headers.map(h => {
+          let val = p[h] || "";
+          if (Array.isArray(val)) val = val.join(' ');
+          val = val.replace(/"/g, '""');
+          return `"${val}"`;
+        });
+        rows.push(line.join(','));
+      });
+      return rows.join('\n');
+    }
+
+    function toVCF(data) {
+      return data.map(p => {
+        const vcf = ["BEGIN:VCARD", "VERSION:3.0"];
+        if (p.n) vcf.push(`FN:${p.n}`);
+        if (p.ph) vcf.push(`TEL;TYPE=CELL:${p.ph}`);
+        if (p.em) vcf.push(`EMAIL:${p.em}`);
+        if (p.ad) vcf.push(`ADR;TYPE=HOME:;;${p.ad};;;${p.zp || ""};`);
+        if (p.bd) vcf.push(`BDAY:${p.bd.replace(/-/g, '')}`);
+        if (p.no) vcf.push(`NOTE:${p.no}`);
+        vcf.push("END:VCARD");
+        return vcf.join('\n');
+      }).join('\n');
+    }
+
+    function toMD(data) {
+      return data.map(p => {
+        let md = `### ${p.n || "Unknown"}\n`;
+        if (p.ph || p.em) md += `- ${[p.ph, p.em].filter(Boolean).join(' | ')}\n`;
+        if (p.ad || p.zp) md += `- Address: ${p.ad || ""} ${p.zp || ""}\n`;
+        if (p.bd) md += `- Birthday: ${p.bd}\n`;
+        if (p.av) md += `- Anniversary: ${p.av}\n`;
+        if (p.t && p.t.length > 0) md += `- Tags: ${p.t.join(', ')}\n`;
+        if (p.no) md += `\n*${p.no}*\n`;
+        return md;
+      }).join('\n---\n\n');
+    }
+
+    downloadBtn.onclick = () => {
+      const blob = new Blob([outputPre.textContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ext = selectedFormat === 'vcf' ? 'vcf' : selectedFormat === 'md' ? 'md' : selectedFormat === 'csv' ? 'csv' : 'json';
+      a.href = url;
+      a.download = `greatuncle-export.${ext}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
 
     copyBtn.onclick = () => {
       navigator.clipboard.writeText(outputPre.textContent);
       const original = copyBtn.textContent;
-      copyBtn.textContent = 'Copied! ✓';
+      copyBtn.textContent = '✓ Copied';
       copyBtn.style.background = '#28a745';
       setTimeout(() => {
         copyBtn.textContent = original;

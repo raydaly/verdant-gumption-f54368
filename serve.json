@@ -1,0 +1,7 @@
+{
+  "cleanUrls": false,
+  "rewrites": [
+    { "source": "/tools/**", "destination": "/tools/csv.html" },
+    { "source": "!tools/**", "destination": "/index.html" }
+  ]
+}
