@@ -241,7 +241,7 @@
         output = JSON.stringify(data, null, 2);
         downloadBtn.style.display = 'none';
       } else if (selectedFormat === 'package') {
-        output = JSON.stringify({ v: 4, ea: Date.now(), c: data, l: [] }, null, 2);
+        output = JSON.stringify({ v: 5, ea: Date.now(), c: data, l: [] }, null, 2);
       } else if (selectedFormat === 'csv') {
         output = toCSV(data);
       } else if (selectedFormat === 'vcf') {
@@ -257,9 +257,10 @@
     }
 
     function toCode(data) {
-      // Wrap in standard transfer payload v2
+      // Wrap in standard Universal v5 payload
       const payload = {
-        v: 2,
+        v: 5,
+        ea: Date.now(),
         c: data
       };
       const json = JSON.stringify(payload);

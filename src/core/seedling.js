@@ -4,7 +4,7 @@ export function exportSeedling(contacts, logs) {
   const filteredLogs = (logs || []).filter(l => activeIds.has(l.contactId));
 
   return JSON.stringify({
-    v: 4,
+    v: 5,
     ea: Date.now(),
     c: activeContacts,
     l: filteredLogs,
@@ -40,30 +40,27 @@ function cleanMember(c) {
   if (c.bd) clean.bd = c.bd;
   if (c.av) clean.av = c.av;
   if (c.dp) clean.dp = c.dp;
-  if (c.no) clean.no = c.no;
-  // Tags and other internal fields are intentionally omitted
+  // Notes (no) and internal tags (&owner, &dirty) are intentionally omitted for privacy
   return clean;
 }
 
 export function encodeInvite(contact, senderName = null, recipientName = null) {
-  const hasMilestones = !!(contact.bd || contact.av);
   const payload = {
-    v: 2,
+    v: 5,
+    ea: Date.now(),
     sn: senderName,
     rn: recipientName,
-    hm: hasMilestones,
-    c: cleanMember(contact),
+    c: [cleanMember(contact)],
   };
   return encodeBase64(JSON.stringify(payload));
 }
 
 export function encodeGroup(contacts, groupTag, senderName = null, recipientName = null) {
-  const hasMilestones = contacts.some(c => c.bd || c.av);
   const payload = {
-    v: 2,
+    v: 5,
+    ea: Date.now(),
     sn: senderName,
     rn: recipientName,
-    hm: hasMilestones,
     g: groupTag,
     c: contacts.map(cleanMember),
   };
@@ -74,24 +71,23 @@ export function encodeGroup(contacts, groupTag, senderName = null, recipientName
  * Exposes the raw payload object for UI preview (e.g. Trunk "View JSON")
  */
 export function buildPayload(mode, data, senderName, recipientName) {
+  const base = {
+    v: 5,
+    ea: Date.now(),
+    sn: senderName,
+    rn: recipientName
+  };
+
   if (mode === 'group') {
-    const hasMilestones = data.contacts.some(c => c.bd || c.av);
     return {
-      v: 2,
-      sn: senderName,
-      rn: recipientName,
-      hm: hasMilestones,
+      ...base,
       g: data.groupTag,
       c: data.contacts.map(cleanMember)
     };
   } else {
-    const hasMilestones = !!(data.contact.bd || data.contact.av);
     return {
-      v: 2,
-      sn: senderName,
-      rn: recipientName,
-      hm: hasMilestones,
-      c: cleanMember(data.contact)
+      ...base,
+      c: [cleanMember(data.contact)]
     };
   }
 }

@@ -18,12 +18,16 @@ async function parseAndWriteImport(db, params) {
     const { contacts } = ingestContacts(payload, existingContacts);
     
     // Stash metadata for a warm welcome screen
-    if (payload.sn || payload.senderName || payload.g || payload.group || payload.c || payload.contact) {
+    if (payload.sn || payload.g || payload.c) {
+      const contacts = Array.isArray(payload.c) ? payload.c : (payload.c ? [payload.c] : []);
+      const firstContactName = contacts.length > 0 ? contacts[0].n : 'Someone';
+      const containsMilestones = contacts.some(c => c.bd || c.av || c.dp);
+
       sessionStorage.setItem('lastImportMeta', JSON.stringify({
-        senderName: payload.sn || payload.senderName || 'Someone',
-        recipientName: payload.rn || payload.recipientName || '',
-        groupName: payload.g || payload.group || (payload.c ? payload.c.n : (payload.contact ? payload.contact.name : '')),
-        hasMilestones: !!(payload.hm || payload.hasMilestones)
+        senderName: payload.sn || 'Someone',
+        recipientName: payload.rn || '',
+        groupName: payload.g || (contacts.length > 1 ? `${firstContactName}'s Group` : firstContactName),
+        hasMilestones: !!(payload.hm || containsMilestones)
       }));
     }
 

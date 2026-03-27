@@ -76,10 +76,6 @@ export async function renderTrunk(db) {
   content.className = 'view-content';
   let shareBtn; // Declare early for closure access
 
-  // Share section (Pre-declare for Heritage Card scroll reference)
-  const shareSection = document.createElement('div');
-  shareSection.className = 'trunk-section';
-
   // Heritage (First Gift) Section
   const heritageCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
   
@@ -115,13 +111,19 @@ export async function renderTrunk(db) {
     content.appendChild(heritageSection);
   }
 
+  // --- THE BRIDGE (Sharing) ---
+  const shareSection = document.createElement('div');
+  shareSection.className = 'trunk-section';
+
   const shareTitle = document.createElement('div');
   shareTitle.className = 'trunk-section-title';
-  shareTitle.textContent = 'Share';
+  shareTitle.textContent = 'The Bridge (Share with Others)';
+  shareSection.appendChild(shareTitle);
 
   const shareMeta = document.createElement('div');
   shareMeta.className = 'trunk-section-meta';
-  shareMeta.textContent = 'Share your circle securely with family and friends.';
+  shareMeta.textContent = 'Pass on contacts to family and friends. For your privacy, private notes and interaction history are NEVER sent through the bridge.';
+  shareSection.appendChild(shareMeta);
 
   // Collect all @group tags
   const groupTags = [];
@@ -147,7 +149,7 @@ export async function renderTrunk(db) {
   
   const modeOpt0 = document.createElement('option');
   modeOpt0.value = '';
-  modeOpt0.textContent = '1. What would you like to share?';
+  modeOpt0.textContent = '1. Pick what to share...';
   shareModeSelect.appendChild(modeOpt0);
 
   const modeOpt1 = document.createElement('option');
@@ -327,7 +329,7 @@ export async function renderTrunk(db) {
       
       if (suggestedMembers.length > 40) {
         sizeWarning.style.display = 'block';
-        sizeWarning.innerHTML = `<strong>⚠️ This group is large (${suggestedMembers.length} people).</strong> Links may break in some email apps. Consider sharing smaller topic groups or using Export JSON.`;
+        sizeWarning.innerHTML = `<strong>⚠️ This group is large (${suggestedMembers.length} people).</strong> Links may break in some email apps. Consider sharing smaller topic groups.`;
       }
     }
 
@@ -379,18 +381,13 @@ export async function renderTrunk(db) {
   personSearch.addEventListener('input', updateRecipientUI);
   recipientInput.addEventListener('input', updateCodeGen);
 
-  const shareActionRow = document.createElement('div');
-  shareActionRow.style.display = 'block'; // Block or flex width 100%
-  shareActionRow.style.marginTop = '0.5rem';
-
   shareBtn = document.createElement('button');
   shareBtn.type = 'button';
   shareBtn.className = 'trunk-btn trunk-btn--primary';
-  shareBtn.style.marginBottom = '0';
+  shareBtn.style.marginTop = '0.5rem';
   shareBtn.style.width = '100%';
   shareBtn.textContent = 'Share Link';
-  shareBtn.disabled = true; // Disabled by default
-  shareActionRow.appendChild(shareBtn);
+  shareBtn.disabled = true;
 
   shareBtn.addEventListener('click', async () => {
     const val = getShareValue();
@@ -416,9 +413,7 @@ export async function renderTrunk(db) {
       const base = window.location.origin + window.location.pathname;
       const url = `${base}?invite=${encodeURIComponent(encoded)}`;
       subject = `Sharing Greatuncle Circle: ${tag}`;
-      body = `I'm using Greatuncle to stay connected with the people who matter most. It's a private, local-first app for staying in touch. When you click, you'll get instant access to the address book and a shared birthday/milestone calendar for our (${tag}) group. No login, no cloud, just connection.\n\nIf you have any concerns let me know. Obviously I use it and would not have shared it with you unless I thought it was safe and private.\n\n${url}`;
-      
-      // Collect emails for fallback mailto
+      body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n${url}`;
       groupEmails = groupContacts.map(c => c.em).filter(Boolean);
       
     } else if (val.startsWith('contact:')) {
@@ -429,26 +424,17 @@ export async function renderTrunk(db) {
       const base = window.location.origin + window.location.pathname;
       const url = `${base}?invite=${encodeURIComponent(encoded)}`;
       subject = `Greatuncle Contact: ${contact.n}`;
-      body = `I'm using Greatuncle to stay connected with the people who matter most. It's a private, local-first app for staying in touch. I'd like to share ${contact.n}'s contact info with you. When you click, you'll get instant access to their details and milestone info. No login, no cloud, just connection.\n\nIf you have any concerns let me know. Obviously I use it and would not have shared it with you unless I thought it was safe and private.\n\n${url}`;
-    } else {
-      return;
+      body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n${url}`;
     }
 
-    // Try Web Share API first (mobile)
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: subject,
-          text: body
-        });
+        await navigator.share({ title: subject, text: body });
         return;
       } catch (err) {
-        if (err.name === 'AbortError') return; // User cancelled
-        console.log('Web share failed, falling back to mailto:', err);
+        if (err.name === 'AbortError') return;
       }
     }
-
-    // Fallback: mailto
     const toField = recipientEmail ? recipientEmail : groupEmails.join(',');
     window.location.href = `mailto:${toField}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   });
@@ -458,40 +444,33 @@ export async function renderTrunk(db) {
   shareRow.appendChild(personSearch);
   shareRow.appendChild(personList);
   shareRow.appendChild(recipientContainer);
-  if (ownerRecord) {
-    shareSection.appendChild(shareTitle);
-    shareSection.appendChild(shareMeta);
-    shareSection.appendChild(shareRow);
-    shareSection.appendChild(shareActionRow);
 
-    // New: Secret Code Generator (Glass Box)
-    const codeDivider = document.createElement('div');
-    codeDivider.className = 'trunk-section-meta';
-    codeDivider.style.margin = '1.5rem 0 0.5rem 0';
-    codeDivider.style.textAlign = 'center';
-    codeDivider.textContent = '— OR —';
-    shareSection.appendChild(codeDivider);
+  if (ownerRecord) {
+    shareSection.appendChild(shareRow);
+    shareSection.appendChild(shareBtn);
 
     const codeArea = document.createElement('textarea');
     codeArea.className = 'trunk-readable-area';
-    codeArea.placeholder = 'Select a contact above to generate a connection code…';
+    codeArea.style.marginTop = '1rem';
+    codeArea.placeholder = 'Pick something to share to generate a Connection Code…';
     codeArea.rows = 4;
     codeArea.readOnly = true;
     shareSection.appendChild(codeArea);
 
     const codeActionRow = document.createElement('div');
     codeActionRow.style.display = 'flex';
-    codeActionRow.style.flexDirection = 'column'; // Stack buttons for better stability
     codeActionRow.style.gap = '8px';
     codeActionRow.style.marginTop = '0.5rem';
 
     const copyCodeBtn = document.createElement('button');
     copyCodeBtn.className = 'trunk-btn trunk-btn--secondary';
+    copyCodeBtn.style.flex = '1';
     copyCodeBtn.textContent = 'Copy Code';
     copyCodeBtn.disabled = true;
 
     const toggleViewBtn = document.createElement('button');
     toggleViewBtn.className = 'trunk-btn trunk-btn--secondary';
+    toggleViewBtn.style.flex = '1';
     toggleViewBtn.textContent = 'View JSON';
     toggleViewBtn.disabled = true;
 
@@ -513,208 +492,117 @@ export async function renderTrunk(db) {
       setTimeout(() => { copyCodeBtn.textContent = oldText; }, 2000);
     });
   } else {
-    // Simpler share placeholder for guests
-    shareSection.appendChild(shareTitle);
     const nudge = document.createElement('div');
     nudge.className = 'trunk-section-meta';
     nudge.textContent = 'Claim your circle by saving a backup to unlock sharing with others.';
     shareSection.appendChild(nudge);
   }
-  // Storage Persistence Status
-  const storageSection = document.createElement('div');
-  storageSection.className = 'trunk-section';
 
-  const storageTitle = document.createElement('div');
-  storageTitle.className = 'trunk-section-title';
-  storageTitle.textContent = ownerRecord ? 'Circle Safety (Local Status)' : 'Local Safety';
-  storageSection.appendChild(storageTitle);
+  // --- THE VAULT (Backups) ---
+  const vaultSection = document.createElement('div');
+  vaultSection.className = 'trunk-section';
 
+  const vaultTitle = document.createElement('div');
+  vaultTitle.className = 'trunk-section-title';
+  vaultTitle.textContent = ownerRecord ? 'The Vault (Complete Backup)' : 'Save your Backup';
+  vaultSection.appendChild(vaultTitle);
+
+  const vaultMeta = document.createElement('div');
+  vaultMeta.className = 'trunk-section-meta';
+  vaultMeta.textContent = lastExport
+    ? 'Last rooted in vault: ' + formatExportDate(lastExport)
+    : (ownerRecord ? 'You have not rooted your circle yet. Keep a complete seedling backup for safety.' : 'Save your backup to claim this circle and unlock smart connections.');
+  vaultSection.appendChild(vaultMeta);
+
+  // Storage Persistence Status (Nested in Vault for context)
   const storageMeta = document.createElement('div');
   storageMeta.className = 'trunk-section-meta';
+  storageMeta.style.marginTop = '0.5rem';
   storageMeta.textContent = 'Checking protection level...';
-  storageSection.appendChild(storageMeta);
+  vaultSection.appendChild(storageMeta);
 
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persisted().then(isPersisted => {
       if (isPersisted) {
-        storageMeta.innerHTML = '<span class="layer-badge" style="background:#4CAF50;color:#FFF;">' + (ownerRecord ? 'Protected from auto-deletion' : 'Safe in your browser') + '</span>';
+        storageMeta.innerHTML = '<span class="layer-badge" style="background:var(--color-success);color:#FFF;">' + (ownerRecord ? 'Protected from auto-deletion' : 'Safe in your browser') + '</span>';
       } else {
         storageMeta.textContent = ownerRecord 
-          ? 'Your data may be cleared by the browser if space runs low.' 
-          : 'This browser may clear your contacts if its memory gets full.';
+          ? 'Browser may clear data if space runs low.' 
+          : 'Browser may clear contacts if memory gets full.';
         const persistBtn = document.createElement('button');
         persistBtn.className = 'trunk-btn trunk-btn--secondary';
         persistBtn.style.marginTop = '0.5rem';
-        persistBtn.textContent = ownerRecord ? 'Enable Persistent Storage' : 'Keep this circle safe';
-        
-        persistBtn.addEventListener('click', async () => {
-          try {
-            const granted = await navigator.storage.persist();
-            if (granted) {
-              storageMeta.innerHTML = '<span class="layer-badge" style="background:#4CAF50;color:#FFF;">Protected from auto-deletion</span>';
-              persistBtn.remove();
-            } else {
-              persistBtn.textContent = 'Browser denied permission';
-              persistBtn.disabled = true;
-            }
-          } catch (e) {
-            console.error('Persist failed', e);
+        persistBtn.textContent = 'Protect this Circle';
+        persistBtn.onclick = async () => {
+          const granted = await navigator.storage.persist();
+          if (granted) {
+            storageMeta.innerHTML = '<span class="layer-badge" style="background:var(--color-success);color:#FFF;">Protected</span>';
+            persistBtn.remove();
           }
-        });
-        
-        storageSection.appendChild(persistBtn);
+        };
+        vaultSection.appendChild(persistBtn);
       }
     });
-  } else {
-    storageMeta.textContent = 'Persistent storage is not supported in this browser.';
   }
-
-  // Export nudge
-  if (showNudge) {
-    const nudge = document.createElement('div');
-    nudge.className = 'trunk-nudge';
-    nudge.textContent = lastExport
-      ? `Your circle was last rooted ${daysSinceExport} days ago. Consider a fresh seedling.`
-      : 'You have not rooted your circle yet. Keep a seedling backup for safety.';
-    content.appendChild(nudge);
-  }
-
-  // Import nudge
-  if (hasPendingImport) {
-    const importNudge = document.createElement('div');
-    importNudge.className = 'trunk-nudge';
-    importNudge.textContent = 'New contacts were recently imported.';
-    content.appendChild(importNudge);
-  }
-
-  // Export section
-  const exportSection = document.createElement('div');
-  exportSection.className = 'trunk-section';
-
-  const exportTitle = document.createElement('div');
-  exportTitle.className = 'trunk-section-title';
-  exportTitle.textContent = ownerRecord ? 'Root your Circle (Seedling)' : 'Save your Backup';
-
-  const exportMeta = document.createElement('div');
-  exportMeta.className = 'trunk-section-meta';
-  exportMeta.textContent = lastExport
-    ? 'Last backed up: ' + formatExportDate(lastExport)
-    : (ownerRecord ? 'You have not rooted your circle yet. Keep a seedling backup for safety.' : 'Save your backup to claim this circle and unlock smart reminders to stay in touch.');
 
   const exportActionRow = document.createElement('div');
   exportActionRow.style.display = 'flex';
   exportActionRow.style.flexDirection = 'column';
-  exportActionRow.style.gap = '0.75rem';
-  exportActionRow.style.marginTop = '0.75rem';
+  exportActionRow.style.gap = '8px';
+  exportActionRow.style.marginTop = '1rem';
 
-  // Helper to trigger claim workflow if guest just saved their data
   const checkAndClaim = () => {
     if (ownerRecord) return;
     setTimeout(() => {
       const tabBar = document.getElementById('tab-bar');
       if (tabBar) tabBar.setAttribute('hidden', '');
-      document.querySelectorAll('.bottom-sheet-backdrop').forEach(el => el.remove());
-      
       renderOnboarding(db, () => {
         window.location.hash = 'home';
         window.location.reload();
       });
-    }, 1000); // Small delay to let the backup action finish visually
+    }, 1000);
   };
 
   const exportBtn = document.createElement('button');
   exportBtn.type = 'button';
   exportBtn.className = 'trunk-btn trunk-btn--primary';
   exportBtn.style.width = '100%';
-  exportBtn.textContent = 'Download Backup File';
+  exportBtn.textContent = 'Download Complete Seedling (.json)';
   exportBtn.addEventListener('click', async () => {
     const contacts = await getAllContacts(db);
     const logs = await getAllLogs(db);
     const json = exportSeedling(contacts, logs);
     const filename = `greatuncle-${new Date().toISOString().slice(0, 10)}.json`;
-
     triggerDownload(json, filename);
     setLastExportedAt(Date.now());
     resetDeletedSinceExport();
-    exportMeta.textContent = 'Last backed up: ' + formatExportDate(Date.now());
+    vaultMeta.textContent = 'Last rooted in vault: ' + formatExportDate(Date.now());
     updateHorizonBar(db);
     checkAndClaim();
   });
 
-  // Share backup button (Web Share API with file) - For Everyone (Email to self promise)
-  const shareBackupBtn = document.createElement('button');
-  shareBackupBtn.type = 'button';
-  shareBackupBtn.className = 'trunk-btn trunk-btn--secondary';
-  shareBackupBtn.style.width = '100%';
-  shareBackupBtn.textContent = ownerRecord ? 'Share backup…' : 'Email or Save to Self…';
-  shareBackupBtn.addEventListener('click', async () => {
-    const contacts = await getAllContacts(db);
-    const logs = await getAllLogs(db);
-    const json = exportSeedling(contacts, logs);
-    const filename = `greatuncle-${new Date().toISOString().slice(0, 10)}.json`;
-    const file = new File([json], filename, { type: 'application/json' });
-
-    try {
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Greatuncle Backup' });
-      } else if (navigator.share) {
-        await navigator.share({ title: 'Greatuncle Backup', text: json });
-      } else {
-        // Fallback for browsers without Web Share API
-        const mailtoLink = `mailto:?subject=${encodeURIComponent('Greatuncle Backup')}&body=${encodeURIComponent(json)}`;
-        window.location.href = mailtoLink;
-      }
-      setLastExportedAt(Date.now());
-      resetDeletedSinceExport();
-      exportMeta.textContent = 'Last backed up: ' + formatExportDate(Date.now());
-      checkAndClaim();
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        shareBackupBtn.textContent = 'Sharing not supported';
-        setTimeout(() => { shareBackupBtn.textContent = ownerRecord ? 'Share backup…' : 'Email or Save to Self…'; }, 3000);
-      }
-    }
-  });
-
-  // Copy Backup Text Button (Replaces the hidden toggle)
   const copyBackupBtn = document.createElement('button');
-  copyBackupBtn.type = 'button';
   copyBackupBtn.className = 'trunk-btn trunk-btn--secondary';
   copyBackupBtn.style.width = '100%';
-  copyBackupBtn.textContent = 'Copy Backup Text (Notion, Notes)';
+  copyBackupBtn.textContent = 'Copy Vault Text (to Notes/Notion)';
   copyBackupBtn.addEventListener('click', async () => {
     const contacts = await getAllContacts(db);
     const logs = await getAllLogs(db);
     const json = exportSeedling(contacts, logs);
-    
-    try {
-      await navigator.clipboard.writeText(json);
-      const oldText = copyBackupBtn.textContent;
-      copyBackupBtn.textContent = 'Copied to Clipboard!';
-      setLastExportedAt(Date.now());
-      resetDeletedSinceExport();
-      exportMeta.textContent = 'Last backed up: ' + formatExportDate(Date.now());
-      checkAndClaim();
-      setTimeout(() => { copyBackupBtn.textContent = oldText; }, 2000);
-    } catch (err) {
-      console.error('Clipboard failed', err);
-      copyBackupBtn.textContent = 'Copy failed';
-    }
+    await navigator.clipboard.writeText(json);
+    const old = copyBackupBtn.textContent;
+    copyBackupBtn.textContent = 'Copied to Clipboard!';
+    setLastExportedAt(Date.now());
+    vaultMeta.textContent = 'Last rooted in vault: ' + formatExportDate(Date.now());
+    checkAndClaim();
+    setTimeout(() => { copyBackupBtn.textContent = old; }, 2000);
   });
 
-  exportSection.appendChild(exportTitle);
-  exportSection.appendChild(exportMeta);
-  exportActionRow.appendChild(exportBtn);
-  exportActionRow.appendChild(shareBackupBtn);
-  exportActionRow.appendChild(copyBackupBtn);
-  exportSection.appendChild(exportActionRow);
-
-  // Print button
   const printBtn = document.createElement('button');
   printBtn.type = 'button';
   printBtn.className = 'trunk-btn trunk-btn--secondary';
   printBtn.textContent = 'Print my Circle';
-  printBtn.addEventListener('click', async () => {
+  printBtn.onclick = async () => {
     const contacts = await getAllContacts(db);
     const nonOwners = contacts
       .filter(c => !(c.t || []).includes('&owner'))
@@ -722,7 +610,6 @@ export async function renderTrunk(db) {
 
     const printEl = document.createElement('div');
     printEl.className = 'print-contact-list';
-
     const title = document.createElement('h1');
     title.textContent = 'My Circle';
     printEl.appendChild(title);
@@ -730,35 +617,32 @@ export async function renderTrunk(db) {
     nonOwners.forEach(c => {
       const row = document.createElement('div');
       row.className = 'print-contact-row';
-
       const name = document.createElement('div');
       name.className = 'print-contact-name';
       name.textContent = c.n;
-
       const details = document.createElement('div');
       details.className = 'print-contact-details';
-      
       const visibleTags = (c.t || []).filter(t => t.startsWith('@') || t.startsWith('#'));
       const parts = [c.ph, c.em, c.ad].filter(Boolean);
-      
       let detailsText = parts.join(' · ');
       if (visibleTags.length > 0) {
         if (detailsText) detailsText += ' · ';
         detailsText += visibleTags.join(', ');
       }
-      
       details.textContent = detailsText;
-
       row.appendChild(name);
       if (detailsText) row.appendChild(details);
       printEl.appendChild(row);
     });
-
     document.body.appendChild(printEl);
     window.print();
     document.body.removeChild(printEl);
-  });
-  exportSection.appendChild(printBtn);
+  };
+
+  exportActionRow.appendChild(exportBtn);
+  exportActionRow.appendChild(copyBackupBtn);
+  exportActionRow.appendChild(printBtn);
+  vaultSection.appendChild(exportActionRow);
 
   // Import section
   const importSection = document.createElement('div');
@@ -1041,9 +925,8 @@ export async function renderTrunk(db) {
   diagSection.appendChild(diagDetail);
   
   // Final Assembly
-  content.appendChild(exportSection);
+  content.appendChild(vaultSection);
   content.appendChild(shareSection);
-  content.appendChild(storageSection);
   content.appendChild(importSection);
   content.appendChild(diagSection);
   
