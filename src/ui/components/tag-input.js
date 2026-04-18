@@ -1,4 +1,4 @@
-export function createTagInput(initialTags, onChange) {
+export function createTagInput(initialTags, onChange, popularTags = []) {
   let tags = [...initialTags];
 
   const wrap = document.createElement('div');
@@ -33,7 +33,25 @@ export function createTagInput(initialTags, onChange) {
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'tag-new-input';
-    input.placeholder = '#topic or @group';
+    input.placeholder = '@group or #topic';
+
+    if (popularTags && popularTags.length > 0) {
+      const listId = 'tag-suggestions-list';
+      input.setAttribute('list', listId);
+      
+      let datalist = wrap.querySelector('#' + listId);
+      if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = listId;
+      }
+      datalist.innerHTML = '';
+      popularTags.forEach(tag => {
+        const opt = document.createElement('option');
+        opt.value = tag;
+        datalist.appendChild(opt);
+      });
+      wrap.appendChild(datalist);
+    }
 
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {

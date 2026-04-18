@@ -29,9 +29,8 @@ export async function renderOnboarding(db, onComplete) {
     pickerContainer.className = 'onboarding-picker';
     
     const prompt = document.createElement('p');
-    prompt.style.marginBottom = '1.5rem';
-    prompt.style.fontWeight = '500';
-    prompt.textContent = "Which of these seats is yours? Someone shared this gift with you, and you might be in it.";
+    prompt.style.cssText = 'margin-bottom: 1.5rem; font-weight: 500; font-size: 0.95rem;';
+    prompt.textContent = "Welcome to your Circle. Someone shared this with you — which of these profiles is yours?";
     pickerContainer.appendChild(prompt);
 
     // Get recipient name hint if available
@@ -126,11 +125,11 @@ function showConfirmationForm(db, contact, container, onComplete) {
   
   const title = document.createElement('h1');
   title.className = 'onboarding-title';
-  title.textContent = 'Claim Your Seat';
+  title.textContent = 'Greatuncle';
 
   const tagline = document.createElement('p');
   tagline.className = 'onboarding-tagline';
-  tagline.innerHTML = `Great! We'll use <strong>${contact.n}</strong> as your owner profile. You've transitioned to <strong>Sustaining Mode</strong>. Check your details below:`;
+  tagline.innerHTML = `Great! We'll use <strong>${contact.n}</strong> as your profile. Your circle stays strictly on your device. Check your details below:`;
 
   const nameInput = document.createElement('input');
   nameInput.type = 'text';
@@ -146,7 +145,7 @@ function showConfirmationForm(db, contact, container, onComplete) {
 
   const submitBtn = document.createElement('button');
   submitBtn.className = 'onboarding-submit-btn';
-  submitBtn.textContent = 'Claim Profile & Get Started';
+  submitBtn.textContent = 'Get started';
 
   submitBtn.onclick = async () => {
     const now = Date.now();
@@ -175,11 +174,11 @@ function showManualEntry(db, container, onComplete) {
 
   const title = document.createElement('h1');
   title.className = 'onboarding-title';
-  title.textContent = 'Taking Stewardship';
+  title.textContent = 'Greatuncle';
 
   const tagline = document.createElement('p');
   tagline.className = 'onboarding-tagline';
-  tagline.textContent = 'Transition to Owner Mode to start sustaining your circle.';
+  tagline.textContent = 'Smart reminders to help you stay in touch.';
 
   const nameInput = document.createElement('input');
   nameInput.type = 'text';

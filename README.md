@@ -14,6 +14,7 @@ Most people start here. Someone who loves you shares a link, and you open it to 
 Once you perform the **Stewardship Ritual** (saving a local backup), you transition into **Owner Mode**. You are no longer just a visitor in someone else's list; you are the sovereign keeper of your own data. You can now feed the roots of your world:
 
 - **Active Management**: Turn on the engine to proactively manage up to 150 people across multiple circles.
+- **Beta 2 (Tester Workflow)**: Quick-start editing mode via Settings > Advanced to manually add or refine contacts before performing a full Stewardship Ritual.
 - **Prevent the Drift**: Receive daily suggestions to reach out to people before they become strangers.
 - **Become the Source**: Create your own new groups and share them as a "First Gift" to others, passing on the legacy of connection.
 
@@ -36,8 +37,10 @@ By helping you consciously balance these levels, Greatuncle ensures your closest
 ## 🛡️ Core Philosophy
 1. **Privacy First**: All data lives strictly in your browser (IndexedDB). No cloud, no tracking.
 2. **Local-First**: The app is a PWA (Progressive Web App) that survives entirely as a "Seedling" backup file.
-3. **The Stewardship Ritual**: To unlock editing (adding people, changing names), a guest must perform a backup. This transition from **Viewing** to **Sustaining** is how a Guest becomes an **Owner**.
+3. **The Stewardship Ritual**: To unlock full editing (adding people, changing names), a guest must perform a backup. This transition from **Viewing** to **Sustaining** is how a Guest becomes an **Owner**.
 4. **Zero-Permission**: No passwords, no accounts. You are the sole keeper of your data.
+5. **The Additive Rule (Data Sovereignty)**: Greatuncle is strictly additive. Once people are in your circle, you are the sovereign owner. If an originator deletes a record, it is NOT deleted from your local circle during a sync.
+6. **Smart Sync & Conflict Resolution**: If incoming data conflicts with your local edits, a **"🌱 Review"** banner facilitates a manual merge to prevent data loss.
 
 ---
 
@@ -66,6 +69,9 @@ Greatuncle is built for portability. The internal data structure and backup form
 - `su`: Snooze until timestamp (Unix ms).
 - `ca` / `ua`: Created at / Updated at timestamps.
 
+### 📅 Milestone Radar
+The app automatically monitors your circle for upcoming events. When a birthday or anniversary is within the next 21 days, an **"Upcoming Milestones"** section dynamically appears at the bottom of the People view to help you plan your connection.
+
 ### Intimacy Layers (Dunbar Levels)
 - `&level5`: Your Inner Circle (Daily/Weekly).
 - `&level15`: Monthly touchpoints.
@@ -86,4 +92,4 @@ Greatuncle is built for portability. The internal data structure and backup form
 - `archive/`: Legacy specs and philosophy documents.
 
 ---
-*Version: v44 (Current)*
+*Version: v48.1 (Stewardship Beta)*

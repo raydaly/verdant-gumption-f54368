@@ -13,10 +13,10 @@ import { getUpcomingMilestones, formatMilestoneDate } from '../core/milestone-en
 const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
 
 const LAYER_LABELS = {
-  '&level5':   'Level 5 (Weekly)',
-  '&level15':  'Level 15 (Monthly)',
-  '&level50':  'Level 50 (Quarterly)',
-  '&level150': 'Level 150 (Annually)',
+  '&level5':   'Weekly',
+  '&level15':  'Monthly',
+  '&level50':  'Quarterly',
+  '&level150': 'Annually',
 };
 
 // Module-level filter state — persists across in-session navigation
@@ -520,15 +520,41 @@ export async function renderPeople(db) {
   app.innerHTML = '<div class="view-loading"><div class="view-loading-spinner"></div><span>Scanning your circle...</span></div>';
 
   const allContacts = await getAllContacts(db);
+  const settings = await getSettings(db);
   const ownerContact = allContacts.find(c => (c.t || []).includes('&owner'));
   document.body.setAttribute('data-is-owned', !!ownerContact);
+
+  // Separate pending imports (tagged with &share) from live contacts
+  const liveContacts = allContacts.filter(c => !(c.t || []).includes('&share'));
+  const pendingImports = allContacts.filter(c => (c.t || []).includes('&share'));
   
-  const nonOwnerCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
+  const nonOwnerCount = liveContacts.filter(c => !(c.t || []).includes('&owner')).length;
   console.log('Architect status:', ownerContact ? 'Claimed' : 'Gallery mode');
 
-  const sortedAll = applyFilterSort(allContacts, filterState);
+  const sortedAll = applyFilterSort(liveContacts, filterState);
 
   app.innerHTML = '';
+
+  // 1. Show Review Nudge if pending imports exist
+  if (pendingImports.length > 0) {
+    const nudge = document.createElement('div');
+    nudge.className = 'claim-banner';
+    nudge.style.background = 'var(--color-bg-accent)';
+    nudge.style.border = '1px solid var(--color-action)';
+    nudge.style.marginBottom = '1.5rem';
+    
+    nudge.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong>🌱 ${pendingImports.length} people waiting to join your circle.</strong><br>
+          <span style="font-size:0.9rem;opacity:0.8;">Review and merge new contacts from your recent import.</span>
+        </div>
+        <button class="trunk-btn trunk-btn--primary" id="go-review-btn">Review</button>
+      </div>
+    `;
+    nudge.querySelector('#go-review-btn').onclick = () => navigate('share-review');
+    app.appendChild(nudge);
+  }
 
   // Check for import metadata to personalize the gallery experience
   let importMeta = null;
@@ -557,6 +583,9 @@ export async function renderPeople(db) {
 
     const text = document.createElement('p');
     text.innerHTML = `<strong>${bannerTitle}</strong> Browse freely, call, text, or email anyone. To edit contacts or create groups, <strong>save a private backup first</strong> — it takes seconds and keeps your data 100% on your device. <a href="#" id="about-link-claim" style="color: var(--color-link); text-decoration: underline; font-weight: 500;">Learn how it works.</a>`;
+    if (settings.betaMode) {
+      text.innerHTML += `<br><br>🚀 <strong>Beta Mode Active:</strong> Editing is unlocked! You can add and modify people now, but be sure to save a backup to keep your work safe.`;
+    }
     text.style.margin = '0';
     text.style.fontSize = '0.95rem';
     text.style.lineHeight = '1.45';
@@ -650,15 +679,31 @@ export async function renderPeople(db) {
   header.className = 'view-header';
 
   const h1 = document.createElement('h1');
-  if (ownerContact) {
-    h1.textContent = 'My Circle';
-  } else if (importMeta && importMeta.groupName) {
-    h1.textContent = `The ${importMeta.groupName} Circle`;
-  } else if (importMeta && importMeta.senderName) {
-    h1.textContent = `${importMeta.senderName}'s Circle`;
-  } else {
-    h1.textContent = 'Shared Circle';
+  
+  // Base Title logic
+  let baseTitle = 'My Circle';
+  if (!ownerContact) {
+    if (importMeta && importMeta.groupName) baseTitle = `The ${importMeta.groupName} Circle`;
+    else if (importMeta && importMeta.senderName) baseTitle = `${importMeta.senderName}'s Circle`;
+    else baseTitle = 'Shared Circle';
   }
+
+  // Dynamic context (filters)
+  const activeFilters = [];
+  filterState.layers.forEach(tag => {
+    if (tag === 'none') activeFilters.push('Unsorted');
+    else if (LAYER_LABELS[tag]) activeFilters.push(LAYER_LABELS[tag]);
+  });
+  filterState.groups.forEach(g => activeFilters.push(g));
+
+  let finalTitle = baseTitle;
+  if (activeFilters.length > 0) {
+    const shown = activeFilters.slice(0, 2).join(', ');
+    const more = activeFilters.length > 2 ? ` +${activeFilters.length - 2} more` : '';
+    finalTitle = `${baseTitle}: ${shown}${more}`;
+  }
+  
+  h1.textContent = `${finalTitle} (${sortedAll.length})`;
 
   const headerRight = document.createElement('div');
   headerRight.className = 'view-header-right';
@@ -669,19 +714,17 @@ export async function renderPeople(db) {
   printBtn.setAttribute('aria-label', 'Print contact list');
   printBtn.textContent = '🖨️';
   printBtn.addEventListener('click', async () => {
-    const contacts = await getAllContacts(db);
-    const nonOwners = contacts
-      .filter(c => !(c.t || []).includes('&owner'))
-      .sort((a, b) => (a.n || '').toLowerCase().localeCompare((b.n || '').toLowerCase()));
+    // Respect active filters (What You See Is What You Get)
+    const contactsToPrint = sortedAll.filter(c => !(c.t || []).includes('&owner'));
 
     const printEl = document.createElement('div');
     printEl.className = 'print-contact-list';
 
     const title = document.createElement('h1');
-    title.textContent = 'My Contact from Greatuncle';
+    title.textContent = finalTitle; 
     printEl.appendChild(title);
 
-    nonOwners.forEach(c => {
+    contactsToPrint.forEach(c => {
       const row = document.createElement('div');
       row.className = 'print-contact-row';
 
@@ -691,7 +734,8 @@ export async function renderPeople(db) {
 
       const details = document.createElement('div');
       details.className = 'print-contact-details';
-      const parts = [c.ph, c.em, c.ad].filter(Boolean);
+      const fullAddress = c.ad ? `${c.ad}${c.zp ? ' ' + c.zp : ''}` : (c.zp || null);
+      const parts = [c.ph, c.em, fullAddress].filter(Boolean);
       details.textContent = parts.join(' · ');
 
       row.appendChild(name);
@@ -713,26 +757,77 @@ export async function renderPeople(db) {
 
   // Sharing helper
   const shareAction = async () => {
-    let shareUrl;
     const base = `${window.location.origin}${window.location.pathname}`;
     const allNonOwners = allContacts.filter(c => !(c.t || []).includes('&owner'));
     const isFiltering = isFilterActive(filterState);
+    const isSingleGroup = filterState.groups.length === 1;
 
+    let volunteerMeta = null;
+
+    // Phase 2: Volunteer prompt — only when sharing exactly one @group
+    if (isSingleGroup && ownerContact) {
+      const groupTag = filterState.groups[0];  // e.g. "@family"
+      const groupName = groupTag.replace(/^@/, '');  // "family"
+      const stewardTag = `&steward.${groupName}`;
+
+      const alreadyHasSteward = allContacts.some(c => (c.t || []).includes(stewardTag));
+
+      if (!alreadyHasSteward) {
+        volunteerMeta = await new Promise((resolve) => {
+          const content = document.createElement('div');
+          content.style.cssText = 'display:flex;flex-direction:column;gap:1rem;padding:0.5rem 0;';
+
+          const msg = document.createElement('p');
+          msg.style.cssText = 'margin:0;font-size:0.95rem;line-height:1.5;';
+          msg.innerHTML = `You are sharing the <strong>${groupTag}</strong> directory.<br><br>Would you like to volunteer as the <strong>Greatuncle</strong> for this group? Members who update a contact will be nudged to text or email you the correction so you can keep the master list current.`;
+          content.appendChild(msg);
+
+          const btnRow = document.createElement('div');
+          btnRow.style.cssText = 'display:flex;flex-direction:column;gap:0.75rem;';
+
+          const yesBtn = document.createElement('button');
+          yesBtn.type = 'button';
+          yesBtn.className = 'trunk-btn trunk-btn--primary';
+          yesBtn.textContent = 'Yes, I will be the Greatuncle';
+
+          const noBtn = document.createElement('button');
+          noBtn.type = 'button';
+          noBtn.className = 'trunk-btn trunk-btn--secondary';
+          noBtn.textContent = 'No, just share the list';
+
+          btnRow.appendChild(yesBtn);
+          btnRow.appendChild(noBtn);
+          content.appendChild(btnRow);
+
+          const { close } = showBottomSheet({ title: 'Volunteer as Greatuncle?', content });
+
+          yesBtn.addEventListener('click', () => {
+            close();
+            resolve({ phone: ownerContact.ph || null, email: ownerContact.em || null });
+          });
+          noBtn.addEventListener('click', () => {
+            close();
+            resolve(null);
+          });
+        });
+      }
+    }
+
+    // Build the share URL
+    let shareUrl;
     if (isFiltering) {
-      // Share currently visible filtered contacts
       const filtered = applyFilterSort(allNonOwners, filterState);
       let title = 'Filtered Circle';
       if (filterState.groups.length === 1) title = filterState.groups[0];
       else if (filterState.layers.length === 1) title = LAYER_LABELS[filterState.layers[0]] || 'Unsorted';
-      
-      const groupCode = encodeGroup(filtered, title);
+
+      const groupCode = encodeGroup(filtered, title, ownerContact ? ownerContact.n : null, null, volunteerMeta);
       shareUrl = `${base}?importGroup=${groupCode}`;
     } else {
-      // Full circle share
-      const groupCode = encodeGroup(allNonOwners, 'Shared Circle');
+      const groupCode = encodeGroup(allNonOwners, 'Shared Circle', ownerContact ? ownerContact.n : null, null, null);
       shareUrl = `${base}?importGroup=${groupCode}`;
     }
-    
+
     const subject = 'GreatUncle Circle';
     const text = 'Check out this GreatUncle contact list.';
 
@@ -750,7 +845,6 @@ export async function renderPeople(db) {
       await navigator.clipboard.writeText(shareUrl);
       alert('Share link copied to clipboard!');
     } catch (err) {
-      // Final fallback for restricted environments
       const tempInput = document.createElement('input');
       tempInput.value = shareUrl;
       document.body.appendChild(tempInput);
@@ -853,7 +947,6 @@ export async function renderPeople(db) {
   if (sortedAll.length > 0 && sortedAll.length < 30) {
     const milestones = getUpcomingMilestones(sortedAll);
     if (milestones.length > 0) {
-      const settings = await getSettings(db);
       const milestoneSection = document.createElement('div');
       milestoneSection.className = 'view-content milestone-radar';
       milestoneSection.style.marginTop = '0';
@@ -905,8 +998,8 @@ export async function renderPeople(db) {
     }
   }
 
-  // FAB (Only for Architect/Owner)
-  if (ownerContact) {
+  // FAB (Only for Architect/Owner OR Beta testers)
+  if (ownerContact || settings.betaMode) {
     const fab = document.createElement('button');
     fab.type = 'button';
     fab.className = 'add-contact-fab';

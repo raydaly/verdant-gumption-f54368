@@ -5,9 +5,11 @@ import { createLevelSelector } from './components/level-selector.js';
 import { createTagInput } from './components/tag-input.js';
 import { showToast } from './components/toast.js';
 import { showConfirmDialog } from './components/confirm-dialog.js';
+import { showBottomSheet } from './components/bottom-sheet.js';
 import { goBack, navigate } from './router.js';
 import { sanitizeString } from '../core/sanitizer.js';
 import { generateId } from '../core/utils.js';
+import { encodeInvite } from '../core/seedling.js';
 
 const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
 
@@ -145,14 +147,28 @@ export async function renderContactForm(db, contactId) {
   const app = document.getElementById('app');
   app.innerHTML = '';
 
+  const allContacts = await getAllContacts(db);
   let existingContact = null;
   if (contactId) {
-    existingContact = await getContact(db, contactId);
+    existingContact = allContacts.find(c => c.id === contactId) || await getContact(db, contactId);
   }
+
+  // Compute popular tags
+  const tagCounts = {};
+  allContacts.forEach(c => {
+    (c.t || []).forEach(tag => {
+      if (tag.startsWith('@') || tag.startsWith('#')) {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      }
+    });
+  });
+  const popularTags = Object.entries(tagCounts)
+    .sort((a, b) => b[1] - a[1]) // Descending frequency
+    .map(e => e[0]);
 
   const isEdit = !!existingContact;
   const isOwner = isEdit && (existingContact.t || []).includes('&owner');
-  const title = isEdit ? 'Edit Contact' : 'New Contact';
+  const title = isEdit ? `Edit: ${existingContact.n}` : 'New Contact';
   const settings = await getSettings(db);
 
   let currentTags = existingContact ? [...(existingContact.t || [])] : [];
@@ -187,6 +203,36 @@ export async function renderContactForm(db, contactId) {
   // Body
   const formBody = document.createElement('div');
   formBody.className = 'form-body';
+
+  // --- Relationship (Top Section) ---
+  const relationshipSection = document.createElement('div');
+  relationshipSection.className = 'form-section';
+
+  const relLabel = document.createElement('div');
+  relLabel.className = 'form-section-label';
+  relLabel.textContent = 'Relationship';
+  relationshipSection.appendChild(relLabel);
+
+  const explainer = document.createElement('p');
+  explainer.className = 'form-explainer';
+  explainer.textContent = 'Choose your target for staying in touch, and tag them by community.';
+  relationshipSection.appendChild(explainer);
+
+  // Connection
+  const levelSelector = createLevelSelector(currentLevelTag, (tag) => {
+    currentLevelTag = tag;
+  });
+  relationshipSection.appendChild(levelSelector);
+
+  // Tags
+  let userTags = currentTags.filter(t => t.startsWith('#') || t.startsWith('@'));
+  const tagInput = createTagInput(userTags, (updated) => {
+    userTags = updated;
+  }, popularTags);
+  tagInput.style.marginTop = '1rem';
+  relationshipSection.appendChild(tagInput);
+
+  formBody.appendChild(relationshipSection);
 
   // --- Contact details ---
   const detailsSection = document.createElement('div');
@@ -225,20 +271,11 @@ export async function renderContactForm(db, contactId) {
   if ('contacts' in navigator && 'ContactsManager' in window && !isEdit) {
     const importBtn = document.createElement('button');
     importBtn.type = 'button';
-    importBtn.textContent = '👤+';
+    importBtn.textContent = 'Import from Contacts';
     importBtn.className = 'trunk-btn trunk-btn--secondary';
-    importBtn.style.padding = '0 12px';
-    importBtn.style.fontSize = '1.2rem';
-    importBtn.title = 'Import from device';
-
-    const wrapper = document.createElement('div');
-    wrapper.style.display = 'flex';
-    wrapper.style.gap = '8px';
+    importBtn.style.marginBottom = '1.5rem';
     
-    nameField.insertBefore(wrapper, nameInput);
-    wrapper.appendChild(nameInput);
-    nameInput.style.flex = '1';
-    wrapper.appendChild(importBtn);
+    formBody.insertBefore(importBtn, relationshipSection);
 
     importBtn.addEventListener('click', async () => {
       try {
@@ -313,43 +350,6 @@ export async function renderContactForm(db, contactId) {
   notesField.appendChild(notesInput);
   notesSection.appendChild(notesField);
   formBody.appendChild(notesSection);
-
-  // --- Connection ---
-  const connectionSection = document.createElement('div');
-  connectionSection.className = 'form-section';
-
-  const connectionLabel = document.createElement('div');
-  connectionLabel.className = 'form-section-label';
-  connectionLabel.textContent = 'Connection';
-  connectionSection.appendChild(connectionLabel);
-
-  const explainer = document.createElement('p');
-  explainer.className = 'form-explainer';
-  explainer.textContent = 'How often do you want to stay in touch?';
-  connectionSection.appendChild(explainer);
-
-  const levelSelector = createLevelSelector(currentLevelTag, (tag) => {
-    currentLevelTag = tag;
-  });
-  connectionSection.appendChild(levelSelector);
-  formBody.appendChild(connectionSection);
-
-  // --- Tags ---
-  const tagsSection = document.createElement('div');
-  tagsSection.className = 'form-section';
-
-  const tagsLabel = document.createElement('div');
-  tagsLabel.className = 'form-section-label';
-  tagsLabel.textContent = 'Tags';
-  tagsSection.appendChild(tagsLabel);
-
-  let userTags = currentTags.filter(t => t.startsWith('#') || t.startsWith('@'));
-
-  const tagInput = createTagInput(userTags, (updated) => {
-    userTags = updated;
-  });
-  tagsSection.appendChild(tagInput);
-  formBody.appendChild(tagsSection);
 
   // Assemble
   formView.appendChild(formHeader);
@@ -449,10 +449,97 @@ export async function renderContactForm(db, contactId) {
 
     await saveContact(db, contact);
 
+    // --- Phase 3: Stewardship Correction Routing ---
+    // Only trigger for edits (not new contacts) that have @group tags.
+    if (isEdit) {
+      const groupTags = finalTags.filter(t => t.startsWith('@'));
+      if (groupTags.length > 0) {
+        const freshContacts = await getAllContacts(db);
+        // Find all stewards who curate any of this contact's groups
+        const stewards = [];
+        groupTags.forEach(groupTag => {
+          const groupName = groupTag.replace(/^@/, '');
+          const stewardTag = `&steward.${groupName}`;
+          freshContacts.forEach(c => {
+            if (
+              (c.t || []).includes(stewardTag) &&
+              !stewards.find(s => s.id === c.id)
+            ) {
+              stewards.push({ ...c, _stewardsFor: groupTag });
+            }
+          });
+        });
+
+        if (stewards.length > 0) {
+          const base = `${window.location.origin}${window.location.pathname}`;
+          const correctionCode = encodeInvite(contact);
+          const correctionUrl = `${base}?invite=${correctionCode}`;
+
+          const content = document.createElement('div');
+          content.style.cssText = 'display:flex;flex-direction:column;gap:1rem;padding:0.5rem 0;';
+
+          const msg = document.createElement('p');
+          msg.style.cssText = 'margin:0;font-size:0.95rem;line-height:1.5;';
+          msg.innerHTML = `You updated <strong>${contact.n}</strong>. The following Greatuncle(s) curate groups this person belongs to. Would you like to forward this correction?`;
+          content.appendChild(msg);
+
+          stewards.forEach(steward => {
+            const stewardRow = document.createElement('div');
+            stewardRow.style.cssText = 'border-top:1px solid var(--color-bg-accent);padding-top:0.75rem;display:flex;flex-direction:column;gap:0.5rem;';
+
+            const stewardLabel = document.createElement('p');
+            stewardLabel.style.cssText = 'margin:0;font-size:0.85rem;opacity:0.7;';
+            stewardLabel.textContent = `${steward.n} — curates ${steward._stewardsFor}`;
+            stewardRow.appendChild(stewardLabel);
+
+            const btnRow = document.createElement('div');
+            btnRow.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;';
+
+            if (steward.ph) {
+              const smsBtn = document.createElement('a');
+              smsBtn.className = 'trunk-btn trunk-btn--primary';
+              smsBtn.style.cssText = 'flex:1;text-align:center;text-decoration:none;';
+              smsBtn.href = `sms:${steward.ph}?body=${encodeURIComponent('Hi ' + steward.n + ', here is an updated contact record: ' + correctionUrl)}`;
+              smsBtn.textContent = `Text ${steward.n}`;
+              btnRow.appendChild(smsBtn);
+            }
+
+            if (steward.em) {
+              const emailBtn = document.createElement('a');
+              emailBtn.className = steward.ph ? 'trunk-btn trunk-btn--secondary' : 'trunk-btn trunk-btn--primary';
+              emailBtn.style.cssText = 'flex:1;text-align:center;text-decoration:none;';
+              emailBtn.href = `mailto:${steward.em}?subject=${encodeURIComponent('Contact Update: ' + contact.n)}&body=${encodeURIComponent('Hi ' + steward.n + ', here is an updated contact record: ' + correctionUrl)}`;
+              emailBtn.textContent = `Email ${steward.n}`;
+              btnRow.appendChild(emailBtn);
+            }
+
+            stewardRow.appendChild(btnRow);
+            content.appendChild(stewardRow);
+          });
+
+          const skipBtn = document.createElement('button');
+          skipBtn.type = 'button';
+          skipBtn.className = 'trunk-btn trunk-btn--secondary';
+          skipBtn.style.marginTop = '0.25rem';
+          skipBtn.textContent = 'Skip for now';
+          content.appendChild(skipBtn);
+
+          const { close } = showBottomSheet({ title: 'Forward Correction?', content });
+          skipBtn.addEventListener('click', () => close());
+          // SMS/email links navigate away naturally, so closing is automatic
+        }
+      }
+    }
+
+    // Feedback: Success Transform
+    saveBtn.textContent = 'Saved ✓';
+    saveBtn.style.color = '#2e7d32'; // Forest Green
+    saveBtn.disabled = true;
+
     // Address "update all" prompt
     if (isEdit && originalAddress && newAddress !== originalAddress) {
-      const allContacts = await getAllContacts(db);
-      const candidates = allContacts.filter(c =>
+      const allContactsAfter = await getAllContacts(db);
+      const candidates = allContactsAfter.filter(c =>
         c.ad === originalAddress && c.id !== contact.id
       );
       if (candidates.length > 0) {
@@ -470,6 +557,8 @@ export async function renderContactForm(db, contactId) {
       }
     }
 
-    goBack();
+    setTimeout(() => {
+      goBack();
+    }, 500);
   });
 }

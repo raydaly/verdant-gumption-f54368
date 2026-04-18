@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v46';
+var CACHE_NAME = 'greatuncle-v65';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -38,17 +38,16 @@ var STATIC_ASSETS = [
   '/src/ui/components/confirm-dialog.js',
 ];
 
-self.addEventListener('install', function (event) {
+self.addEventListener('install', event => {
+  console.log('SW: Installing v65...');
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(function (cache) {
-      return cache.addAll(STATIC_ASSETS);
-    }).then(function () {
-      return self.skipWaiting();
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
   );
 });
 
 self.addEventListener('activate', function (event) {
+  console.log('SW: Activated v65');
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(
@@ -69,9 +68,13 @@ self.addEventListener('fetch', function (event) {
   const url = new URL(event.request.url);
   if (url.pathname.startsWith('/tools/')) return;
 
-  // NETWORK-FIRST: always fetch fresh from network, update cache, fall back to cache if offline
+  // NETWORK-FIRST with CACHE-BYPASS: always fetch fresh from network (bypassing browser HTTP cache)
+  // then update the SW cache, fall back to SW cache if offline.
   event.respondWith(
-    fetch(event.request).then(function (response) {
+    fetch(event.request, { cache: 'no-store' }).then(function (response) {
+      if (!response || response.status !== 200 || response.type !== 'basic') {
+        return response;
+      }
       var responseClone = response.clone();
       caches.open(CACHE_NAME).then(function (cache) {
         cache.put(event.request, responseClone);

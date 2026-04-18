@@ -48,6 +48,7 @@ export async function updateHorizonBar(db) {
 
   bar.style.width = `${width}%`;
   bar.style.backgroundColor = color;
+  bar.style.display = width > 0 ? 'block' : 'none';
   
   // Update tooltip/metadata if we want accessibility
   bar.setAttribute('aria-label', `${totalVolatility} unsaved changes, last backup ${Math.floor(daysSinceExport)} days ago`);

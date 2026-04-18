@@ -4,6 +4,8 @@ import { clearAllLogs, deleteLogsForContact } from '../storage/logs.js';
 import { goBack, navigate } from './router.js';
 import { showConfirmDialog } from './components/confirm-dialog.js';
 
+const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
+
 export function applyTheme(theme) {
   if (theme === 'system') {
     document.documentElement.removeAttribute('data-theme');
@@ -131,7 +133,7 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
     let safeEmail = emailField.getInput().value.trim() || null;
     if (safeEmail) safeEmail = safeEmail.replace(/</g, '').substring(0, 100).trim();
 
-    const safeUserTags = tagsField.getInput().value.trim().split(/\\s+/).filter(Boolean)
+    const safeUserTags = tagsField.getInput().value.trim().split(/\s+/).filter(Boolean)
       .map(t => t.replace(/</g, '').substring(0, 50).trim())
       .filter(t => t && (t.startsWith('@') || t.startsWith('#')));
 
@@ -204,6 +206,18 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
 
   const legacyRow = makeToggleRow('Track date of passing', settings.trackLegacy, (val) => saveSettings(db, { trackLegacy: val }));
   advancedSection.appendChild(legacyRow);
+
+  const betaRow = makeToggleRow('Beta 2 (Enable Editing)', settings.betaMode, (val) => {
+    saveSettings(db, { betaMode: val });
+    showConfirmDialog({
+      title: 'Beta mode changed',
+      message: 'You may need to refresh the page to see all editing options unlocked.',
+      confirmPhrase: 'RELOAD',
+    }).then(ok => {
+      if (ok) window.location.reload();
+    });
+  });
+  advancedSection.appendChild(betaRow);
   container.appendChild(advancedSection);
 
   // --- Locale & Dates ---
@@ -311,11 +325,13 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
  * Tab 2: Vision (The Dunbar Bars and Magic Mike spirit)
  */
 function renderVisionTab(db, container, allContacts) {
+  const nonOwners = allContacts.filter(c => !(c.t || []).includes('&owner'));
+  const totalLimit = 150;
+
   const intro = document.createElement('div');
   intro.className = 'vision-text';
   intro.innerHTML = `
-    <p>Greatuncle is a private tool built on a simple premise: 
-    <strong>Grounded connection</strong> is the work of maintaining deep roots.</p>
+    <p>A quick overview of your stewardship distribution by frequency.</p>
   `;
   container.appendChild(intro);
 
@@ -324,31 +340,62 @@ function renderVisionTab(db, container, allContacts) {
   chartsContainer.className = 'dunbar-charts';
 
   const layers = [
-    { tag: '&level5',   label: 'Hearth',       limit: 5,   desc: 'Weekly check-ins' },
-    { tag: '&level15',  label: 'Table',        limit: 15,  desc: 'Monthly dinners' },
-    { tag: '&level50',  label: 'Neighborhood', limit: 50,  desc: 'Quarterly coffee' },
-    { tag: '&level150', label: 'Horizon',      limit: 150, desc: 'Yearly hello' },
+    { tag: null,        label: 'Awaiting Stewardship', limit: null, desc: 'Not assigned a frequency' },
+    { tag: '&level5',   label: 'Weekly',             limit: 5,   desc: 'Keep them close' },
+    { tag: '&level15',  label: 'Monthly',            limit: 10,  desc: 'Regular roots' },
+    { tag: '&level50',  label: 'Quarterly',          limit: 35,  desc: 'Steady connection' },
+    { tag: '&level150', label: 'Annually',           limit: 100, desc: 'Yearly hello' },
   ];
 
   layers.forEach(layer => {
-    const count = allContacts.filter(c => (c.t || []).includes(layer.tag)).length;
-    const percent = Math.min(100, (count / layer.limit) * 100);
-    const isOver = count > layer.limit;
+    let count;
+    if (layer.tag === null) {
+      // Unassigned: has no level tag
+      count = nonOwners.filter(c => !LEVEL_TAGS.some(t => (c.t || []).includes(t))).length;
+    } else {
+      count = nonOwners.filter(c => (c.t || []).includes(layer.tag)).length;
+    }
+    
+    const limit = layer.limit || nonOwners.length || 1;
+    const percent = Math.min(100, (count / limit) * 100);
+    const isOver = layer.limit && count > layer.limit;
 
     const item = document.createElement('div');
     item.className = 'chart-item';
     item.innerHTML = `
       <div class="chart-header">
-        <span class="chart-label">${layer.label}</span>
-        <span class="chart-count">${count} / ${layer.limit}</span>
+        <span class="chart-label" style="font-weight: 700; text-transform: uppercase;">${layer.label}</span>
+        <span class="chart-count">${count}${layer.limit ? ' / ' + layer.limit : ''}</span>
       </div>
       <div class="chart-bar-bg">
-        <div class="chart-bar-fill ${isOver ? 'chart-bar-fill--warning' : ''}" style="width: ${percent}%"></div>
+        <div class="chart-bar-fill ${isOver ? 'chart-bar-fill--warning' : ''}" style="width: ${percent}%; background: ${layer.tag === null ? 'var(--color-bg-accent)' : ''}"></div>
       </div>
       <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.25rem;">${layer.desc}</div>
     `;
     chartsContainer.appendChild(item);
   });
+
+  // Total Capacity Bar
+  const totalCount = nonOwners.length;
+  const totalPercent = Math.min(100, (totalCount / totalLimit) * 100);
+  const totalOver = totalCount > totalLimit;
+
+  const totalItem = document.createElement('div');
+  totalItem.className = 'chart-item';
+  totalItem.style.marginTop = '1rem';
+  totalItem.style.paddingTop = '1rem';
+  totalItem.style.borderTop = '1px solid var(--color-bg-accent)';
+  totalItem.innerHTML = `
+    <div class="chart-header">
+      <span class="chart-label" style="font-weight: 800; color: var(--color-action);">TOTAL CIRCLE</span>
+      <span class="chart-count">${totalCount} / ${totalLimit}</span>
+    </div>
+    <div class="chart-bar-bg" style="height: 12px;">
+      <div class="chart-bar-fill ${totalOver ? 'chart-bar-fill--warning' : ''}" style="width: ${totalPercent}%; background: var(--color-action);"></div>
+    </div>
+    <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.5rem; font-style: italic;">Research suggests 150 is the natural limit for stable, meaningful relationships.</div>
+  `;
+  chartsContainer.appendChild(totalItem);
   
   container.appendChild(chartsContainer);
 

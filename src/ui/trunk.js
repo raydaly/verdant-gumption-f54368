@@ -74,7 +74,12 @@ export async function renderTrunk(db) {
 
   const content = document.createElement('div');
   content.className = 'view-content';
-  let shareBtn; // Declare early for closure access
+  
+  // Forward-declare UI elements for logic visibility
+  let shareBtn, codeArea, copyCodeBtn, toggleViewBtn;
+  let viewMode = 'code'; // 'code' or 'json'
+  let currentPayload = null;
+  let currentEncoded = null;
 
   // Heritage (First Gift) Section
   const heritageCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
@@ -256,16 +261,12 @@ export async function renderTrunk(db) {
     return null;
   };
 
-  let currentPayload = null;
-  let currentEncoded = null;
-  let viewMode = 'code'; // 'code' or 'json'
-
   const updateCodeGen = () => {
     const val = getShareValue();
     if (!val) {
-      if (typeof codeArea !== 'undefined') codeArea.value = '';
-      if (typeof copyCodeBtn !== 'undefined') copyCodeBtn.disabled = true;
-      if (typeof toggleViewBtn !== 'undefined') toggleViewBtn.disabled = true;
+      if (codeArea) codeArea.value = '';
+      if (copyCodeBtn) copyCodeBtn.disabled = true;
+      if (toggleViewBtn) toggleViewBtn.disabled = true;
       if (shareBtn) shareBtn.disabled = true;
       return;
     }
@@ -291,11 +292,12 @@ export async function renderTrunk(db) {
 
     currentPayload = payload;
     currentEncoded = encoded;
-    if (typeof codeArea !== 'undefined') {
+
+    if (codeArea) {
       codeArea.value = viewMode === 'code' ? encoded : JSON.stringify(payload, null, 2);
     }
-    if (typeof copyCodeBtn !== 'undefined') copyCodeBtn.disabled = false;
-    if (typeof toggleViewBtn !== 'undefined') toggleViewBtn.disabled = false;
+    if (copyCodeBtn) copyCodeBtn.disabled = false;
+    if (toggleViewBtn) toggleViewBtn.disabled = false;
     if (shareBtn) shareBtn.disabled = false;
   };
 
@@ -449,7 +451,7 @@ export async function renderTrunk(db) {
     shareSection.appendChild(shareRow);
     shareSection.appendChild(shareBtn);
 
-    const codeArea = document.createElement('textarea');
+    codeArea = document.createElement('textarea');
     codeArea.className = 'trunk-readable-area';
     codeArea.style.marginTop = '1rem';
     codeArea.placeholder = 'Pick something to share to generate a Connection Code…';
@@ -462,13 +464,13 @@ export async function renderTrunk(db) {
     codeActionRow.style.gap = '8px';
     codeActionRow.style.marginTop = '0.5rem';
 
-    const copyCodeBtn = document.createElement('button');
+    copyCodeBtn = document.createElement('button');
     copyCodeBtn.className = 'trunk-btn trunk-btn--secondary';
     copyCodeBtn.style.flex = '1';
     copyCodeBtn.textContent = 'Copy Code';
     copyCodeBtn.disabled = true;
 
-    const toggleViewBtn = document.createElement('button');
+    toggleViewBtn = document.createElement('button');
     toggleViewBtn.className = 'trunk-btn trunk-btn--secondary';
     toggleViewBtn.style.flex = '1';
     toggleViewBtn.textContent = 'View JSON';
@@ -498,7 +500,102 @@ export async function renderTrunk(db) {
     shareSection.appendChild(nudge);
   }
 
+  // --- GREATUNCLE PUBLISHING DESK (Phase 5) ---
+  // Only visible if the owner is stewarding at least one group.
+  const stewardedGroups = [];
+  if (ownerRecord) {
+    allContacts.forEach(c => {
+      (c.t || []).forEach(tag => {
+        if (tag.startsWith('&steward.') && !stewardedGroups.includes(tag)) {
+          stewardedGroups.push(tag);
+        }
+      });
+    });
+  }
+
+  if (stewardedGroups.length > 0) {
+    const publishSection = document.createElement('div');
+    publishSection.className = 'trunk-section';
+
+    const publishTitle = document.createElement('div');
+    publishTitle.className = 'trunk-section-title';
+    publishTitle.textContent = 'Greatuncle Publishing Desk';
+    publishSection.appendChild(publishTitle);
+
+    const publishMeta = document.createElement('div');
+    publishMeta.className = 'trunk-section-meta';
+    publishMeta.textContent = 'You are the Greatuncle for the following groups. Publish a fresh update to route future corrections back to you.';
+    publishSection.appendChild(publishMeta);
+
+    stewardedGroups.sort().forEach(stewardTag => {
+      const groupName = stewardTag.replace('&steward.', '');
+      const groupTag = `@${groupName}`;
+      const groupContacts = allContacts.filter(c =>
+        !(c.t || []).includes('&owner') && (c.t || []).includes(groupTag)
+      );
+
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-top:1px solid var(--color-bg-accent);';
+
+      const info = document.createElement('div');
+      info.style.cssText = 'display:flex;flex-direction:column;gap:0.2rem;';
+
+      const tagLabel = document.createElement('strong');
+      tagLabel.textContent = groupTag;
+
+      const countLabel = document.createElement('span');
+      countLabel.style.cssText = 'font-size:0.8rem;opacity:0.6;';
+      countLabel.textContent = `${groupContacts.length} ${groupContacts.length === 1 ? 'person' : 'people'}`;
+
+      info.appendChild(tagLabel);
+      info.appendChild(countLabel);
+
+      const publishBtn = document.createElement('button');
+      publishBtn.type = 'button';
+      publishBtn.className = 'trunk-btn trunk-btn--primary';
+      publishBtn.style.cssText = 'padding:0.4rem 0.9rem;font-size:0.85rem;white-space:nowrap;';
+      publishBtn.textContent = 'Publish Update';
+
+      publishBtn.addEventListener('click', async () => {
+        if (groupContacts.length === 0) {
+          alert(`No contacts found in ${groupTag}.`);
+          return;
+        }
+        const volunteerMeta = { phone: ownerRecord.ph || null, email: ownerRecord.em || null };
+        const encoded = encodeGroup(groupContacts, groupTag, senderName, null, volunteerMeta);
+        const base = window.location.origin + window.location.pathname;
+        const shareUrl = `${base}?importGroup=${encodeURIComponent(encoded)}`;
+        const subject = `Updated ${groupTag} Circle`;
+        const body = `Hi! Here is the latest ${groupTag} address book. Click the link to update your Greatuncle app:\n\n${shareUrl}`;
+
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: subject, text: body, url: shareUrl });
+            return;
+          } catch (err) {
+            if (err.name === 'AbortError') return;
+          }
+        }
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          const old = publishBtn.textContent;
+          publishBtn.textContent = 'Link Copied!';
+          setTimeout(() => { publishBtn.textContent = old; }, 2000);
+        } catch {
+          alert('Copy failed — please share this link manually:\n\n' + shareUrl);
+        }
+      });
+
+      row.appendChild(info);
+      row.appendChild(publishBtn);
+      publishSection.appendChild(row);
+    });
+
+    content.appendChild(publishSection);
+  }
+
   // --- THE VAULT (Backups) ---
+
   const vaultSection = document.createElement('div');
   vaultSection.className = 'trunk-section';
 

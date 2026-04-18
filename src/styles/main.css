@@ -99,7 +99,7 @@ body {
 
 /* Spacer for the bar if needed on scroll */
 body {
-  padding-top: 4px;
+  padding-top: 0;
 }
 
 #sw-update-banner {

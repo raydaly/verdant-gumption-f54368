@@ -55,7 +55,7 @@ export function encodeInvite(contact, senderName = null, recipientName = null) {
   return encodeBase64(JSON.stringify(payload));
 }
 
-export function encodeGroup(contacts, groupTag, senderName = null, recipientName = null) {
+export function encodeGroup(contacts, groupTag, senderName = null, recipientName = null, volunteerMeta = null) {
   const payload = {
     v: 5,
     ea: Date.now(),
@@ -64,6 +64,13 @@ export function encodeGroup(contacts, groupTag, senderName = null, recipientName
     g: groupTag,
     c: contacts.map(cleanMember),
   };
+  // If the sender is volunteering as a Greatuncle for this group,
+  // embed their contact details so the recipient's app can route corrections back.
+  if (volunteerMeta) {
+    payload.sv = true;           // sv = steward volunteer flag
+    if (volunteerMeta.phone) payload.sp = volunteerMeta.phone;  // sp = steward phone
+    if (volunteerMeta.email) payload.se = volunteerMeta.email;  // se = steward email
+  }
   return encodeBase64(JSON.stringify(payload));
 }
 
@@ -96,26 +103,42 @@ import { sanitizeContact, normalizePhone, sanitizeString } from './sanitizer.js'
 import { generateId } from './utils.js';
 
 export function findMatch(incoming, existingContacts) {
-  return existingContacts.find(existing => {
-    // Never match against pending imports
-    if (existing.t && existing.t.includes('&share')) return false;
+  // Never match against pending imports
+  const pool = existingContacts.filter(c => !(c.t || []).includes('&share'));
 
-    const nameMatch = existing.n && incoming.n &&
-      existing.n.toLowerCase().trim() === incoming.n.toLowerCase().trim();
-    const phoneMatch = incoming.ph && existing.ph &&
-      normalizePhone(existing.ph) === normalizePhone(incoming.ph);
-    const emailMatch = incoming.em && existing.em &&
-      existing.em.toLowerCase().trim() === incoming.em.toLowerCase().trim();
+  // 1. Email Match (highest confidence)
+  if (incoming.em) {
+    const match = pool.find(c => c.em && c.em.toLowerCase().trim() === incoming.em.toLowerCase().trim());
+    if (match) return match;
+  }
 
-    return nameMatch || phoneMatch || emailMatch;
-  }) || null;
+  // 2. Phone Match
+  if (incoming.ph) {
+    const pIncoming = normalizePhone(incoming.ph);
+    const match = pool.find(c => c.ph && normalizePhone(c.ph) === pIncoming);
+    if (match) return match;
+  }
+
+  // 3. Name Match (only if unique)
+  if (incoming.n) {
+    const nameMatches = pool.filter(c => c.n && c.n.toLowerCase().trim() === incoming.n.toLowerCase().trim());
+    if (nameMatches.length === 1) return nameMatches[0];
+  }
+
+  // 4. Owner match (Safety catch for the primary user)
+  if (incoming.t && incoming.t.includes('&owner')) {
+    const owner = pool.find(c => (c.t || []).includes('&owner'));
+    if (owner) return owner;
+  }
+
+  return null;
 }
 
 /**
  * Turns a raw payload into a sanitized list of prospective contact records.
  * Returns { contacts: Array, hadDuplicates: Boolean }
  */
-export function ingestContacts(payload, existingContacts) {
+export function ingestContacts(payload, existingContacts, isFreshInstall = false) {
   if (!payload) return { contacts: [], hadDuplicates: false };
 
   // Handle both abbreviated and direct array payloads
@@ -153,7 +176,8 @@ export function ingestContacts(payload, existingContacts) {
     if (isAlreadyPending) continue;
 
     // Prepare the record for the review queue
-    const finalTags = [...(safe.t || []), '&share', '&dirty'];
+    const finalTags = [...(safe.t || []), '&dirty'];
+    if (!isFreshInstall) finalTags.push('&share');
     if (batchTag && !finalTags.includes(batchTag)) finalTags.push(batchTag);
     
     // Default to @level50 (Neighborhood) if no level is assigned yet.
@@ -163,7 +187,8 @@ export function ingestContacts(payload, existingContacts) {
 
     const record = {
       ...safe,
-      id: safe.id || generateId(),
+      t: finalTags,
+      id: match ? match.id : (safe.id || generateId()),
       lc: null,
       su: null,
       ca: now,
@@ -172,7 +197,7 @@ export function ingestContacts(payload, existingContacts) {
 
     if (match) {
       record.t.push('&duplicate');
-      record.matchedId = (match.id);
+      record.matchedId = match.id;
     }
 
     results.push(record);

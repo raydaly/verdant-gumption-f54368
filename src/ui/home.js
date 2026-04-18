@@ -155,6 +155,8 @@ export async function renderHome(db, version = currentVersion) {
     content.appendChild(banner);
   }
 
+
+
   // Health summary
   if (health.total > 0) {
     const healthGrid = document.createElement('div');
@@ -181,6 +183,43 @@ export async function renderHome(db, version = currentVersion) {
     });
 
     content.appendChild(healthGrid);
+  }
+
+  // --- Phase 6: Stewardship Dashboard ---
+  // Scan all contacts for &steward.* tags to show who is curating which groups.
+  const stewardMap = new Map(); // groupTag -> stewardName
+  allContacts.forEach(c => {
+    (c.t || []).forEach(tag => {
+      if (tag.startsWith('&steward.')) {
+        const group = `@${tag.replace('&steward.', '')}`;
+        if (!stewardMap.has(group)) stewardMap.set(group, c.n);
+      }
+    });
+  });
+
+  if (stewardMap.size > 0) {
+    const stewardSection = document.createElement('div');
+    stewardSection.className = 'home-section';
+    stewardSection.style.marginBottom = '1.5rem';
+
+    const stewardLabel = document.createElement('div');
+    stewardLabel.className = 'home-section-label';
+    stewardLabel.textContent = 'Greatuncles';
+    stewardSection.appendChild(stewardLabel);
+
+    const stewardGrid = document.createElement('div');
+    stewardGrid.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;';
+
+    for (const [group, name] of stewardMap.entries()) {
+      const chip = document.createElement('div');
+      chip.className = 'layer-badge';
+      chip.style.cssText = 'padding:0.4rem 0.75rem;background:var(--color-bg-elevated);border:1px solid var(--color-border);font-size:0.85rem;';
+      chip.innerHTML = `<span style="opacity:0.6;margin-right:0.3rem;">${group}</span> <strong>${name}</strong>`;
+      stewardGrid.appendChild(chip);
+    }
+
+    stewardSection.appendChild(stewardGrid);
+    content.appendChild(stewardSection);
   }
 
   // Anchor events
@@ -211,15 +250,24 @@ export async function renderHome(db, version = currentVersion) {
       const date = document.createElement('div');
       date.className = 'event-date';
       const key = type === 'birthday' ? 'bd' : 'av';
-      const age = (settings.showAge && contact[key]) ? (() => {
-          const md = getMonthDay(contact[key]);
-          const eventAge = md ? (new Date(new Date().getFullYear() + (md.month < new Date().getMonth() || (md.month === new Date().getMonth() && md.day < new Date().getDate()) ? 1 : 0), md.month, md.day).getFullYear() - md.year) : null;
-          if (!eventAge || eventAge < 0) return '';
-          const suffix = (eventAge % 10 === 1 && eventAge !== 11) ? 'st' : 
-                         (eventAge % 10 === 2 && eventAge !== 12) ? 'nd' :
-                         (eventAge % 10 === 3 && eventAge !== 13) ? 'rd' : 'th';
-          return ` · ${eventAge}${suffix}`;
-      })() : '';
+      const dateVal = contact[key];
+      let age = '';
+      if (settings.showAge && dateVal) {
+        const md = getMonthDay(dateVal);
+        if (md && md.year) {
+          const now = new Date();
+          const currentYear = now.getFullYear();
+          let eventThisYear = new Date(currentYear, md.month, md.day);
+          let targetYear = (eventThisYear < now) ? currentYear + 1 : currentYear;
+          const a = targetYear - md.year;
+          if (a > 0) {
+            const suffix = (a % 10 === 1 && a !== 11) ? 'st' : 
+                          (a % 10 === 2 && a !== 12) ? 'nd' :
+                          (a % 10 === 3 && a !== 13) ? 'rd' : 'th';
+            age = ` · ${a}${suffix}`;
+          }
+        }
+      }
       
       const typeLabel = type === 'birthday' ? 'Birthday' : 'Anniversary';
       date.textContent = typeLabel + age + ' · ' + formatDaysUntil(daysUntil);
@@ -302,6 +350,15 @@ export async function renderHome(db, version = currentVersion) {
           pill.className = 'layer-badge';
           pill.textContent = tag;
           pill.style.marginLeft = '4px';
+
+          // If this tag has a steward, highlight it
+          if (stewardMap.has(tag)) {
+            pill.style.borderColor = 'var(--color-primary)';
+            pill.style.borderWidth = '2px';
+            pill.title = `${stewardMap.get(tag)} curates ${tag}`;
+            pill.innerHTML = `${tag} <span style="font-size:0.7rem;margin-left:2px;">🛡️</span>`;
+          }
+          
           meta.appendChild(pill);
         });
       }

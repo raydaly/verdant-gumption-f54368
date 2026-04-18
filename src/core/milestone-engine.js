@@ -52,7 +52,9 @@ export function getMonthDay(dateVal) {
   }
 
   if (isNaN(date.getTime())) return null;
-  return { month: date.getMonth(), day: date.getDate(), year: date.getFullYear() };
+  const y = date.getFullYear();
+  const year = (y === 0 || y === 1904) ? null : y;
+  return { month: date.getMonth(), day: date.getDate(), year };
 }
 
 /**
@@ -83,7 +85,9 @@ export function getDaysUntil(month, day) {
  * Calculates the age at the next occurrence.
  */
 function getAgeAtEvent(birthYear, eventMonth, eventDay) {
-  if (!birthYear) return null;
+  // birthYear must be a non-zero number to calculate age
+  if (!birthYear || isNaN(birthYear)) return null;
+  
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const currentYear = today.getFullYear();

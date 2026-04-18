@@ -96,8 +96,8 @@ export async function renderShareReview(db) {
     
     if (confirm(`Add all ${newOnes.length} new people to your circle?`)) {
       for (const p of newOnes) {
-        const incomingTags = (p.t || []).filter(t => !t.startsWith('&'));
-        const tags = new Set(incomingTags);
+        // Only strip specific internal sync tags, preserve levels and owner status
+        const tags = new Set((p.t || []).filter(t => t !== '&share' && t !== '&duplicate'));
         if (suggestedTag) tags.add(suggestedTag);
         tags.add('&dirty');
         
@@ -208,15 +208,19 @@ export async function renderShareReview(db) {
       let hasSmartMerges = false;
 
       for (const field of DIFF_FIELDS) {
-        const mine = existingContact[field];
-        const theirs = pendingContact[field];
+        const incomingValue = pendingContact[field];
+        const localValue = existingContact[field];
 
-        if (theirs && theirs !== mine) {
-          if (!mine) {
+        // Check if there is an actual difference (and ignore null vs undefined vs empty string mismatches)
+        const incomingValStr = (incomingValue || '').toString().trim();
+        const localValStr = (localValue || '').toString().trim();
+
+        if (incomingValStr !== localValStr) {
+          if (!localValStr && incomingValStr) {
             // Smart Merge: we have nothing, they have something. Auto-accept.
             hasSmartMerges = true;
             mergeChoices[field] = 'shared';
-          } else {
+          } else if (localValStr && incomingValStr) {
             // Conflict: we both have values and they differ.
             hasConflicts = true;
             mergeChoices[field] = 'original'; // Default to mine
@@ -340,8 +344,8 @@ export async function renderShareReview(db) {
       actionBtn.textContent = 'Add to Circle';
       actionBtn.onclick = async () => {
         const userTag = tagInput.value.trim();
-        const incomingTags = (pendingContact.t || []).filter(t => !t.startsWith('&'));
-        const tags = new Set(incomingTags);
+        // Only strip specific internal sync tags, preserve levels and owner status
+        const tags = new Set((pendingContact.t || []).filter(t => t !== '&share' && t !== '&duplicate'));
         
         if (userTag) {
           const finalTag = userTag.startsWith('@') ? userTag : `@${userTag}`;
