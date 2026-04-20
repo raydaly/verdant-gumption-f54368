@@ -6,7 +6,8 @@ To maintain the Greatuncle brand, the following technical constraints are non-ne
 
 - **Zero-Auth Architecture**: No sign-up, sign-in, or forgot password flows. The user is identified solely by the possession of a unique, shareable link or key.
 - **Local-First Persistence**: Data must be stored on the device. Syncing is peer-to-peer or via manual export/import. No central cloud database should ever hold family PII (Personally Identifiable Information).
-- **Zero-Onboarding Friction**: The transition from "Clicking a Link" to "Seeing the Family List" must be under 2 seconds. No "intro carousels" or "tutorial overlays" unless they are contextual and non-blocking.
+- **Server-Log Protection (Antigravity)**: Sharing links must use **URL Fragments (`#`)** rather than query strings (`?`). Fragments are handled entirely client-side and are never sent to the hosting server, ensuring that family PII never touches a server log.
+- **Zero-Onboarding Friction**: The transition from "Clicking a Link" to "Seeing the Family List" must be under 2 seconds. No "intro carousels" or "tutorial overlays."
 
 ## 2. The Steward/Guest Dichotomy
 
@@ -21,13 +22,15 @@ The interface should feel like a utility that turned into a heirloom.
 
 - **Typography**: Clear, legible, and warm. Avoid "tech-heavy" or overly modern aesthetics.
 - **State Management**: Use the "Steward's Pledge" logic to confirm high-stakes actions (like creating a group or resetting data).
-- **Empty States**: When a Steward first opens the app, the UI shouldn't feel "empty"; it should feel "waiting." Use the "How to be a Greatuncle" logic to guide the first entry.
+- **Empty States**: The app must be **Adaptive**. When a Steward first opens the app, advanced features (The Vault, The Bridge) are hidden to reduce cognitive load. The UI should focus entirely on the "Universal Doorway"—inviting the user to bring their people in via a link, a backup, or an AI-assisted import.
 
 ## 4. Feature Implementation Specs (Derived from Marketing)
 
 ### The "Aha!" Invite Flow
-- **Technical Requirement**: Generate a lightweight, URL-safe payload that carries group metadata so the recipient sees the group name and a few names immediately upon landing.
-- **Emotional Goal**: Instant recognition. "Oh, this is my family."
+- **Technical Requirement**:
+  - **Payload Design**: Use **DEFLATE compression** to pack 100+ contacts into a single URL-safe Base64 code within a `#` fragment.
+  - **The Zero-Strand Philosophy (Universal Doorway)**: If a link is mangled or truncated by a messaging app, the app must provide a "Repair" mechanism (a universal text input) that can extract Greatuncle data from raw text, JSON blocks, or delimited messages.
+- **Emotional Goal**: Instant recognition and total resilience. "It just works, even if I copy-paste it wrong."
 
 ### The "Legacy" Backup
 - **Technical Requirement**: A simple, one-click export to a standard format (JSON or CSV) that is human-readable.
