@@ -22,14 +22,7 @@ export function parseSeedling(jsonString) {
   };
 }
 
-// Unicode-safe base64 encoding
-function encodeBase64(str) {
-  return btoa(unescape(encodeURIComponent(str)));
-}
-
-function decodeBase64(str) {
-  return decodeURIComponent(escape(atob(str)));
-}
+import { compressPayload, decompressPayload } from './parser.js';
 
 function cleanMember(c) {
   const clean = { n: c.n };
@@ -44,7 +37,7 @@ function cleanMember(c) {
   return clean;
 }
 
-export function encodeInvite(contact, senderName = null, recipientName = null) {
+export async function encodeInvite(contact, senderName = null, recipientName = null) {
   const payload = {
     v: 5,
     ea: Date.now(),
@@ -52,10 +45,10 @@ export function encodeInvite(contact, senderName = null, recipientName = null) {
     rn: recipientName,
     c: [cleanMember(contact)],
   };
-  return encodeBase64(JSON.stringify(payload));
+  return compressPayload(payload);
 }
 
-export function encodeGroup(contacts, groupTag, senderName = null, recipientName = null, volunteerMeta = null) {
+export async function encodeGroup(contacts, groupTag, senderName = null, recipientName = null, volunteerMeta = null) {
   const payload = {
     v: 5,
     ea: Date.now(),
@@ -71,7 +64,7 @@ export function encodeGroup(contacts, groupTag, senderName = null, recipientName
     if (volunteerMeta.phone) payload.sp = volunteerMeta.phone;  // sp = steward phone
     if (volunteerMeta.email) payload.se = volunteerMeta.email;  // se = steward email
   }
-  return encodeBase64(JSON.stringify(payload));
+  return compressPayload(payload);
 }
 
 /**
@@ -206,10 +199,6 @@ export function ingestContacts(payload, existingContacts, isFreshInstall = false
   return { contacts: results, count: results.length };
 }
 
-export function decodeShareParam(encoded) {
-  try {
-    return JSON.parse(decodeBase64(encoded));
-  } catch {
-    return null;
-  }
+export async function decodeShareParam(encoded) {
+  return decompressPayload(encoded);
 }

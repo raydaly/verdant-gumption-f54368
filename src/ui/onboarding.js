@@ -29,8 +29,8 @@ export async function renderOnboarding(db, onComplete) {
     pickerContainer.className = 'onboarding-picker';
     
     const prompt = document.createElement('p');
-    prompt.style.cssText = 'margin-bottom: 1.5rem; font-weight: 500; font-size: 0.95rem;';
-    prompt.textContent = "Welcome to your Circle. Someone shared this with you — which of these profiles is yours?";
+    prompt.style.cssText = 'margin-bottom: 2rem; font-weight: 500; font-size: 1rem; line-height: 1.5; color: var(--color-text-muted);';
+    prompt.textContent = "Someone who cares about you has invited you into their private address book. Find your seat at the table below:";
     pickerContainer.appendChild(prompt);
 
     // Get recipient name hint if available
@@ -125,11 +125,12 @@ function showConfirmationForm(db, contact, container, onComplete) {
   
   const title = document.createElement('h1');
   title.className = 'onboarding-title';
+  title.style.fontFamily = 'var(--font-serif)';
   title.textContent = 'Greatuncle';
 
   const tagline = document.createElement('p');
   tagline.className = 'onboarding-tagline';
-  tagline.innerHTML = `Great! We'll use <strong>${contact.n}</strong> as your profile. Your circle stays strictly on your device. Check your details below:`;
+  tagline.innerHTML = `Great! We'll use <strong>${contact.n}</strong> as your seat in this circle. This choice stays strictly on your device. Just a few more details to help us remind you of the people you love:`;
 
   const nameInput = document.createElement('input');
   nameInput.type = 'text';
@@ -143,6 +144,18 @@ function showConfirmationForm(db, contact, container, onComplete) {
   emailInput.value = contact.em || '';
   emailInput.placeholder = 'Your email (optional)';
 
+  const bdInput = document.createElement('input');
+  bdInput.type = 'date';
+  bdInput.className = 'form-input onboarding-field';
+  bdInput.value = contact.bd || '';
+  bdInput.placeholder = 'Your birthday (optional)';
+
+  const avInput = document.createElement('input');
+  avInput.type = 'date';
+  avInput.className = 'form-input onboarding-field';
+  avInput.value = contact.av || '';
+  avInput.placeholder = 'Your anniversary (optional)';
+
   const submitBtn = document.createElement('button');
   submitBtn.className = 'onboarding-submit-btn';
   submitBtn.textContent = 'Get started';
@@ -153,6 +166,8 @@ function showConfirmationForm(db, contact, container, onComplete) {
       ...contact,
       n: nameInput.value.trim(),
       em: emailInput.value.trim() || null,
+      bd: bdInput.value || null,
+      av: avInput.value || null,
       t: [...new Set([...(contact.t || []), '&owner'])],
       ua: now
     };
@@ -244,12 +259,16 @@ function showManualEntry(db, container, onComplete) {
 
   const privacyNote = document.createElement('p');
   privacyNote.className = 'onboarding-privacy-note';
-  privacyNote.innerHTML = 'Your name and email stay strictly on your device.<br>Only you can choose to share them.';
+  privacyNote.style.marginTop = '2rem';
+  privacyNote.style.fontSize = '0.85rem';
+  privacyNote.innerHTML = 'Your data stays strictly on your device.<br><strong>No Cloud. No Ads. No Prying Eyes.</strong>';
 
   container.appendChild(title);
   container.appendChild(tagline);
   container.appendChild(nameInput);
   container.appendChild(emailInput);
+  container.appendChild(bdInput);
+  container.appendChild(avInput);
   container.appendChild(privacyNote);
   container.appendChild(submitBtn);
 }

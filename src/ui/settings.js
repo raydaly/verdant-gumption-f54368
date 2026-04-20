@@ -401,16 +401,22 @@ function renderVisionTab(db, container, allContacts) {
 
   // Tag Directory
   const tagCounts = {};
+  const stewardMap = new Map(); // tagName (no prefix) -> [stewardNames]
+
   allContacts.forEach(contact => {
     (contact.t || []).forEach(tag => {
       if (!tag.startsWith('&')) {
         tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      } else if (tag.startsWith('&steward.')) {
+        const tagName = tag.replace('&steward.', '');
+        if (!stewardMap.has(tagName)) stewardMap.set(tagName, []);
+        stewardMap.get(tagName).push(contact.n || contact.ph || contact.em || 'Unnamed');
       }
     });
   });
 
-  const validTags = Object.keys(tagCounts).sort();
-
+  const validTags = Object.keys(tagCounts);
+  
   if (validTags.length > 0) {
     const dirContainer = document.createElement('div');
     dirContainer.className = 'settings-section';
@@ -423,34 +429,99 @@ function renderVisionTab(db, container, allContacts) {
     dirTitle.textContent = 'Tag Directory';
     dirContainer.appendChild(dirTitle);
 
-    const tagList = document.createElement('div');
-    tagList.style.display = 'flex';
-    tagList.style.flexWrap = 'wrap';
-    tagList.style.gap = '0.5rem';
+    // Group tags
+    const stewarded = [];
+    const simple = [];
 
     validTags.forEach(tag => {
-      const pill = document.createElement('div');
-      pill.className = 'pill-btn';
-      pill.style.display = 'inline-flex';
-      pill.style.alignItems = 'center';
-      pill.style.background = 'var(--color-bg-card)';
-      pill.style.border = '1px solid var(--color-bg-accent)';
-      
-      const countPill = document.createElement('span');
-      countPill.textContent = tagCounts[tag];
-      countPill.style.background = 'var(--color-action)';
-      countPill.style.color = 'white';
-      countPill.style.padding = '0.1rem 0.4rem';
-      countPill.style.borderRadius = '20px';
-      countPill.style.fontSize = '0.7rem';
-      countPill.style.marginLeft = '0.4rem';
-
-      pill.textContent = tag;
-      pill.appendChild(countPill);
-      tagList.appendChild(pill);
+      const tagName = tag.replace(/^[@#]/, '');
+      if (stewardMap.has(tagName)) {
+        stewarded.push(tag);
+      } else {
+        simple.push(tag);
+      }
     });
 
-    dirContainer.appendChild(tagList);
+    stewarded.sort();
+    simple.sort();
+
+    // 1. Render Stewarded Tags (One per row)
+    stewarded.forEach(tag => {
+      const tagName = tag.replace(/^[@#]/, '');
+      const stewards = stewardMap.get(tagName);
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.marginBottom = '0.75rem';
+      row.style.fontSize = '1.05rem';
+      
+      const tagSpan = document.createElement('span');
+      tagSpan.style.fontWeight = '600';
+      tagSpan.style.cursor = 'pointer';
+      tagSpan.textContent = tag;
+      tagSpan.onclick = () => navigate('people', { group: tag });
+      tagSpan.onmouseover = () => { tagSpan.style.textDecoration = 'underline'; };
+      tagSpan.onmouseout = () => { tagSpan.style.textDecoration = 'none'; };
+      
+      const countSpan = document.createElement('span');
+      countSpan.style.margin = '0 0.5rem';
+      countSpan.style.opacity = '0.6';
+      countSpan.textContent = `[${tagCounts[tag]}]`;
+      
+      const stewardSpan = document.createElement('span');
+      stewardSpan.style.color = 'var(--color-primary-dark)';
+      stewardSpan.appendChild(document.createTextNode('--'));
+      stewards.forEach((name, idx) => {
+        const nameLink = document.createElement('span');
+        nameLink.textContent = name;
+        nameLink.style.cursor = 'pointer';
+        nameLink.onclick = () => navigate('people', { search: name });
+        nameLink.onmouseover = () => { nameLink.style.textDecoration = 'underline'; };
+        nameLink.onmouseout = () => { nameLink.style.textDecoration = 'none'; };
+        stewardSpan.appendChild(nameLink);
+        if (idx < stewards.length - 1) stewardSpan.appendChild(document.createTextNode(', '));
+      });
+      
+      row.appendChild(tagSpan);
+      row.appendChild(countSpan);
+      row.appendChild(stewardSpan);
+      dirContainer.appendChild(row);
+    });
+
+    // 2. Render Simple Tags (Wrapped pills)
+    if (simple.length > 0) {
+      const tagList = document.createElement('div');
+      tagList.style.display = 'flex';
+      tagList.style.flexWrap = 'wrap';
+      tagList.style.gap = '0.5rem';
+      tagList.style.marginTop = stewarded.length > 0 ? '1rem' : '0';
+
+      simple.forEach(tag => {
+        const pill = document.createElement('div');
+        pill.className = 'pill-btn';
+        pill.style.display = 'inline-flex';
+        pill.style.alignItems = 'center';
+        pill.style.background = 'var(--color-bg-card)';
+        pill.style.border = '1px solid var(--color-bg-accent)';
+        pill.style.cursor = 'pointer';
+        pill.onclick = () => navigate('people', { group: tag });
+        
+        const countPill = document.createElement('span');
+        countPill.textContent = tagCounts[tag];
+        countPill.style.background = 'var(--color-action)';
+        countPill.style.color = 'white';
+        countPill.style.padding = '0.1rem 0.4rem';
+        countPill.style.borderRadius = '20px';
+        countPill.style.fontSize = '0.7rem';
+        countPill.style.marginLeft = '0.4rem';
+
+        pill.textContent = tag;
+        pill.appendChild(countPill);
+        tagList.appendChild(pill);
+      });
+      dirContainer.appendChild(tagList);
+    }
+
     container.appendChild(dirContainer);
   }
 

@@ -45,7 +45,7 @@ async function render(view, params) {
       await renderHome(_db, _version);
       break;
     case 'people':
-      await renderPeople(_db);
+      await renderPeople(_db, params);
       break;
     case 'journal':
       await renderJournal(_db, params);

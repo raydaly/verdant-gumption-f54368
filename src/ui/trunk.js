@@ -10,6 +10,7 @@ import {
   getDeletedSinceExport,
 } from '../storage/settings.js';
 import { exportSeedling, parseSeedling, encodeInvite, encodeGroup, buildPayload, ingestContacts, decodeShareParam } from '../core/seedling.js';
+import { parseAnyInput, IMPORT_TYPE } from '../core/parser.js';
 import { APP_CONSTANTS } from '../core/constants.js';
 import { navigate } from './router.js';
 import { updateHorizonBar } from './components/horizon-bar.js';
@@ -84,6 +85,7 @@ export async function renderTrunk(db) {
   // Heritage (First Gift) Section
   const heritageCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
   
+  // Only show Heritage and Sharing sections if there are contacts to share
   if (heritageCount > 0) {
     const heritageSection = document.createElement('div');
     heritageSection.className = 'trunk-section trunk-section--heritage';
@@ -412,10 +414,11 @@ export async function renderTrunk(db) {
       );
       if (groupContacts.length === 0) return;
       encoded = encodeGroup(groupContacts, tag, senderName, recipientName);
+      encoded = await encoded;
       const base = window.location.origin + window.location.pathname;
-      const url = `${base}?invite=${encodeURIComponent(encoded)}`;
+      const url = `${base}#invite=${encodeURIComponent(encoded)}`;
       subject = `Sharing Greatuncle Circle: ${tag}`;
-      body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n${url}`;
+      body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n--- START GREATUNCLE LINK ---\n${url}\n--- END GREATUNCLE LINK ---`;
       groupEmails = groupContacts.map(c => c.em).filter(Boolean);
       
     } else if (val.startsWith('contact:')) {
@@ -423,10 +426,11 @@ export async function renderTrunk(db) {
       const contact = allContacts.find(c => c.id === contactId);
       if (!contact) return;
       encoded = encodeInvite(contact, senderName, recipientName);
+      encoded = await encoded;
       const base = window.location.origin + window.location.pathname;
-      const url = `${base}?invite=${encodeURIComponent(encoded)}`;
+      const url = `${base}#invite=${encodeURIComponent(encoded)}`;
       subject = `Greatuncle Contact: ${contact.n}`;
-      body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n${url}`;
+      body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n--- START GREATUNCLE LINK ---\n${url}\n--- END GREATUNCLE LINK ---`;
     }
 
     if (navigator.share) {
@@ -562,11 +566,11 @@ export async function renderTrunk(db) {
           return;
         }
         const volunteerMeta = { phone: ownerRecord.ph || null, email: ownerRecord.em || null };
-        const encoded = encodeGroup(groupContacts, groupTag, senderName, null, volunteerMeta);
-        const base = window.location.origin + window.location.pathname;
-        const shareUrl = `${base}?importGroup=${encodeURIComponent(encoded)}`;
-        const subject = `Updated ${groupTag} Circle`;
-        const body = `Hi! Here is the latest ${groupTag} address book. Click the link to update your Greatuncle app:\n\n${shareUrl}`;
+      const encoded = await encodeGroup(groupContacts, groupTag, senderName, null, volunteerMeta);
+      const base = window.location.origin + window.location.pathname;
+      const shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
+      const subject = `Updated ${groupTag} Circle`;
+      const body = `Hi! Here is the latest ${groupTag} address book. Click the link to update your Greatuncle app:\n\n--- START GREATUNCLE LINK ---\n${shareUrl}\n--- END GREATUNCLE LINK ---`;
 
         if (navigator.share) {
           try {
@@ -845,20 +849,25 @@ export async function renderTrunk(db) {
 
   importSection.appendChild(importTitle);
   importSection.appendChild(importMeta);
-  importSection.appendChild(importLabel);
 
-  // New: Paste Area (Nourish by Code)
+  // Only show the file-upload option if the app already has data (not the primary entry point)
+  if (heritageCount > 0) {
+    importSection.appendChild(importLabel);
+  }
+
   const pasteDivider = document.createElement('div');
   pasteDivider.className = 'trunk-section-meta';
-  pasteDivider.style.margin = '1rem 0 0.5rem 0';
+  pasteDivider.style.margin = heritageCount > 0 ? '1rem 0 0.5rem 0' : '0 0 0.5rem 0';
   pasteDivider.style.textAlign = 'center';
-  pasteDivider.textContent = '— OR —';
+  pasteDivider.textContent = heritageCount > 0 ? '— OR —' : '';
   importSection.appendChild(pasteDivider);
 
   const pasteArea = document.createElement('textarea');
   pasteArea.className = 'trunk-readable-area';
-  pasteArea.placeholder = 'Paste Connection Code or raw JSON here…';
-  pasteArea.rows = 4;
+  pasteArea.placeholder = heritageCount > 0
+    ? 'Paste a link, a code, or your backup text here…'
+    : 'Paste your invite link or backup text here to get started. If your link was cut off, copy the whole message and paste it here.';
+  pasteArea.rows = heritageCount > 0 ? 4 : 6;
   importSection.appendChild(pasteArea);
   
   const convertorLink = document.createElement('div');
@@ -890,66 +899,185 @@ export async function renderTrunk(db) {
   let pendingImportRecords = [];
 
   const updateAuditPreview = async (val) => {
-    let cleanVal = val.trim();
+    const cleanVal = val.trim();
     if (!cleanVal) {
       auditBox.style.display = 'none';
       nourishBtn.style.display = 'none';
       return;
     }
 
-    // Smart Link Extractor: pull out the code from the URL if a full link is pasted
-    if (cleanVal.includes('invite=')) {
-      const parts = cleanVal.split('?');
-      const query = parts[parts.length - 1];
-      const params = new URLSearchParams(query);
-      const invite = params.get('invite');
-      if (invite) cleanVal = invite;
-    } else if (cleanVal.includes('importGroup=')) {
-      const parts = cleanVal.split('?');
-      const query = parts[parts.length - 1];
-      const params = new URLSearchParams(query);
-      const grp = params.get('importGroup');
-      if (grp) cleanVal = grp;
-    }
+    const result = await parseAnyInput(cleanVal);
 
-    try {
-      let payload;
-      // Is it Base64?
-      if (cleanVal.length > 50 && !cleanVal.startsWith('{') && !cleanVal.startsWith('[')) {
-        payload = decodeShareParam(cleanVal);
-      } else {
-        payload = JSON.parse(cleanVal);
-      }
-      
-      const existingContacts = await getAllContacts(db);
-      const { contacts } = ingestContacts(payload, existingContacts);
-      pendingImportRecords = contacts;
-
-      if (contacts.length > 0) {
-        auditBox.style.display = 'block';
-        nourishBtn.style.display = 'block';
-        const names = contacts.map(c => c.n).join(', ');
-        auditBox.innerHTML = `
-          <div style="color: var(--color-success); font-weight: 500; margin-bottom: 0.25rem;">✅ Sanctity Check Passed</div>
-          <div style="font-size: 0.85rem; color: var(--color-text-muted); font-weight: 500;">Safe to import <strong>${contacts.length}</strong> people: ${names}</div>
-        `;
-      } else {
-        auditBox.style.display = 'block';
-        nourishBtn.style.display = 'none';
-        auditBox.innerHTML = '<div style="color: var(--color-text-muted); font-weight: 500;">No new contacts found or everyone is already in your circle.</div>';
-      }
-    } catch (err) {
-      console.error('Nourish Sanctity Check failed:', err);
+    if (result.type === IMPORT_TYPE.CSV || result.type === IMPORT_TYPE.VCARD) {
+      const formatLabel = result.type === IMPORT_TYPE.CSV ? 'CSV' : 'VCard';
       auditBox.style.display = 'block';
       nourishBtn.style.display = 'none';
-      let msg = 'Wait, that code or JSON doesn\'t look quite right.';
-      if (err instanceof SyntaxError) {
-        msg = 'Invalid JSON: ' + err.message;
-      } else if (err.message && err.message.includes('atob')) {
-        msg = 'That doesn\'t seem to be a valid connection code (Base64 error).';
-      }
-      auditBox.innerHTML = `<div style="color: var(--color-error-text);">${msg}</div>`;
+
+      const aiPrompt = `I have a list of contacts I want to import into an app called Greatuncle.
+Please convert them into a valid JSON array using only these fields:
+
+  n   = Full name (required)
+  ph  = Phone number (optional, keep formatting as-is)
+  em  = Email address (optional)
+  ad  = Street address (optional, single line: "123 Main St, Springfield, IL")
+  zp  = ZIP / postal code (optional)
+  bd  = Birthday in YYYY-MM-DD format (optional, omit if unknown)
+  av  = Anniversary in YYYY-MM-DD format (optional, omit if unknown)
+
+Rules:
+- Output a JSON array and NOTHING ELSE. No explanation, no markdown, no code fences.
+- Omit any key whose value is empty or unknown.
+- If a name has separate First/Last columns, combine them into a single "n" field.
+- If a birthday has no year, use 1900 as a placeholder year (e.g., 1900-07-04).
+- Do not include any fields not listed above.
+
+Here is my contact data:
+[PASTE YOUR ${formatLabel} HERE]`;
+
+      auditBox.innerHTML = '';
+
+      const header = document.createElement('div');
+      header.style.cssText = 'font-weight:600;font-size:0.95rem;margin-bottom:0.4rem;';
+      header.textContent = `📋 ${formatLabel} detected — use AI to convert`;
+      auditBox.appendChild(header);
+
+      const privacy = document.createElement('div');
+      privacy.style.cssText = 'font-size:0.8rem;color:var(--color-text-muted);margin-bottom:0.75rem;padding:0.4rem 0.6rem;background:rgba(245,158,11,0.1);border-radius:6px;border-left:3px solid #f59e0b;';
+      privacy.innerHTML = '<strong>Privacy note:</strong> This sends your contacts to a third-party AI. Only use it with data you\'re comfortable sharing.';
+      auditBox.appendChild(privacy);
+
+      const steps = document.createElement('div');
+      steps.style.cssText = 'font-size:0.85rem;margin-bottom:0.6rem;line-height:1.6;';
+      steps.innerHTML = `
+        <strong>1.</strong> Copy the prompt below.<br>
+        <strong>2.</strong> Open an AI assistant and paste the prompt, then add your ${formatLabel} at the bottom.<br>
+        <strong>3.</strong> Copy the JSON array the AI outputs and paste it back here.
+      `;
+      auditBox.appendChild(steps);
+
+      const aiLinks = document.createElement('div');
+      aiLinks.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;';
+      [
+        { label: '✦ ChatGPT', url: 'https://chat.openai.com' },
+        { label: '✦ Claude', url: 'https://claude.ai' },
+        { label: '✦ Gemini', url: 'https://gemini.google.com' },
+      ].forEach(({ label, url }) => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.textContent = label;
+        a.style.cssText = 'font-size:0.8rem;color:var(--color-primary);text-decoration:none;border:1px solid var(--color-primary);border-radius:6px;padding:0.2rem 0.5rem;';
+        aiLinks.appendChild(a);
+      });
+      auditBox.appendChild(aiLinks);
+
+      const promptBox = document.createElement('textarea');
+      promptBox.readOnly = true;
+      promptBox.value = aiPrompt;
+      promptBox.rows = 6;
+      promptBox.style.cssText = 'width:100%;font-family:monospace;font-size:0.75rem;border:1px solid var(--color-bg-accent);border-radius:8px;padding:0.5rem;background:var(--color-bg);color:var(--color-text);resize:vertical;box-sizing:border-box;';
+      auditBox.appendChild(promptBox);
+
+      const copyPromptBtn = document.createElement('button');
+      copyPromptBtn.className = 'trunk-btn trunk-btn--secondary';
+      copyPromptBtn.style.cssText = 'margin-top:0.5rem;width:100%;';
+      copyPromptBtn.textContent = 'Copy AI Prompt';
+      copyPromptBtn.onclick = async () => {
+        await navigator.clipboard.writeText(aiPrompt);
+        copyPromptBtn.textContent = 'Copied! ✓';
+        setTimeout(() => { copyPromptBtn.textContent = 'Copy AI Prompt'; }, 2500);
+      };
+      auditBox.appendChild(copyPromptBtn);
+
+      const convertor = document.createElement('div');
+      convertor.style.cssText = 'font-size:0.75rem;color:var(--color-text-muted);margin-top:0.75rem;text-align:center;';
+      convertor.innerHTML = `Prefer a visual approach? Use the <a href="/tools/contact_convertor.html" target="_blank" style="color:var(--color-primary);text-decoration:underline;">Contact Convertor</a>.`;
+      auditBox.appendChild(convertor);
+
+      return;
     }
+
+    if (result.type === IMPORT_TYPE.MANGLED) {
+      auditBox.style.display = 'block';
+      nourishBtn.style.display = 'none';
+      auditBox.innerHTML = `<div style="color: var(--color-error-text);">⚠️ That link appears to have been cut off. Try copying the whole message (including the <strong>--- START GREATUNCLE LINK ---</strong> block) and paste it again.</div>`;
+      return;
+    }
+
+    if (result.type === IMPORT_TYPE.UNKNOWN) {
+      auditBox.style.display = 'block';
+      nourishBtn.style.display = 'none';
+      auditBox.innerHTML = `<div style="color: var(--color-text-muted);">That doesn't look like a Greatuncle link or backup. Try pasting the full invite message.</div>`;
+      return;
+    }
+
+    if (result.type === IMPORT_TYPE.FULL_BACKUP) {
+      const existingContacts = await getAllContacts(db);
+      const hasExisting = existingContacts.filter(c => !(c.t || []).includes('&owner')).length > 0;
+
+      auditBox.style.display = 'block';
+      pendingImportRecords = result.payload.c || result.payload.contacts || [];
+
+      if (hasExisting) {
+        // Merge vs Overwrite choice
+        nourishBtn.style.display = 'none';
+        auditBox.innerHTML = `
+          <div style="font-weight: 500; margin-bottom: 0.5rem;">📦 Full Backup Detected — ${result.contactCount} people</div>
+          <div style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 0.75rem;">You already have people in your circle. How would you like to proceed?</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button id="merge-btn" class="trunk-btn trunk-btn--secondary" style="flex:1;">Merge (add new, keep existing)</button>
+            <button id="overwrite-btn" class="trunk-btn" style="flex:1;background:var(--color-error,#c0392b);color:#fff;">Replace everything</button>
+          </div>
+        `;
+        auditBox.querySelector('#merge-btn').addEventListener('click', async () => {
+          const existing = await getAllContacts(db);
+          for (const c of pendingImportRecords) {
+            const safe = sanitizeContact(c);
+            if (safe && !existing.find(e => e.id === safe.id)) await saveContact(db, safe);
+          }
+          setPendingImportNudge(true);
+          window.location.hash = 'people'; window.location.reload();
+        });
+        auditBox.querySelector('#overwrite-btn').addEventListener('click', async () => {
+          for (const c of pendingImportRecords) {
+            const safe = sanitizeContact(c);
+            if (safe) await saveContact(db, safe);
+          }
+          setPendingImportNudge(true);
+          window.location.hash = 'people'; window.location.reload();
+        });
+      } else {
+        nourishBtn.style.display = 'block';
+        nourishBtn.textContent = `Restore ${result.contactCount} people into your Circle`;
+        auditBox.innerHTML = `
+          <div style="color: var(--color-success); font-weight: 500; margin-bottom: 0.25rem;">✅ Full Backup Detected</div>
+          <div style="font-size: 0.85rem; color: var(--color-text-muted);">Ready to restore <strong>${result.contactCount}</strong> people.</div>
+        `;
+      }
+      return;
+    }
+
+    // IMPORT_TYPE.INVITE — regular group or single contact invite
+    if (result.type === IMPORT_TYPE.INVITE && result.contactCount > 0) {
+      const existingContacts = await getAllContacts(db);
+      const { contacts } = ingestContacts(result.payload, existingContacts);
+      pendingImportRecords = contacts;
+
+      auditBox.style.display = 'block';
+      nourishBtn.style.display = contacts.length > 0 ? 'block' : 'none';
+      nourishBtn.textContent = 'Nourish your Circle with these People';
+
+      const names = contacts.map(c => c.n).join(', ');
+      auditBox.innerHTML = contacts.length > 0
+        ? `<div style="color: var(--color-success); font-weight: 500; margin-bottom: 0.25rem;">✅ Sanctity Check Passed</div>
+           <div style="font-size: 0.85rem; color: var(--color-text-muted);">Safe to import <strong>${contacts.length}</strong> ${contacts.length === 1 ? 'person' : 'people'}: ${names}</div>`
+        : `<div style="color: var(--color-text-muted); font-weight: 500;">No new contacts found — everyone is already in your circle.</div>`;
+      return;
+    }
+
+    auditBox.style.display = 'none';
+    nourishBtn.style.display = 'none';
   };
 
   pasteArea.addEventListener('input', (e) => updateAuditPreview(e.target.value));

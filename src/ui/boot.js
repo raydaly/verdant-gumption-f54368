@@ -2,11 +2,13 @@ import { openDB } from '../storage/db.js';
 import { getOwner, getAllContacts, saveContact } from '../storage/contacts.js';
 import { setPendingImportNudge } from '../storage/settings.js';
 import { decodeShareParam, ingestContacts } from '../core/seedling.js';
+import { parseHashForInvite, isHashMangled } from '../core/parser.js';
 import { normalizePhone } from '../core/sanitizer.js';
 
-async function parseAndWriteImport(db, params) {
-  const inviteRaw = params.get('invite');
-  const groupRaw = params.get('importGroup');
+async function parseAndWriteImport(db, params, hashParam) {
+  // Prefer hash fragment (secure, not logged by server) over query string (legacy)
+  const inviteRaw = hashParam?.paramName === 'invite' ? hashParam.encoded : params.get('invite');
+  const groupRaw = hashParam?.paramName === 'importGroup' ? hashParam.encoded : params.get('importGroup');
 
   if (!inviteRaw && !groupRaw) return false;
 
@@ -92,12 +94,27 @@ async function parseAndWriteImport(db, params) {
 export async function boot() {
   const db = await openDB();
 
+  // Check for mangled hash first — before attempting to parse
+  const mangledHash = isHashMangled();
+  if (mangledHash) {
+    // Don't attempt import; signal the app to show the Repair screen
+    const owner = await getOwner(db);
+    const allContacts = await getAllContacts(db);
+    return { db, hasOwner: !!owner, hasNewImports: false, redirectToRepair: true, version: 'v-boot-repair', hadParams: true, hasContacts: allContacts.length > 0 };
+  }
+
+  // Try hash fragment first (new secure format), then query string (legacy)
+  const hashParam = parseHashForInvite();
   const params = new URLSearchParams(window.location.search);
-  const hasUrlParams = params.has('invite') || params.has('importGroup');
+  const hasUrlParams = !!(hashParam) || params.has('invite') || params.has('importGroup');
 
   let hasNewImports = false;
   if (hasUrlParams) {
-    hasNewImports = await parseAndWriteImport(db, params);
+    hasNewImports = await parseAndWriteImport(db, params, hashParam);
+    // Clear both the hash and query string to prevent re-importing on refresh
+    if (hasNewImports) {
+      history.replaceState(null, '', window.location.pathname);
+    }
   }
 
   const owner = await getOwner(db);

@@ -515,7 +515,7 @@ function showFilterSheet(allContacts, filterBtn, ul, ownerContact, applyCallback
   return sheetHandle;
 }
 
-export async function renderPeople(db) {
+export async function renderPeople(db, params = {}) {
   const app = document.getElementById('app');
   app.innerHTML = '<div class="view-loading"><div class="view-loading-spinner"></div><span>Scanning your circle...</span></div>';
 
@@ -531,7 +531,14 @@ export async function renderPeople(db) {
   const nonOwnerCount = liveContacts.filter(c => !(c.t || []).includes('&owner')).length;
   console.log('Architect status:', ownerContact ? 'Claimed' : 'Gallery mode');
 
-  const sortedAll = applyFilterSort(liveContacts, filterState);
+  // Handle initial filters from params (e.g. from Vision page clicks)
+  if (params.group) {
+    filterState.groups = [params.group];
+    filterState.layers = [];
+    filterState.sort = 'az';
+  }
+
+  let currentContacts = applyFilterSort(liveContacts, filterState);
 
   app.innerHTML = '';
 
@@ -703,7 +710,7 @@ export async function renderPeople(db) {
     finalTitle = `${baseTitle}: ${shown}${more}`;
   }
   
-  h1.textContent = `${finalTitle} (${sortedAll.length})`;
+  h1.textContent = `${finalTitle} (${currentContacts.length})`;
 
   const headerRight = document.createElement('div');
   headerRight.className = 'view-header-right';
@@ -715,7 +722,7 @@ export async function renderPeople(db) {
   printBtn.textContent = '🖨️';
   printBtn.addEventListener('click', async () => {
     // Respect active filters (What You See Is What You Get)
-    const contactsToPrint = sortedAll.filter(c => !(c.t || []).includes('&owner'));
+    const contactsToPrint = currentContacts.filter(c => !(c.t || []).includes('&owner'));
 
     const printEl = document.createElement('div');
     printEl.className = 'print-contact-list';
@@ -937,15 +944,14 @@ export async function renderPeople(db) {
 
   const onRefresh = () => renderPeople(db);
 
-  let currentContacts = sortedAll;
   renderList(ul, currentContacts, ownerContact, db, onRefresh);
   content.appendChild(ul);
 
   app.appendChild(content);
 
   // Upcoming Milestones Section (only if < 30 people listed)
-  if (sortedAll.length > 0 && sortedAll.length < 30) {
-    const milestones = getUpcomingMilestones(sortedAll);
+  if (currentContacts.length > 0 && currentContacts.length < 30) {
+    const milestones = getUpcomingMilestones(currentContacts);
     if (milestones.length > 0) {
       const milestoneSection = document.createElement('div');
       milestoneSection.className = 'view-content milestone-radar';
@@ -1079,4 +1085,18 @@ export async function renderPeople(db) {
       delete shareBtn.dataset.shareTag;
     }
   });
+  
+  // Initial search if passed in params
+  if (params.search) {
+    searchInput.value = params.search;
+    searchInput.dispatchEvent(new Event('input'));
+  }
+
+  // Update filter btn state initially
+  const active = isFilterActive(filterState);
+  filterBtn.className = 'filter-btn' + (active ? ' filter-btn--active' : '');
+  shareBtn.hidden = filterState.groups.length === 0;
+  if (filterState.groups.length > 0) {
+    shareBtn.textContent = `⬆️ Share Selected`;
+  }
 }
