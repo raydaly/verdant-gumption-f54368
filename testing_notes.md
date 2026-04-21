@@ -148,6 +148,25 @@ Use this JSON blob for initial imports to verify all levels and group overlaps.
     - [ ] Open a profile of one of the original (deleted) people. Their logs should be gone.
 5.  **Success**: A perfectly clean restoration from the new file with no "zombie" contacts or logs left behind.
 
+### Case O: The "Greatuncle Code" Bridge (Cross-Platform)
+**Goal**: Verify that the compressed codes (`z...`) are robust across different apps/platforms.
+1.  **Action**: On a Desktop, use **"Copy Vault Text"** to get a compressed code.
+2.  **Action**: Send that code to yourself via Email, Slack, or iMessage.
+3.  **Action**: On a **Mobile device** (or different browser), copy that code from the message.
+4.  **Action**: Open Greatuncle and let the **Clipboard Monitor** or the **Paste Box** detect it.
+5.  **Success**: The app successfully decodes the `z...` string and offers to import/restore. This proves our compression engine is perfectly cross-platform.
+
+### Case P: The "Silent Correction" (Field Sovereignty)
+**Goal**: Verify that a Guest can receive updates from a Steward without losing their own private logs.
+1.  **Preparation**: Guest already has **"Indigo"** in their circle. Guest adds a private log: *"Met at the park, great guy."*
+2.  **Action**: The Steward corrects **Indigo's** name to **"Indigo Blue"** and updates his phone number.
+3.  **Action**: Steward sends a NEW share link. Guest imports it.
+4.  **Verify**:
+    - [ ] Indigo's name is now "Indigo Blue".
+    - [ ] Indigo's phone number is updated.
+    - [ ] **Critical**: Open Indigo's profile. The Guest's log (*"Met at the park..."*) must still be there.
+5.  **Success**: Public fields (name/phone) updated, but private sovereignty (logs) was preserved.
+
 ---
 
 ## 3. Results Log
