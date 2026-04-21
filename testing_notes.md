@@ -123,6 +123,31 @@ Use this JSON blob for initial imports to verify all levels and group overlaps.
 4.  **Action 2 (File Restore)**: Hard Reset (Case A), then save the JSON as `test.json` and use **"Choose Seedling File"** to import.
 5.  **Verify**: People view is populated immediately with NO review badges. This is a "Restore" from your own backup.
 
+### Case M: The "Mangled Message" Rescue (Partial/Group)
+**Goal**: Verify that the Universal Doorway can "look past" broken links and extra text to extract a group.
+1.  **Action**: Create a @family share link.
+2.  **Action**: Draft a messy text message:
+    ```text
+    Hey, sorry the first link was cut off! Try copying this whole thing:
+    --- START GREATUNCLE LINK ---
+    https://greatuncle.app/#invite=z[REPLACE_WITH_REAL_CODE]... (truncated)
+    --- END GREATUNCLE LINK ---
+    ```
+3.  **Action**: Paste that entire block into the **Backup** tab text box.
+4.  **Verify**: The app should ignore the peripheral text, successfully extract the code, and show the "Nourish your Circle" button.
+5.  **Success**: The 4 people from the @family group appear in your list (with Review badges).
+
+### Case N: The "Total Vault Reset" (Full Backup)
+**Goal**: Verify the v69 fix that "Replace Everything" actually clears old data (including logs) rather than merging.
+1.  **Preparation**: Start with a Circle that has 10+ people and at least 3 Interaction Logs (check Forest's profile).
+2.  **Action**: Import a **different** Full Backup (e.g., a tiny backup with only 2 people) using the Paste box.
+3.  **Action**: When the prompt appears, click **"Replace everything"** (the red button).
+4.  **Verify**:
+    - [ ] The app reloads to the People view.
+    - [ ] The list now has **exactly 2** people (the ones from the new backup).
+    - [ ] Open a profile of one of the original (deleted) people. Their logs should be gone.
+5.  **Success**: A perfectly clean restoration from the new file with no "zombie" contacts or logs left behind.
+
 ---
 
 ## 3. Results Log
