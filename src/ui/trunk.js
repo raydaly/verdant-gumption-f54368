@@ -1,5 +1,5 @@
-import { getAllContacts, saveContact } from '../storage/contacts.js';
-import { getAllLogs, addLog } from '../storage/logs.js';
+import { getAllContacts, saveContact, clearAllContacts } from '../storage/contacts.js';
+import { getAllLogs, addLog, clearAllLogs } from '../storage/logs.js';
 import {
   getSettings,
   getLastExportedAt,
@@ -689,8 +689,14 @@ export async function renderTrunk(db) {
   copyBackupBtn.addEventListener('click', async () => {
     const contacts = await getAllContacts(db);
     const logs = await getAllLogs(db);
-    const json = exportSeedling(contacts, logs);
-    await navigator.clipboard.writeText(json);
+    const payload = {
+      v: 5,
+      ea: Date.now(),
+      c: contacts,
+      l: logs
+    };
+    const code = await compressPayload(payload);
+    await navigator.clipboard.writeText(code);
     const old = copyBackupBtn.textContent;
     copyBackupBtn.textContent = 'Copied to Clipboard!';
     setLastExportedAt(Date.now());
@@ -897,6 +903,8 @@ export async function renderTrunk(db) {
   importSection.appendChild(nourishBtn);
 
   let pendingImportRecords = [];
+  let resultTypeRef = null;
+  let resultPayloadRef = null;
 
   const updateAuditPreview = async (val) => {
     const cleanVal = val.trim();
@@ -907,6 +915,8 @@ export async function renderTrunk(db) {
     }
 
     const result = await parseAnyInput(cleanVal);
+    resultTypeRef = result.type;
+    resultPayloadRef = result.payload;
 
     if (result.type === IMPORT_TYPE.CSV || result.type === IMPORT_TYPE.VCARD) {
       const formatLabel = result.type === IMPORT_TYPE.CSV ? 'CSV' : 'VCard';
@@ -1036,13 +1046,24 @@ Here is my contact data:
             const safe = sanitizeContact(c);
             if (safe && !existing.find(e => e.id === safe.id)) await saveContact(db, safe);
           }
+          // Merge logs
+          const backupLogs = result.payload.l || result.payload.logs || [];
+          for (const l of backupLogs) {
+            await addLog(db, l.contactId, l.timestamp, l.comment);
+          }
           setPendingImportNudge(true);
           window.location.hash = 'people'; window.location.reload();
         });
         auditBox.querySelector('#overwrite-btn').addEventListener('click', async () => {
+          await clearAllContacts(db);
+          await clearAllLogs(db);
           for (const c of pendingImportRecords) {
             const safe = sanitizeContact(c);
             if (safe) await saveContact(db, safe);
+          }
+          const backupLogs = result.payload.l || result.payload.logs || [];
+          for (const l of backupLogs) {
+            await addLog(db, l.contactId, l.timestamp, l.comment);
           }
           setPendingImportNudge(true);
           window.location.hash = 'people'; window.location.reload();
@@ -1085,12 +1106,19 @@ Here is my contact data:
   nourishBtn.addEventListener('click', async () => {
     if (pendingImportRecords.length === 0) return;
     for (const record of pendingImportRecords) {
-      await saveContact(db, record);
+      const safe = sanitizeContact(record);
+      if (safe) await saveContact(db, safe);
+    }
+    // Handle logs if this was a full backup restoration in an empty app
+    if (resultTypeRef === IMPORT_TYPE.FULL_BACKUP) {
+      const backupLogs = resultPayloadRef.l || resultPayloadRef.logs || [];
+      for (const l of backupLogs) {
+        await addLog(db, l.contactId, l.timestamp, l.comment);
+      }
     }
     setPendingImportNudge(true);
-    // Navigation to share-review is handled by the presence of &share contacts
     window.location.hash = 'people';
-    window.location.reload(); // Force a refresh to catch the new imports
+    window.location.reload();
   });
 
   importSection.appendChild(importStatus);
