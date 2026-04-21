@@ -433,16 +433,55 @@ export async function renderTrunk(db) {
       body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n--- START GREATUNCLE LINK ---\n${url}\n--- END GREATUNCLE LINK ---`;
     }
 
-    if (navigator.share) {
+    // Handle Share Options
+    const menu = document.createElement('div');
+    menu.className = 'share-options-menu';
+    menu.style.cssText = 'display:flex; gap:0.5rem; margin-top:0.75rem; flex-wrap:wrap;';
+
+    const systemBtn = document.createElement('button');
+    systemBtn.className = 'trunk-btn trunk-btn--secondary';
+    systemBtn.style.flex = '1';
+    systemBtn.textContent = 'Share via App';
+    systemBtn.onclick = async () => {
       try {
-        await navigator.share({ title: subject, text: body });
-        return;
+        await navigator.share({ title: subject, text: body + '\n\n' + shareUrl });
       } catch (err) {
-        if (err.name === 'AbortError') return;
+        if (err.name !== 'AbortError') alert('System share failed. Try Email or Copy Link.');
       }
-    }
-    const toField = recipientEmail ? recipientEmail : groupEmails.join(',');
-    window.location.href = `mailto:${toField}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    };
+
+    const emailBtn = document.createElement('button');
+    emailBtn.className = 'trunk-btn trunk-btn--secondary';
+    emailBtn.style.flex = '1';
+    emailBtn.textContent = 'Email';
+    emailBtn.onclick = () => {
+      const toField = recipientEmail ? recipientEmail : groupEmails.join(',');
+      const mailtoUrl = `mailto:${toField}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n' + shareUrl)}`;
+      if (mailtoUrl.length > 2000) {
+        alert('This update is too large for a direct email link. Please use "Copy Link" and paste it into your email instead.');
+      } else {
+        window.location.href = mailtoUrl;
+      }
+    };
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'trunk-btn trunk-btn--secondary';
+    copyBtn.style.flex = '1';
+    copyBtn.textContent = 'Copy Link';
+    copyBtn.onclick = async () => {
+      await navigator.clipboard.writeText(shareUrl);
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 2000);
+    };
+
+    if (navigator.share) menu.appendChild(systemBtn);
+    menu.appendChild(emailBtn);
+    menu.appendChild(copyBtn);
+
+    // Replace the specific "Share" button click area with this menu or append it
+    shareSection.appendChild(menu);
+    // Hide the generate button to avoid clutter once generated
+    shareBtn.style.display = 'none';
   });
 
   shareRow.appendChild(shareModeSelect);
@@ -565,29 +604,58 @@ export async function renderTrunk(db) {
           alert(`No contacts found in ${groupTag}.`);
           return;
         }
+        
         const volunteerMeta = { phone: ownerRecord.ph || null, email: ownerRecord.em || null };
-      const encoded = await encodeGroup(groupContacts, groupTag, senderName, null, volunteerMeta);
-      const base = window.location.origin + window.location.pathname;
-      const shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
-      const subject = `Updated ${groupTag} Circle`;
-      const body = `Hi! Here is the latest ${groupTag} address book. Click the link to update your Greatuncle app:\n\n--- START GREATUNCLE LINK ---\n${shareUrl}\n--- END GREATUNCLE LINK ---`;
+        const encoded = await encodeGroup(groupContacts, groupTag, senderName, null, volunteerMeta);
+        const base = window.location.origin + window.location.pathname;
+        const shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
+        const subject = `Updated ${groupTag} Circle`;
+        const body = `Hi! Here is the latest ${groupTag} address book.\n\n--- START GREATUNCLE LINK ---\n${shareUrl}\n--- END GREATUNCLE LINK ---`;
 
-        if (navigator.share) {
+        // Create Share Menu for Publishing Desk
+        publishBtn.style.display = 'none';
+        
+        const menu = document.createElement('div');
+        menu.style.cssText = 'display:flex; gap:0.4rem;';
+
+        const systemBtn = document.createElement('button');
+        systemBtn.className = 'trunk-btn trunk-btn--secondary';
+        systemBtn.style.cssText = 'padding:0.4rem 0.6rem; font-size:0.8rem;';
+        systemBtn.textContent = 'Share';
+        systemBtn.onclick = async () => {
           try {
-            await navigator.share({ title: subject, text: body, url: shareUrl });
-            return;
-          } catch (err) {
-            if (err.name === 'AbortError') return;
+            await navigator.share({ title: subject, text: body });
+          } catch (e) { if (e.name !== 'AbortError') alert('Failed. Use Email/Copy.'); }
+        };
+
+        const emailBtn = document.createElement('button');
+        emailBtn.className = 'trunk-btn trunk-btn--secondary';
+        emailBtn.style.cssText = 'padding:0.4rem 0.6rem; font-size:0.8rem;';
+        emailBtn.textContent = 'Email';
+        emailBtn.onclick = () => {
+          const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+          if (mailtoUrl.length > 2000) {
+            alert('Too large for direct Email link. Use Copy instead.');
+          } else {
+            window.location.href = mailtoUrl;
           }
-        }
-        try {
+        };
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'trunk-btn trunk-btn--secondary';
+        copyBtn.style.cssText = 'padding:0.4rem 0.6rem; font-size:0.8rem;';
+        copyBtn.textContent = 'Copy';
+        copyBtn.onclick = async () => {
           await navigator.clipboard.writeText(shareUrl);
-          const old = publishBtn.textContent;
-          publishBtn.textContent = 'Link Copied!';
-          setTimeout(() => { publishBtn.textContent = old; }, 2000);
-        } catch {
-          alert('Copy failed — please share this link manually:\n\n' + shareUrl);
-        }
+          const old = copyBtn.textContent;
+          copyBtn.textContent = '✓';
+          setTimeout(() => { copyBtn.textContent = old; }, 2000);
+        };
+
+        if (navigator.share) menu.appendChild(systemBtn);
+        menu.appendChild(emailBtn);
+        menu.appendChild(copyBtn);
+        row.appendChild(menu);
       });
 
       row.appendChild(info);
