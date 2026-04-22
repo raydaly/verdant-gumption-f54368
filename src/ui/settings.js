@@ -288,6 +288,68 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
   dangerTitle.textContent = 'Danger Zone';
   dangerSection.appendChild(dangerTitle);
 
+  // --- Update Management ---
+  const updateSection = document.createElement('div');
+  updateSection.className = 'settings-section';
+  updateSection.style.marginTop = '2rem';
+  
+  const updateTitle = document.createElement('div');
+  updateTitle.className = 'settings-section-title';
+  updateTitle.textContent = 'App Maintenance';
+  updateSection.appendChild(updateTitle);
+
+  const updateMeta = document.createElement('div');
+  updateMeta.className = 'settings-section-meta';
+  updateMeta.textContent = 'Manually check for the latest Antigravity improvements and fixes.';
+  updateSection.appendChild(updateMeta);
+
+  const updateBtn = document.createElement('button');
+  updateBtn.className = 'trunk-btn trunk-btn--secondary';
+  updateBtn.style.width = '100%';
+  updateBtn.style.marginTop = '0.5rem';
+  updateBtn.textContent = 'Check for Updates';
+  updateBtn.onclick = async () => {
+    updateBtn.disabled = true;
+    updateBtn.textContent = 'Checking...';
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          await reg.update();
+          // If a new SW is found, index.html's controllerchange listener will reload the page.
+          // If no update is found, we'll let the user know.
+          setTimeout(() => {
+            if (updateBtn.textContent === 'Checking...') {
+              updateBtn.textContent = 'App is Up to Date';
+              setTimeout(() => { 
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Check for Updates'; 
+              }, 3000);
+            }
+          }, 2000);
+        } else {
+          alert('Service Worker not found. Try a hard refresh.');
+          updateBtn.disabled = false;
+          updateBtn.textContent = 'Check for Updates';
+        }
+      }
+    } catch (e) {
+      alert('Update check failed: ' + e.message);
+      updateBtn.disabled = false;
+      updateBtn.textContent = 'Check for Updates';
+    }
+  };
+  updateSection.appendChild(updateBtn);
+  container.appendChild(updateSection);
+
+  const aboutBtn = document.createElement('button');
+  aboutBtn.className = 'trunk-btn trunk-btn--secondary';
+  aboutBtn.style.marginTop = '2rem';
+  aboutBtn.style.width = '100%';
+  aboutBtn.textContent = 'About Greatuncle';
+  aboutBtn.addEventListener('click', () => navigate('about'));
+  container.appendChild(aboutBtn);
+
   const resetBtn = document.createElement('button');
   resetBtn.className = 'trunk-btn trunk-btn--secondary';
   resetBtn.style.opacity = '0.7';
