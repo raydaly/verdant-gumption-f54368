@@ -808,8 +808,14 @@ export async function renderPeople(db, params = {}) {
 
           const { close } = showBottomSheet({ title: 'Volunteer as Greatuncle?', content });
 
-          yesBtn.addEventListener('click', () => {
+          yesBtn.addEventListener('click', async () => {
             close();
+            // Force persistence of steward status to local owner record
+            const tags = [...(ownerContact.t || [])];
+            if (!tags.includes(stewardTag)) {
+              tags.push(stewardTag);
+              await saveContact(db, { ...ownerContact, t: tags, ua: Date.now() });
+            }
             resolve({ phone: ownerContact.ph || null, email: ownerContact.em || null });
           });
           noBtn.addEventListener('click', () => {

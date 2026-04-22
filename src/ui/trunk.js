@@ -547,12 +547,10 @@ export async function renderTrunk(db) {
   // Only visible if the owner is stewarding at least one group.
   const stewardedGroups = [];
   if (ownerRecord) {
-    allContacts.forEach(c => {
-      (c.t || []).forEach(tag => {
-        if (tag.startsWith('&steward.') && !stewardedGroups.includes(tag)) {
-          stewardedGroups.push(tag);
-        }
-      });
+    (ownerRecord.t || []).forEach(tag => {
+      if (tag.startsWith('&steward.')) {
+        stewardedGroups.push(tag);
+      }
     });
   }
 
