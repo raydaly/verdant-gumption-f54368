@@ -263,7 +263,7 @@ export async function renderTrunk(db) {
     return null;
   };
 
-  const updateCodeGen = () => {
+  const updateCodeGen = async () => {
     const val = getShareValue();
     if (!val) {
       if (codeArea) codeArea.value = '';
@@ -283,13 +283,13 @@ export async function renderTrunk(db) {
       );
       if (groupContacts.length === 0) return;
       payload = buildPayload('group', { groupTag: tag, contacts: groupContacts }, senderName, recipientName);
-      encoded = encodeGroup(groupContacts, tag, senderName, recipientName);
+      encoded = await encodeGroup(groupContacts, tag, senderName, recipientName);
     } else if (val.startsWith('contact:')) {
       const contactId = val.slice(8);
       const contact = allContacts.find(c => c.id === contactId);
       if (!contact) return;
       payload = buildPayload('contact', { contact }, senderName, recipientName);
-      encoded = encodeInvite(contact, senderName, recipientName);
+      encoded = await encodeInvite(contact, senderName, recipientName);
     }
 
     currentPayload = payload;

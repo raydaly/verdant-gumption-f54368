@@ -1,6 +1,6 @@
 {
   "name": "claude-code",
-  "version": "v81",
+  "version": "v82",
   "description": "",
   "main": "sw.js",
   "scripts": {

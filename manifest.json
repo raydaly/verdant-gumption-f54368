@@ -1,7 +1,7 @@
 {
   "name": "Greatuncle",
   "short_name": "Greatuncle",
-  "version": "v81",
+  "version": "v82",
   "theme_color": "#F9F7F2",
   "background_color": "#F9F7F2",
   "display": "standalone",
@@ -11,5 +11,5 @@
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ],
-  "version": "v81"
+  "version": "v82"
 }
