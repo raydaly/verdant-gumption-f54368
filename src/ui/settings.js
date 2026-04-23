@@ -340,6 +340,27 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
     }
   };
   updateSection.appendChild(updateBtn);
+
+  const nuclearBtn = document.createElement('button');
+  nuclearBtn.className = 'trunk-btn trunk-btn--secondary';
+  nuclearBtn.style.width = '100%';
+  nuclearBtn.style.marginTop = '0.5rem';
+  nuclearBtn.style.opacity = '0.7';
+  nuclearBtn.textContent = 'Force Reset Cache (Nuclear)';
+  nuclearBtn.onclick = async () => {
+    if (confirm('This will unregister the offline bouncer and force a fresh reload from the internet. Your data is safe. Proceed?')) {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (let reg of regs) {
+          await reg.unregister();
+        }
+      }
+      // Force a hard reload from the server
+      window.location.reload(true);
+    }
+  };
+  updateSection.appendChild(nuclearBtn);
+
   container.appendChild(updateSection);
 
   const aboutBtn = document.createElement('button');
