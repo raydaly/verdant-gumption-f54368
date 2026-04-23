@@ -178,7 +178,13 @@ export async function parseAnyInput(text) {
     const endIdx = trimmed.includes(delimEnd)
       ? trimmed.indexOf(delimEnd)
       : trimmed.length;
-    searchText = trimmed.slice(startIdx, endIdx).trim();
+    const block = trimmed.slice(startIdx, endIdx).trim();
+    // Filter out metadata lines like "Rooted: ..." to find the actual code/URL
+    searchText = block.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0 && !line.startsWith('Rooted:'))
+      .join('\n')
+      .trim();
   }
 
   // ── 2. Extract the encoded value from a URL ────────────────────────────
