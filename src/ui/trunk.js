@@ -10,7 +10,7 @@ import {
   getDeletedSinceExport,
 } from '../storage/settings.js';
 import { exportSeedling, parseSeedling, encodeInvite, encodeGroup, buildPayload, ingestContacts, decodeShareParam } from '../core/seedling.js';
-import { parseAnyInput, IMPORT_TYPE } from '../core/parser.js';
+import { parseAnyInput, IMPORT_TYPE, compressPayload } from '../core/parser.js';
 import { APP_CONSTANTS } from '../core/constants.js';
 import { navigate } from './router.js';
 import { updateHorizonBar } from './components/horizon-bar.js';
