@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v78';
+var CACHE_NAME = 'greatuncle-v79';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -36,10 +36,12 @@ var STATIC_ASSETS = [
   '/src/ui/components/toast.js',
   '/src/ui/components/connected-sheet.js',
   '/src/ui/components/confirm-dialog.js',
+  '/src/core/parser.js',
+  '/src/core/utils.js',
 ];
 
 self.addEventListener('install', event => {
-  console.log('SW: Installing v78...');
+  console.log('SW: Installing v79...');
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
@@ -47,7 +49,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', function (event) {
-  console.log('SW: Activated v78');
+  console.log('SW: Activated v79');
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(
