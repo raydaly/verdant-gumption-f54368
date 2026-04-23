@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v80';
+var CACHE_NAME = 'greatuncle-v81';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -41,7 +41,7 @@ var STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('SW: Installing v80...');
+  console.log('SW: Installing v81...');
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
@@ -49,7 +49,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', function (event) {
-  console.log('SW: Activated v80');
+  console.log('SW: Activated v81');
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(
@@ -68,6 +68,7 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
   if (url.pathname.startsWith('/tools/')) return;
 
   // NETWORK-FIRST with CACHE-BYPASS: always fetch fresh from network (bypassing browser HTTP cache)
