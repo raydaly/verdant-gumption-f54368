@@ -76,7 +76,10 @@
         if (banner) banner.removeAttribute('hidden');
       });
 
+      var refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (refreshing) return;
+        refreshing = true;
         window.location.reload();
       });
     }
