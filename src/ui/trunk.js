@@ -22,6 +22,13 @@ function formatExportDate(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function formatWrappedLink(code) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return `--- START GREATUNCLE LINK ---\nRooted: ${dateStr} · ${timeStr}\n${code}\n--- END GREATUNCLE LINK ---`;
+}
+
 function triggerDownload(json, filename) {
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -417,7 +424,7 @@ export async function renderTrunk(db) {
       const base = window.location.origin + window.location.pathname;
       shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
       subject = `Sharing Greatuncle Circle: ${tag}`;
-      body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n--- START GREATUNCLE LINK ---\n${shareUrl}\n--- END GREATUNCLE LINK ---`;
+      body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n${formatWrappedLink(shareUrl)}`;
       groupEmails = groupContacts.map(c => c.em).filter(Boolean);
       
     } else if (val.startsWith('contact:')) {
@@ -428,7 +435,7 @@ export async function renderTrunk(db) {
       const base = window.location.origin + window.location.pathname;
       shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
       subject = `Greatuncle Contact: ${contact.n}`;
-      body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n--- START GREATUNCLE LINK ---\n${shareUrl}\n--- END GREATUNCLE LINK ---`;
+      body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n${formatWrappedLink(shareUrl)}`;
     }
 
     // Handle Share Options
@@ -760,7 +767,7 @@ export async function renderTrunk(db) {
       l: logs
     };
     const code = await compressPayload(payload);
-    const wrapped = `--- START GREATUNCLE LINK ---\n${code}\n--- END GREATUNCLE LINK ---`;
+    const wrapped = formatWrappedLink(code);
     await navigator.clipboard.writeText(wrapped);
     const old = copyBackupBtn.textContent;
     copyBackupBtn.textContent = 'Copied to Clipboard!';
