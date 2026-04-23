@@ -404,7 +404,7 @@ export async function renderTrunk(db) {
       if (rec && rec.em) recipientEmail = rec.em;
     }
 
-    let encoded, subject, body;
+    let encoded, shareUrl, subject, body;
     let groupEmails = [];
 
     if (val.startsWith('group:')) {
@@ -413,24 +413,22 @@ export async function renderTrunk(db) {
         !(c.t || []).includes('&owner') && (c.t || []).includes(tag)
       );
       if (groupContacts.length === 0) return;
-      encoded = encodeGroup(groupContacts, tag, senderName, recipientName);
-      encoded = await encoded;
+      encoded = await encodeGroup(groupContacts, tag, senderName, recipientName);
       const base = window.location.origin + window.location.pathname;
-      const url = `${base}#invite=${encodeURIComponent(encoded)}`;
+      shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
       subject = `Sharing Greatuncle Circle: ${tag}`;
-      body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n--- START GREATUNCLE LINK ---\n${url}\n--- END GREATUNCLE LINK ---`;
+      body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n--- START GREATUNCLE LINK ---\n${shareUrl}\n--- END GREATUNCLE LINK ---`;
       groupEmails = groupContacts.map(c => c.em).filter(Boolean);
       
     } else if (val.startsWith('contact:')) {
       const contactId = val.slice(8);
       const contact = allContacts.find(c => c.id === contactId);
       if (!contact) return;
-      encoded = encodeInvite(contact, senderName, recipientName);
-      encoded = await encoded;
+      encoded = await encodeInvite(contact, senderName, recipientName);
       const base = window.location.origin + window.location.pathname;
-      const url = `${base}#invite=${encodeURIComponent(encoded)}`;
+      shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
       subject = `Greatuncle Contact: ${contact.n}`;
-      body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n--- START GREATUNCLE LINK ---\n${url}\n--- END GREATUNCLE LINK ---`;
+      body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n--- START GREATUNCLE LINK ---\n${shareUrl}\n--- END GREATUNCLE LINK ---`;
     }
 
     // Handle Share Options

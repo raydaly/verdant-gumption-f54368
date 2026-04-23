@@ -834,10 +834,10 @@ export async function renderPeople(db, params = {}) {
       if (filterState.groups.length === 1) title = filterState.groups[0];
       else if (filterState.layers.length === 1) title = LAYER_LABELS[filterState.layers[0]] || 'Unsorted';
 
-      const groupCode = encodeGroup(filtered, title, ownerContact ? ownerContact.n : null, null, volunteerMeta);
+      const groupCode = await encodeGroup(filtered, title, ownerContact ? ownerContact.n : null, null, volunteerMeta);
       shareUrl = `${base}?importGroup=${groupCode}`;
     } else {
-      const groupCode = encodeGroup(allNonOwners, 'Shared Circle', ownerContact ? ownerContact.n : null, null, null);
+      const groupCode = await encodeGroup(allNonOwners, 'Shared Circle', ownerContact ? ownerContact.n : null, null, null);
       shareUrl = `${base}?importGroup=${groupCode}`;
     }
 
