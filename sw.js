@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v76';
+var CACHE_NAME = 'greatuncle-v77';
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -39,7 +39,7 @@ var STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('SW: Installing v76...');
+  console.log('SW: Installing v77...');
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
@@ -47,7 +47,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', function (event) {
-  console.log('SW: Activated v76');
+  console.log('SW: Activated v77');
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(

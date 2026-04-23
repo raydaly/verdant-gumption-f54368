@@ -760,7 +760,8 @@ export async function renderTrunk(db) {
       l: logs
     };
     const code = await compressPayload(payload);
-    await navigator.clipboard.writeText(code);
+    const wrapped = `--- START GREATUNCLE LINK ---\n${code}\n--- END GREATUNCLE LINK ---`;
+    await navigator.clipboard.writeText(wrapped);
     const old = copyBackupBtn.textContent;
     copyBackupBtn.textContent = 'Copied to Clipboard!';
     setLastExportedAt(Date.now());
