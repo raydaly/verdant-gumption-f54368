@@ -129,13 +129,13 @@ Use this JSON blob for initial imports to verify all levels and group overlaps.
 2.  **Action**: Draft a messy text message:
     ```text
     Hey, sorry the first link was cut off! Try copying this whole thing:
-    --- START GREATUNCLE LINK ---
+    🌿 Greatuncle Update 🌿
     https://greatuncle.app/#invite=z[REPLACE_WITH_REAL_CODE]... (truncated)
-    --- END GREATUNCLE LINK ---
+    🌱 End of Update 🌱
     ```
 3.  **Action**: Paste that entire block into the **Backup** tab text box.
 4.  **Verify**: The app should ignore the peripheral text, successfully extract the code, and show the "Nourish your Circle" button.
-5.  **Success**: The 4 people from the @family group appear in your list (with Review badges).
+5.  **Success**: The people from the group appear in your list (with Review badges).
 
 ### Case N: The "Total Vault Reset" (Full Backup)
 **Goal**: Verify the v69 fix that "Replace Everything" actually clears old data (including logs) rather than merging.
@@ -166,6 +166,23 @@ Use this JSON blob for initial imports to verify all levels and group overlaps.
     - [ ] Indigo's phone number is updated.
     - [ ] **Critical**: Open Indigo's profile. The Guest's log (*"Met at the park..."*) must still be there.
 5.  **Success**: Public fields (name/phone) updated, but private sovereignty (logs) was preserved.
+
+### Case Q: The Stewardship Handshake (Decentralized Trust)
+**Goal**: Verify that a recipient automatically recognizes the sender as the steward for a shared circle.
+1.  **Preparation (Sender)**:
+    - Ensure you have a group tag (e.g., `@family`).
+    - Go to **Backup & Stewardship** and ensure "Curate this group" is enabled for that tag (🔑 icon visible).
+2.  **Action (Sender)**: 
+    - Go to **Pass on the Gift**.
+    - Share the `@family` group. 
+    - Type a recipient name (e.g., "Dawn Daly") to ensure the `rn` hint is included.
+3.  **Action (Recipient)**:
+    - Open the link in a fresh browser.
+    - Confirm your name ("Dawn Daly") in the onboarding card.
+4.  **Verify**:
+    - [ ] Once in the app, find the **Sender** in the contact list.
+    - [ ] Open their profile.
+5.  **Success**: The Sender's profile should show the **🔑 Stewardship** badge for the `@family` group. This confirms the app has successfully "handshaked" the trust relationship.
 
 ---
 

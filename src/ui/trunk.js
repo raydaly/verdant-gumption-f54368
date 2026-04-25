@@ -26,7 +26,7 @@ function formatWrappedLink(code) {
   const now = new Date();
   const dateStr = now.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   const timeStr = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  return `--- START GREATUNCLE LINK ---\nRooted: ${dateStr} · ${timeStr}\n${code}\n--- END GREATUNCLE LINK ---`;
+  return `🌿 Greatuncle Update 🌿\nRooted: ${dateStr} · ${timeStr}\n${code}\n🌱 End of Update 🌱`;
 }
 
 function triggerDownload(json, filename) {
@@ -599,7 +599,7 @@ export async function renderTrunk(db) {
         const appRoot = (window.location.origin.startsWith('http') ? window.location.origin : 'https://greatuncle.app') + '/';
         const shareUrl = `${appRoot}#invite=${encodeURIComponent(encoded)}`;
         const subject = `Updated ${groupTag} Circle`;
-        const body = `Hi! Here is the latest ${groupTag} address book.\n\n--- START GREATUNCLE LINK ---\n${shareUrl}\n--- END GREATUNCLE LINK ---`;
+        const body = `Hi! Here is the latest ${groupTag} address book.\n\n🌿 Greatuncle Update 🌿\n${shareUrl}\n🌱 End of Update 🌱`;
 
         // Create Share Menu for Publishing Desk
         publishBtn.style.display = 'none';

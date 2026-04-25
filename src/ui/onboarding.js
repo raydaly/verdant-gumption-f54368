@@ -16,21 +16,28 @@ export async function renderOnboarding(db, onComplete) {
   title.className = 'onboarding-title';
   title.textContent = 'Greatuncle';
 
-  const tagline = document.createElement('p');
-  tagline.className = 'onboarding-tagline';
-  tagline.textContent = 'Smart reminders to help you stay in touch.';
-  
-  screen.appendChild(title);
-  screen.appendChild(tagline);
-
   // --- Option H: Auto-identify recipient from invite metadata ---
   let recipientHint = '';
   let autoMatchedContact = null;
+  let senderName = '';
+  let groupName = '';
   try {
     const meta = JSON.parse(sessionStorage.getItem('lastImportMeta') || '{}');
     recipientHint = (meta.recipientName || '').toLowerCase().trim();
+    senderName = meta.senderName || '';
+    groupName = meta.groupName || '';
   } catch(e) {}
 
+  const tagline = document.createElement('p');
+  tagline.className = 'onboarding-tagline';
+  if (senderName) {
+    tagline.innerHTML = `<strong>${senderName}</strong> has shared the address book and milestone (birthday) calendar with you${groupName ? ` -- for the <em>${groupName}</em> group` : ''}.`;
+  } else {
+    tagline.textContent = 'Smart reminders to help you stay in touch.';
+  }
+  
+  screen.appendChild(title);
+  screen.appendChild(tagline);
   if (recipientHint && availableContacts.length > 0) {
     const exactMatches = availableContacts.filter(c =>
       (c.n || '').toLowerCase() === recipientHint
@@ -165,7 +172,7 @@ function showIsThisYouCard(db, contact, container, onComplete) {
   greeting.className = 'onboarding-tagline';
   greeting.style.marginBottom = '1.5rem';
   greeting.innerHTML = senderName
-    ? `<strong>${senderName}</strong> has invited you into their circle${groupName ? ` — the <em>${groupName}</em>` : ''}.`
+    ? `<strong>${senderName}</strong> has shared the address book and milestone (birthday) calendar with you${groupName ? ` -- for the <em>${groupName}</em> group` : ''}.`
     : `You've been invited into a shared circle.`;
 
   // The "Is this you?" card
@@ -233,7 +240,7 @@ function showConfirmationForm(db, contact, container, onComplete) {
 
   const tagline = document.createElement('p');
   tagline.className = 'onboarding-tagline';
-  tagline.innerHTML = `Great! We'll use <strong>${contact.n}</strong> as your seat in this circle. This choice stays strictly on your device. Just a few more details to help us remind you of the people you love:`;
+  tagline.innerHTML = `Great! We'll use <strong>${contact.n}</strong> as your seat in this circle. This choice stays strictly on your device. Just a few more details to help us remind you of the people important to you:`;
 
   const nameInput = document.createElement('input');
   nameInput.type = 'text';

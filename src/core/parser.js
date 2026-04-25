@@ -170,13 +170,15 @@ export async function parseAnyInput(text) {
   if (!trimmed) return { type: IMPORT_TYPE.UNKNOWN, payload: null, raw: null, contactCount: 0 };
 
   // ── 1. Extract from delimited block first ──────────────────────────────
-  const delimStart = '--- START GREATUNCLE LINK ---';
-  const delimEnd = '--- END GREATUNCLE LINK ---';
+  const emojiStart = '🌿 Greatuncle Update 🌿';
+  const emojiEnd = '🌱 End of Update 🌱';
+
   let searchText = trimmed;
-  if (trimmed.includes(delimStart)) {
-    const startIdx = trimmed.indexOf(delimStart) + delimStart.length;
-    const endIdx = trimmed.includes(delimEnd)
-      ? trimmed.indexOf(delimEnd)
+  
+  if (trimmed.includes(emojiStart)) {
+    const startIdx = trimmed.indexOf(emojiStart) + emojiStart.length;
+    const endIdx = trimmed.includes(emojiEnd)
+      ? trimmed.indexOf(emojiEnd)
       : trimmed.length;
     const block = trimmed.slice(startIdx, endIdx).trim();
     // Filter out metadata lines like "Rooted: ..." to find the actual code/URL

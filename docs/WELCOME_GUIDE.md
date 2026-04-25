@@ -59,7 +59,7 @@ To understand the value of Greatuncle, you have to understand what it is not.
 
 - **It is NOT a Social Network**: There are no "likes," no "feeds," and no algorithms trying to keep you scrolling. It is not designed to steal your time.
 - **It is NOT a Data Mine**: We don't track your location or sell your aunt’s birthday to advertisers. We don't even have a "database" in the traditional sense.
-- **It IS a Digital Steward**: It is a shared, private, and permanent record of the people you love.
+- **It IS a Digital Steward**: It is a shared, private, and permanent record of the people important to you.
 - **It IS a Ritual**: It is the reliable reminder that someone you care about is turning another year older. It’s an intentional act of connection.
 
 ## 4. The First Five Minutes: From Guest to Steward
