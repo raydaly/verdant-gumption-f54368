@@ -102,22 +102,27 @@ Your circle lives in your browser's local `IndexedDB`. You hold the only key. Wh
 ---
 
 ## 5. What Data Travels in a Sharing Link
-
 When you share a group or contact, only the following fields are included. Sensitive internal fields are **intentionally omitted**.
 
-| Field | Included? |
-|---|---|
-| Name (`n`) | ✅ Yes |
-| Phone (`ph`) | ✅ Yes |
-| Email (`em`) | ✅ Yes |
-| Address (`ad`) | ✅ Yes |
-| Birthday (`bd`) | ✅ Yes |
-| Anniversary (`av`) | ✅ Yes |
-| Private Notes (`no`) | ❌ **Never** |
-| Interaction History (logs) | ❌ **Never** |
-| Internal tags (`&owner`, `&dirty`) | ❌ **Never** |
+| Field | Included on Export? | Trusted on Import? |
+|---|---|---|
+| Name (`n`) | ✅ Yes | ✅ Yes |
+| Phone (`ph`) | ✅ Yes | ✅ Yes |
+| Email (`em`) | ✅ Yes | ✅ Yes |
+| Address (`ad`) | ✅ Yes | ✅ Yes |
+| Birthday (`bd`) | ✅ Yes | ✅ Yes |
+| Anniversary (`av`) | ✅ Yes | ✅ Yes |
+| Private Notes (`no`) | ❌ **Never** | ❌ **Blocked** |
+| Interaction History (logs) | ❌ **Never** | ❌ **Blocked** |
+| Internal tags (`&owner`, `&dirty`) | ❌ **Never** | ❌ **Blocked** |
 
-The code that enforces this is in `src/core/seedling.js`, in the `cleanMember()` function.
+### Defense in Depth: Ingestion Filtering
+Greatuncle enforces a **Local Authority Only** policy for system tags (those starting with `&`). 
+
+1.  **Export Filter**: The `cleanMember()` function in `src/core/seedling.js` strips system tags before a link is generated.
+2.  **Ingestion Filter**: The `sanitizeContact()` function in `src/core/sanitizer.js` proactively strips any tag starting with `&` during the import process. 
+
+Even if a malicious actor manually crafts a payload containing `&owner` or `&steward` tags, the recipient's app will recognize them as untrusted and strip them before they enter the local database. This prevents "Remote Privilege Escalation" attacks.
 
 ---
 

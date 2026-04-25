@@ -1,5 +1,5 @@
-import { getAllContacts, saveContact, clearAllContacts } from '../storage/contacts.js';
-import { getAllLogs, addLog, clearAllLogs } from '../storage/logs.js';
+import { getAllContacts, saveContact, clearAllContacts, saveContactsBatch } from '../storage/contacts.js';
+import { getAllLogs, addLog, clearAllLogs, saveLogsBatch } from '../storage/logs.js';
 import {
   getSettings,
   getLastExportedAt,
@@ -838,7 +838,7 @@ export async function renderTrunk(db) {
     let contactCount = 0;
     let logCount = 0;
     for (const contact of importContacts) {
-      const safe = sanitizeContact(contact);
+      const safe = sanitizeContact(contact, true);
       if (safe) {
         await saveContact(db, safe);
         contactCount++;
@@ -1100,29 +1100,33 @@ Here is my contact data:
         `;
         auditBox.querySelector('#merge-btn').addEventListener('click', async () => {
           const existing = await getAllContacts(db);
+          const contactUpdates = [];
           for (const c of pendingImportRecords) {
-            const safe = sanitizeContact(c);
-            if (safe && !existing.find(e => e.id === safe.id)) await saveContact(db, safe);
+            const safe = sanitizeContact(c, true);
+            if (safe && !existing.find(e => e.id === safe.id)) contactUpdates.push(safe);
           }
+          await saveContactsBatch(db, contactUpdates);
+          
           // Merge logs
           const backupLogs = result.payload.l || result.payload.logs || [];
-          for (const l of backupLogs) {
-            await addLog(db, l.contactId, l.timestamp, l.comment);
-          }
+          await saveLogsBatch(db, backupLogs);
+
           setPendingImportNudge(true);
           window.location.hash = 'people'; window.location.reload();
         });
         auditBox.querySelector('#overwrite-btn').addEventListener('click', async () => {
           await clearAllContacts(db);
           await clearAllLogs(db);
+          const contactUpdates = [];
           for (const c of pendingImportRecords) {
-            const safe = sanitizeContact(c);
-            if (safe) await saveContact(db, safe);
+            const safe = sanitizeContact(c, true);
+            if (safe) contactUpdates.push(safe);
           }
+          await saveContactsBatch(db, contactUpdates);
+          
           const backupLogs = result.payload.l || result.payload.logs || [];
-          for (const l of backupLogs) {
-            await addLog(db, l.contactId, l.timestamp, l.comment);
-          }
+          await saveLogsBatch(db, backupLogs);
+
           setPendingImportNudge(true);
           window.location.hash = 'people'; window.location.reload();
         });
@@ -1165,16 +1169,17 @@ Here is my contact data:
 
   nourishBtn.addEventListener('click', async () => {
     if (pendingImportRecords.length === 0) return;
+    const contactUpdates = [];
     for (const record of pendingImportRecords) {
-      const safe = sanitizeContact(record);
-      if (safe) await saveContact(db, safe);
+      const safe = sanitizeContact(record, true);
+      if (safe) contactUpdates.push(safe);
     }
+    await saveContactsBatch(db, contactUpdates);
+
     // Handle logs if this was a full backup restoration in an empty app
     if (resultTypeRef === IMPORT_TYPE.FULL_BACKUP) {
       const backupLogs = resultPayloadRef.l || resultPayloadRef.logs || [];
-      for (const l of backupLogs) {
-        await addLog(db, l.contactId, l.timestamp, l.comment);
-      }
+      await saveLogsBatch(db, backupLogs);
     }
     setPendingImportNudge(true);
     window.location.hash = 'people';

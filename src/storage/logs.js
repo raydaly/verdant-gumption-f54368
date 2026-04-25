@@ -63,6 +63,20 @@ export function restoreLogsForContact(db, logs) {
   });
 }
 
+export function saveLogsBatch(db, logs) {
+  return new Promise((resolve, reject) => {
+    if (!logs || logs.length === 0) return resolve();
+    const tx = db.transaction(APP_CONSTANTS.STORE_LOGS, 'readwrite');
+    const store = tx.objectStore(APP_CONSTANTS.STORE_LOGS);
+    for (const log of logs) {
+      store.add(log);
+    }
+    tx.oncomplete = () => resolve();
+    tx.onerror = (event) => reject(event.target.error);
+    tx.onabort = (event) => reject(event.target.error || new Error('Transaction aborted'));
+  });
+}
+
 export function clearAllLogs(db) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(APP_CONSTANTS.STORE_LOGS, 'readwrite');

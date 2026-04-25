@@ -35,7 +35,7 @@ export function sanitizeString(val, maxLength = 200) {
   return clean.substring(0, maxLength);
 }
 
-export function sanitizeContact(c) {
+export function sanitizeContact(c, isImport = false) {
   if (!c || typeof c !== 'object') return null;
 
   let em = sanitizeString(c.em, 100);
@@ -62,7 +62,13 @@ export function sanitizeContact(c) {
     // Tags are sanitized as an array
     t: (Array.isArray(c.t) ? c.t : [])
       .map(tag => sanitizeString(tag, 50))
-      .filter(tag => tag && (tag.startsWith('@') || tag.startsWith('#') || tag.startsWith('&') || tag.startsWith('!')))
+      .filter(tag => {
+        if (!tag) return false;
+        // Defense in Depth: Treat the '&' namespace as strictly local.
+        // Never allow a remote payload to define system tags like &owner or &steward.
+        if (isImport && tag.startsWith('&')) return false;
+        return (tag.startsWith('@') || tag.startsWith('#') || tag.startsWith('&') || tag.startsWith('!'));
+      })
   };
   
   // Clean up any other fields if we want specific output only

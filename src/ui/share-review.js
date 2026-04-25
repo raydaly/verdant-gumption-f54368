@@ -1,4 +1,4 @@
-import { getAllContacts, saveContact, deleteContact } from '../storage/contacts.js';
+import { getAllContacts, saveContact, deleteContact, saveContactsBatch } from '../storage/contacts.js';
 import { navigate } from './router.js';
 
 const DIFF_FIELDS = ['ph', 'em', 'ad', 'zp', 'bd', 'av'];
@@ -54,7 +54,7 @@ export async function renderShareReview(db) {
   acceptAllBtn.title = 'Accept all identical & smart merges';
   acceptAllBtn.setAttribute('aria-label', 'Accept all easy updates');
   acceptAllBtn.addEventListener('click', async () => {
-    let count = 0;
+    const toSave = [];
     for (const p of pending) {
       const match = allContacts.find(c => c.id === p.matchedId);
       if (match) {
@@ -73,12 +73,12 @@ export async function renderShareReview(db) {
 
         if (!hasConflict) {
           const merged = { ...match, ...updates, t: [...updates.t, '&dirty'], ua: Date.now() };
-          await saveContact(db, merged);
-          count++;
+          toSave.push(merged);
         }
       }
     }
-    if (count > 0) {
+    await saveContactsBatch(db, toSave);
+    if (toSave.length > 0) {
       renderShareReview(db);
     } else {
       alert("No easy merges found. Select 'Add to Circle' for new contacts.");
@@ -95,6 +95,7 @@ export async function renderShareReview(db) {
     if (newOnes.length === 0) return;
     
     if (confirm(`Add all ${newOnes.length} new people to your circle?`)) {
+      const toSave = [];
       for (const p of newOnes) {
         // Only strip specific internal sync tags, preserve levels and owner status
         const tags = new Set((p.t || []).filter(t => t !== '&share' && t !== '&duplicate'));
@@ -103,8 +104,9 @@ export async function renderShareReview(db) {
         
         const saved = { ...p, t: [...tags], ua: Date.now() };
         delete saved.matchedId;
-        await saveContact(db, saved);
+        toSave.push(saved);
       }
+      await saveContactsBatch(db, toSave);
       renderShareReview(db);
     }
   });

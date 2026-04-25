@@ -1,11 +1,11 @@
 {
   "name": "greatuncle",
-  "version": "86.0.18",
+  "version": "86.0.19",
   "description": "Family stewardship and connection app",
   "main": "src/ui/app.js",
   "scripts": {
     "start": "npx serve .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "shipit": "git add . && git commit -m 'v86.0.18 - Warm delimiters, onboarding phrase update, and testing docs' && git push"
+    "shipit": "git add . && git commit -m 'v86.0.19 - Batch writes and security hardening' && git push"
   }
 }

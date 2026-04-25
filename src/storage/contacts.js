@@ -25,6 +25,22 @@ export function saveContact(db, contact) {
   return promisifyRequest(store.put(contact));
 }
 
+export function saveContactsBatch(db, contacts) {
+  return new Promise((resolve, reject) => {
+    if (!contacts || contacts.length === 0) return resolve();
+    const tx = db.transaction(APP_CONSTANTS.STORE_CONTACTS, 'readwrite');
+    const store = tx.objectStore(APP_CONSTANTS.STORE_CONTACTS);
+    
+    for (const contact of contacts) {
+      store.put(contact);
+    }
+    
+    tx.oncomplete = () => resolve();
+    tx.onerror = (event) => reject(event.target.error);
+    tx.onabort = (event) => reject(event.target.error || new Error('Transaction aborted'));
+  });
+}
+
 export function deleteContact(db, id) {
   const tx = db.transaction(APP_CONSTANTS.STORE_CONTACTS, 'readwrite');
   const store = tx.objectStore(APP_CONSTANTS.STORE_CONTACTS);

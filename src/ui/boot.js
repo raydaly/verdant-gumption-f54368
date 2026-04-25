@@ -1,5 +1,5 @@
 import { openDB } from '../storage/db.js';
-import { getOwner, getAllContacts, saveContact } from '../storage/contacts.js';
+import { getOwner, getAllContacts, saveContact, saveContactsBatch } from '../storage/contacts.js';
 import { setPendingImportNudge } from '../storage/settings.js';
 import { decodeShareParam, ingestContacts } from '../core/seedling.js';
 import { parseHashForInvite, isHashMangled } from '../core/parser.js';
@@ -50,9 +50,7 @@ async function parseAndWriteImport(db, params, hashParam) {
     return false;
   }
 
-  for (const record of queue) {
-    await saveContact(db, record);
-  }
+  await saveContactsBatch(db, queue);
 
   // --- Phase 1: Stewardship Handshake ---
   // After saving, check if any payload carried a steward volunteer flag.

@@ -144,7 +144,7 @@ export function ingestContacts(payload, existingContacts, isFreshInstall = false
   const now = Date.now();
 
   for (let c of incomingContacts) {
-    const safe = sanitizeContact(c);
+    const safe = sanitizeContact(c, true);
     if (!safe || !safe.n) continue;
 
     const match = findMatch(safe, existingContacts);

@@ -3,7 +3,7 @@ import { initRouter, navigate } from './router.js';
 import { renderOnboarding } from './onboarding.js';
 import { applyTheme } from './settings.js';
 import { getSettings } from '../storage/settings.js';
-import { getAllContacts, saveContact } from '../storage/contacts.js';
+import { getAllContacts, saveContact, saveContactsBatch } from '../storage/contacts.js';
 import { updateHorizonBar } from './components/horizon-bar.js';
 import { parseAnyInput, IMPORT_TYPE } from '../core/parser.js';
 
@@ -158,15 +158,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const autoAcceptAndLaunch = async () => {
         // Auto-accept all pending imports (strip &share so they become full circle members)
         const all = await getAllContacts(db);
-        let acceptedAny = false;
+        const updates = [];
         for (const c of all) {
           if ((c.t || []).includes('&share')) {
             const newTags = c.t.filter(t => t !== '&share' && t !== '&dirty');
             newTags.push('&dirty');
-            await saveContact(db, { ...c, t: newTags, ua: Date.now() });
-            acceptedAny = true;
+            updates.push({ ...c, t: newTags, ua: Date.now() });
           }
         }
+        await saveContactsBatch(db, updates);
         // If we just accepted people, land on the people page
         initApp(db, 'people', false);
         initClipboardMonitor();
