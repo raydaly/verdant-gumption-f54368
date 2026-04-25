@@ -1,18 +1,11 @@
 {
-  "name": "claude-code",
-  "version": "v85",
-  "description": "",
-  "main": "sw.js",
+  "name": "greatuncle",
+  "version": "86.0.16",
+  "description": "Family stewardship and connection app",
+  "main": "src/ui/app.js",
   "scripts": {
+    "start": "npx serve .",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx serve . -p 3001",
-    "shipit": "npx netlify-cli deploy --prod --dir=."
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "puppeteer": "^24.39.1"
+    "shipit": "git add . && git commit -m 'v86.0.16 - Standardize app root URLs for sharing' && git push"
   }
 }

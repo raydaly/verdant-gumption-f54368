@@ -84,46 +84,10 @@ export async function renderTrunk(db) {
   content.className = 'view-content';
   
   // Forward-declare UI elements for logic visibility
-  let shareBtn, codeArea, copyCodeBtn, toggleViewBtn;
+  let shareBtn, codeArea, copyCodeBtn, toggleViewBtn, codePreviewContainer;
   let viewMode = 'code'; // 'code' or 'json'
   let currentPayload = null;
   let currentEncoded = null;
-
-  // Heritage (First Gift) Section
-  const heritageCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
-  
-  // Only show Heritage and Sharing sections if there are contacts to share
-  if (heritageCount > 0) {
-    const heritageSection = document.createElement('div');
-    heritageSection.className = 'trunk-section trunk-section--heritage';
-
-    const hTitle = document.createElement('div');
-    hTitle.className = 'trunk-section-title';
-    hTitle.style.color = 'var(--color-action)';
-    hTitle.textContent = 'Become the Source of Connection';
-
-    const hMeta = document.createElement('div');
-    hMeta.className = 'trunk-section-meta';
-    hMeta.innerHTML = `
-      A shared circle is a legacy in the making. You've nourished your world with <strong>${heritageCount} people</strong>. Now, you can pass on that blessing.
-      <br><br>
-      <em>"Become the Source: Create new groups and share them as a 'First Gift' to others, passing on the legacy of connection."</em>
-    `;
-
-    const giftBtn = document.createElement('button');
-    giftBtn.className = 'trunk-btn';
-    giftBtn.style.background = 'var(--color-amber)';
-    giftBtn.style.color = '#121212';
-    giftBtn.textContent = '🎁 Pass on the Gift';
-    giftBtn.addEventListener('click', () => {
-      shareSection.scrollIntoView({ behavior: 'smooth' });
-    });
-
-    heritageSection.appendChild(hTitle);
-    heritageSection.appendChild(hMeta);
-    heritageSection.appendChild(giftBtn);
-    content.appendChild(heritageSection);
-  }
 
   // --- THE BRIDGE (Sharing) ---
   const shareSection = document.createElement('div');
@@ -131,12 +95,16 @@ export async function renderTrunk(db) {
 
   const shareTitle = document.createElement('div');
   shareTitle.className = 'trunk-section-title';
-  shareTitle.textContent = 'The Bridge (Share with Others)';
+  shareTitle.textContent = '🎁 The Bridge: Pass on the Gift';
   shareSection.appendChild(shareTitle);
 
   const shareMeta = document.createElement('div');
   shareMeta.className = 'trunk-section-meta';
-  shareMeta.textContent = 'Pass on contacts to family and friends. For your privacy, private notes and interaction history are NEVER sent through the bridge.';
+  const heritageCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
+  shareMeta.innerHTML = `
+    Become the Source: You've nourished your world with <strong>${heritageCount} people</strong>. 
+    Create a connection code to pass on the legacy of belonging. For your privacy, private notes and interaction history are NEVER sent through the bridge.
+  `;
   shareSection.appendChild(shareMeta);
 
   // Collect all @group tags
@@ -276,9 +244,15 @@ export async function renderTrunk(db) {
       if (codeArea) codeArea.value = '';
       if (copyCodeBtn) copyCodeBtn.disabled = true;
       if (toggleViewBtn) toggleViewBtn.disabled = true;
-      if (shareBtn) shareBtn.disabled = true;
+      if (shareBtn) {
+        shareBtn.disabled = true;
+        shareBtn.className = 'trunk-btn trunk-btn--secondary';
+      }
+      if (codePreviewContainer) codePreviewContainer.style.display = 'none';
       return;
     }
+
+    if (codePreviewContainer) codePreviewContainer.style.display = 'block';
 
     let payload, encoded;
     const recipientName = recipientInput.value.trim() || null;
@@ -307,7 +281,10 @@ export async function renderTrunk(db) {
     }
     if (copyCodeBtn) copyCodeBtn.disabled = false;
     if (toggleViewBtn) toggleViewBtn.disabled = false;
-    if (shareBtn) shareBtn.disabled = false;
+    if (shareBtn) {
+      shareBtn.disabled = false;
+      shareBtn.className = 'trunk-btn trunk-btn--primary';
+    }
   };
 
   shareModeSelect.addEventListener('change', () => {
@@ -394,7 +371,7 @@ export async function renderTrunk(db) {
 
   shareBtn = document.createElement('button');
   shareBtn.type = 'button';
-  shareBtn.className = 'trunk-btn trunk-btn--primary';
+  shareBtn.className = 'trunk-btn trunk-btn--secondary';
   shareBtn.style.marginTop = '0.5rem';
   shareBtn.style.width = '100%';
   shareBtn.textContent = 'Share Link';
@@ -421,8 +398,8 @@ export async function renderTrunk(db) {
       );
       if (groupContacts.length === 0) return;
       encoded = await encodeGroup(groupContacts, tag, senderName, recipientName);
-      const base = window.location.origin + window.location.pathname;
-      shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
+      const appRoot = (window.location.origin.startsWith('http') ? window.location.origin : 'https://greatuncle.app') + '/';
+      shareUrl = `${appRoot}#invite=${encodeURIComponent(encoded)}`;
       subject = `Sharing Greatuncle Circle: ${tag}`;
       body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n${formatWrappedLink(shareUrl)}`;
       groupEmails = groupContacts.map(c => c.em).filter(Boolean);
@@ -432,8 +409,8 @@ export async function renderTrunk(db) {
       const contact = allContacts.find(c => c.id === contactId);
       if (!contact) return;
       encoded = await encodeInvite(contact, senderName, recipientName);
-      const base = window.location.origin + window.location.pathname;
-      shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
+      const appRoot = (window.location.origin.startsWith('http') ? window.location.origin : 'https://greatuncle.app') + '/';
+      shareUrl = `${appRoot}#invite=${encodeURIComponent(encoded)}`;
       subject = `Greatuncle Contact: ${contact.n}`;
       body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n${formatWrappedLink(shareUrl)}`;
     }
@@ -499,13 +476,16 @@ export async function renderTrunk(db) {
     shareSection.appendChild(shareRow);
     shareSection.appendChild(shareBtn);
 
+    codePreviewContainer = document.createElement('div');
+    codePreviewContainer.style.display = 'none'; // Hidden until selection
+    codePreviewContainer.style.marginTop = '1rem';
+    
     codeArea = document.createElement('textarea');
     codeArea.className = 'trunk-readable-area';
-    codeArea.style.marginTop = '1rem';
-    codeArea.placeholder = 'Pick something to share to generate a Connection Code…';
+    codeArea.placeholder = 'Connection Code...';
     codeArea.rows = 4;
     codeArea.readOnly = true;
-    shareSection.appendChild(codeArea);
+    codePreviewContainer.appendChild(codeArea);
 
     const codeActionRow = document.createElement('div');
     codeActionRow.style.display = 'flex';
@@ -526,7 +506,8 @@ export async function renderTrunk(db) {
 
     codeActionRow.appendChild(copyCodeBtn);
     codeActionRow.appendChild(toggleViewBtn);
-    shareSection.appendChild(codeActionRow);
+    codePreviewContainer.appendChild(codeActionRow);
+    shareSection.appendChild(codePreviewContainer);
 
     toggleViewBtn.addEventListener('click', () => {
       viewMode = viewMode === 'code' ? 'json' : 'code';
@@ -598,7 +579,7 @@ export async function renderTrunk(db) {
 
       const publishBtn = document.createElement('button');
       publishBtn.type = 'button';
-      publishBtn.className = 'trunk-btn trunk-btn--primary';
+      publishBtn.className = 'trunk-btn trunk-btn--secondary';
       publishBtn.style.cssText = 'padding:0.4rem 0.9rem;font-size:0.85rem;white-space:nowrap;';
       publishBtn.textContent = 'Publish Update';
 
@@ -610,8 +591,8 @@ export async function renderTrunk(db) {
         
         const volunteerMeta = { phone: ownerRecord.ph || null, email: ownerRecord.em || null };
         const encoded = await encodeGroup(groupContacts, groupTag, senderName, null, volunteerMeta);
-        const base = window.location.origin + window.location.pathname;
-        const shareUrl = `${base}#invite=${encodeURIComponent(encoded)}`;
+        const appRoot = (window.location.origin.startsWith('http') ? window.location.origin : 'https://greatuncle.app') + '/';
+        const shareUrl = `${appRoot}#invite=${encodeURIComponent(encoded)}`;
         const subject = `Updated ${groupTag} Circle`;
         const body = `Hi! Here is the latest ${groupTag} address book.\n\n--- START GREATUNCLE LINK ---\n${shareUrl}\n--- END GREATUNCLE LINK ---`;
 
@@ -737,7 +718,7 @@ export async function renderTrunk(db) {
 
   const exportBtn = document.createElement('button');
   exportBtn.type = 'button';
-  exportBtn.className = 'trunk-btn trunk-btn--primary';
+  exportBtn.className = 'trunk-btn trunk-btn--secondary';
   exportBtn.style.width = '100%';
   exportBtn.textContent = 'Download Complete Seedling (.json)';
   exportBtn.addEventListener('click', async () => {
@@ -894,7 +875,7 @@ export async function renderTrunk(db) {
 
           const overwriteBtn = document.createElement('button');
           overwriteBtn.type = 'button';
-          overwriteBtn.className = 'trunk-btn';
+          overwriteBtn.className = 'trunk-btn trunk-btn--secondary';
           overwriteBtn.textContent = 'Overwrite existing';
 
           skipBtn.addEventListener('click', async () => {
@@ -967,7 +948,7 @@ export async function renderTrunk(db) {
   importSection.appendChild(auditBox);
 
   const nourishBtn = document.createElement('button');
-  nourishBtn.className = 'trunk-btn trunk-btn--primary';
+  nourishBtn.className = 'trunk-btn trunk-btn--secondary';
   nourishBtn.style.marginTop = '1rem';
   nourishBtn.style.width = '100%';
   nourishBtn.style.display = 'none'; // Hidden until valid input
@@ -1142,6 +1123,7 @@ Here is my contact data:
         });
       } else {
         nourishBtn.style.display = 'block';
+        nourishBtn.className = 'trunk-btn trunk-btn--primary';
         nourishBtn.textContent = `Restore ${result.contactCount} people into your Circle`;
         auditBox.innerHTML = `
           <div style="color: var(--color-success); font-weight: 500; margin-bottom: 0.25rem;">✅ Full Backup Detected</div>
@@ -1159,6 +1141,7 @@ Here is my contact data:
 
       auditBox.style.display = 'block';
       nourishBtn.style.display = contacts.length > 0 ? 'block' : 'none';
+      if (contacts.length > 0) nourishBtn.className = 'trunk-btn trunk-btn--primary';
       nourishBtn.textContent = 'Nourish your Circle with these People';
 
       const names = contacts.map(c => c.n).join(', ');

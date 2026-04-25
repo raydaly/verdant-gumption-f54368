@@ -318,13 +318,20 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
           await reg.update();
           // If a new SW is found, index.html's controllerchange listener will reload the page.
           // If no update is found, we'll let the user know.
-          setTimeout(() => {
+          setTimeout(async () => {
             if (updateBtn.textContent === 'Checking...') {
-              updateBtn.textContent = 'App is Up to Date';
+              let versionStr = '';
+              try {
+                const res = await fetch('/manifest.json?cb=' + Date.now());
+                const m = await res.json();
+                versionStr = ` (${m.version || 'v86'})`;
+              } catch (e) {}
+              
+              updateBtn.textContent = 'App is Up to Date' + versionStr;
               setTimeout(() => { 
                 updateBtn.disabled = false;
                 updateBtn.textContent = 'Check for Updates'; 
-              }, 3000);
+              }, 6000);
             }
           }, 2000);
         } else {

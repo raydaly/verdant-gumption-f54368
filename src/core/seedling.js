@@ -148,9 +148,21 @@ export function ingestContacts(payload, existingContacts, isFreshInstall = false
     if (!safe || !safe.n) continue;
 
     const match = findMatch(safe, existingContacts);
-    let isAlreadyPending = existingContacts.some(e => 
-      (e.t || []).includes('&share') && findMatch(safe, [e])
-    );
+
+    // Check if this contact is already in the pending queue (&share).
+    // findMatch() intentionally excludes &share contacts from its pool, so we
+    // must do a direct check here to avoid duplicates on repeated imports.
+    const pendingPool = existingContacts.filter(e => (e.t || []).includes('&share'));
+    const isAlreadyPending = pendingPool.some(e => {
+      if (safe.em && e.em && safe.em.toLowerCase().trim() === e.em.toLowerCase().trim()) return true;
+      if (safe.ph && e.ph) {
+        const sp = safe.ph.replace(/\D/g, '');
+        const ep = e.ph.replace(/\D/g, '');
+        if (sp && ep && sp === ep) return true;
+      }
+      if (safe.n && e.n && safe.n.toLowerCase().trim() === e.n.toLowerCase().trim()) return true;
+      return false;
+    });
 
     if (match) {
       // Optimization: Skip if identical
@@ -169,8 +181,7 @@ export function ingestContacts(payload, existingContacts, isFreshInstall = false
     if (isAlreadyPending) continue;
 
     // Prepare the record for the review queue
-    const finalTags = [...(safe.t || []), '&dirty'];
-    if (!isFreshInstall) finalTags.push('&share');
+    const finalTags = [...(safe.t || []), '&dirty', '&share'];
     if (batchTag && !finalTags.includes(batchTag)) finalTags.push(batchTag);
     
     // Default to @level50 (Neighborhood) if no level is assigned yet.

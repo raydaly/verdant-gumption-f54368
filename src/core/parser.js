@@ -292,25 +292,17 @@ export async function parseAnyInput(text) {
  *   #/?invite=...      (router-compatible format)
  */
 export function parseHashForInvite() {
-  const hash = window.location.hash.slice(1); // Remove leading '#'
+  const hash = window.location.hash;
   if (!hash) return null;
 
-  // Try as a query string within the hash
-  const qIndex = hash.indexOf('?');
-  const hashQuery = qIndex >= 0 ? hash.slice(qIndex + 1) : hash;
+  // Extremely flexible regex: looks for invite= or importGroup= anywhere after #, ?, or &
+  const match = hash.match(/[#/?&!](invite|importGroup)=([^&\s]+)/);
+  if (!match) return null;
 
-  const params = new URLSearchParams(hashQuery);
-  const invite = params.get('invite');
-  const importGroup = params.get('importGroup');
-
-  if (invite) return { paramName: 'invite', encoded: invite };
-  if (importGroup) return { paramName: 'importGroup', encoded: importGroup };
-
-  // Try bare format: #invite=...
-  const bareMatch = hash.match(/^(invite|importGroup)=(.+)$/);
-  if (bareMatch) return { paramName: bareMatch[1], encoded: bareMatch[2] };
-
-  return null;
+  const paramName = match[1];
+  const encoded = decodeURIComponent(match[2]).replace(/[.,!?;:]+$/, '');
+  
+  return { paramName, encoded };
 }
 
 /**
@@ -326,7 +318,10 @@ export function isHashMangled() {
 
   // A valid Base64 / Base64URL string should only contain these characters
   const validBase64Url = /^[A-Za-z0-9\-_+/=z]+$/;
-  if (!validBase64Url.test(encoded)) return true;
+  if (!validBase64Url.test(encoded)) {
+    console.warn('Greatuncle: Hash rejected as mangled:', encoded.slice(0, 20) + '...');
+    return true;
+  }
 
   return false;
 }

@@ -338,7 +338,7 @@ export async function renderHome(db, version = currentVersion) {
       metaText.textContent = formatDaysOverdue(daysOverdue);
       meta.appendChild(metaText);
 
-      const visibleTags = (contact.t || []).filter(t => t.startsWith('@') || t.startsWith('#'));
+      const visibleTags = (contact.t || []).filter(t => t.startsWith('@') || t.startsWith('#')).sort();
       if (visibleTags.length > 0) {
         const spacer = document.createElement('span');
         spacer.textContent = ' · ';

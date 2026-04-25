@@ -1,4 +1,7 @@
-var CACHE_NAME = 'greatuncle-v85';
+var CACHE_NAME = 'greatuncle-v86.0.16';
+
+
+
 var STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -41,7 +44,10 @@ var STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('SW: Installing v85...');
+  console.log('SW: Installing v86.0.15...');
+
+
+
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
@@ -49,7 +55,10 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', function (event) {
-  console.log('SW: Activated v85');
+  console.log('SW: Activated v86.0.15');
+
+
+
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(

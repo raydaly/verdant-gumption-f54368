@@ -229,7 +229,7 @@ export async function showContactProfile(db, contact, onRefresh) {
     detailsBox.appendChild(detailList);
   }
 
-  const visibleTags = (contact.t || []).filter(t => t.startsWith('@') || t.startsWith('#'));
+  const visibleTags = (contact.t || []).filter(t => t.startsWith('@') || t.startsWith('#')).sort();
   if (visibleTags.length > 0) {
     const tagsContainer = document.createElement('div');
     tagsContainer.className = 'profile-tags';

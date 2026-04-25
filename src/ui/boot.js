@@ -18,9 +18,9 @@ async function parseAndWriteImport(db, params, hashParam) {
 
   const payloads = [];
 
-  const addPayload = (raw) => {
+  const addPayload = async (raw) => {
     if (!raw) return;
-    const payload = decodeShareParam(raw);
+    const payload = await decodeShareParam(raw);
     if (!payload) return;
     payloads.push(payload);
     
@@ -28,14 +28,14 @@ async function parseAndWriteImport(db, params, hashParam) {
     
     // Stash metadata for a warm welcome screen
     if (payload.sn || payload.g || payload.c) {
-      const contacts = Array.isArray(payload.c) ? payload.c : (payload.c ? [payload.c] : []);
-      const firstContactName = contacts.length > 0 ? contacts[0].n : 'Someone';
-      const containsMilestones = contacts.some(c => c.bd || c.av || c.dp);
+      const rawContacts = Array.isArray(payload.c) ? payload.c : (payload.c ? [payload.c] : []);
+      const firstContactName = rawContacts.length > 0 ? rawContacts[0].n : 'Someone';
+      const containsMilestones = rawContacts.some(c => c.bd || c.av || c.dp);
 
       sessionStorage.setItem('lastImportMeta', JSON.stringify({
         senderName: payload.sn || 'Someone',
         recipientName: payload.rn || '',
-        groupName: payload.g || (contacts.length > 1 ? `${firstContactName}'s Group` : firstContactName),
+        groupName: payload.g || (rawContacts.length > 1 ? `${firstContactName}'s Group` : firstContactName),
         hasMilestones: !!(payload.hm || containsMilestones)
       }));
     }
@@ -43,11 +43,10 @@ async function parseAndWriteImport(db, params, hashParam) {
     queue.push(...contacts);
   };
 
-  addPayload(inviteRaw);
-  addPayload(groupRaw);
+  await addPayload(inviteRaw);
+  await addPayload(groupRaw);
 
   if (queue.length === 0) {
-    history.replaceState(null, '', window.location.pathname);
     return false;
   }
 
@@ -87,7 +86,6 @@ async function parseAndWriteImport(db, params, hashParam) {
   }
 
   setPendingImportNudge(true);
-  history.replaceState(null, '', window.location.pathname);
   return true;
 }
 
@@ -106,6 +104,7 @@ export async function boot() {
   // Try hash fragment first (new secure format), then query string (legacy)
   const hashParam = parseHashForInvite();
   const params = new URLSearchParams(window.location.search);
+  console.log('Greatuncle Boot: Checking for params...', { hash: window.location.hash, hashParam, hasQueryInvite: params.has('invite') });
   const hasUrlParams = !!(hashParam) || params.has('invite') || params.has('importGroup');
 
   let hasNewImports = false;
@@ -113,7 +112,7 @@ export async function boot() {
     hasNewImports = await parseAndWriteImport(db, params, hashParam);
     // Clear both the hash and query string to prevent re-importing on refresh
     if (hasNewImports) {
-      history.replaceState(null, '', window.location.pathname);
+      // We used to clear the hash here, but now we wait until app.js ensures stability
     }
   }
 

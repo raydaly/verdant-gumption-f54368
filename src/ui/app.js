@@ -3,6 +3,7 @@ import { initRouter, navigate } from './router.js';
 import { renderOnboarding } from './onboarding.js';
 import { applyTheme } from './settings.js';
 import { getSettings } from '../storage/settings.js';
+import { getAllContacts, saveContact } from '../storage/contacts.js';
 import { updateHorizonBar } from './components/horizon-bar.js';
 import { parseAnyInput, IMPORT_TYPE } from '../core/parser.js';
 
@@ -146,19 +147,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isGallery = !hasOwner && hasContacts;
     let startView = isGallery ? 'people' : 'home';
 
+    // Option H: No owner but have contacts (either just imported or from a previous attempt)
+    // We force them into Onboarding to "Claim their seat"
+    if (!hasOwner && hasContacts && !redirectToRepair) {
+      // Clear hash immediately if it's still there to prevent re-imports
+      if (hadParams) {
+        history.replaceState(null, '', window.location.pathname);
+      }
+      
+      const autoAcceptAndLaunch = async () => {
+        // Auto-accept all pending imports (strip &share so they become full circle members)
+        const all = await getAllContacts(db);
+        let acceptedAny = false;
+        for (const c of all) {
+          if ((c.t || []).includes('&share')) {
+            const newTags = c.t.filter(t => t !== '&share' && t !== '&dirty');
+            newTags.push('&dirty');
+            await saveContact(db, { ...c, t: newTags, ua: Date.now() });
+            acceptedAny = true;
+          }
+        }
+        // If we just accepted people, land on the people page
+        initApp(db, 'people', false);
+        initClipboardMonitor();
+      };
+      renderOnboarding(db, autoAcceptAndLaunch);
+      return;
+    }
+
     if (hasNewImports) {
       startView = 'share-review';
     } else if (hadParams && isGallery) {
       startView = 'people';
     }
-
-    if (!hasOwner && !hasContacts) {
+    
+    if (!hasOwner && !hasContacts && !redirectToRepair) {
       renderOnboarding(db, () => initApp(db, 'home', false));
       return;
     }
 
     initApp(db, startView, isGallery);
     initClipboardMonitor();
+
+    // Clear the URL hash after a delay to ensure it's been processed and the app is stable
+    if (hadParams) {
+      setTimeout(() => {
+        history.replaceState(null, '', window.location.pathname);
+      }, 2000);
+    }
   } catch (err) {
     console.error('CRITICAL BOOT ERROR:', err);
     if (app) {

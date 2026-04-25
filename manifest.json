@@ -1,15 +1,21 @@
 {
   "name": "Greatuncle",
   "short_name": "Greatuncle",
-  "version": "v85",
-  "theme_color": "#F9F7F2",
-  "background_color": "#F9F7F2",
+  "start_url": ".",
   "display": "standalone",
-  "start_url": "/",
-  "scope": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#111827",
+  "version": "86.0.16",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ],
-  "version": "v85"
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }

@@ -292,6 +292,66 @@ body {
   border-radius: 6px;
 }
 
+.contextual-ribbon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-bg-accent);
+  margin: 0 -1rem 0.5rem -1rem;
+  font-size: 0.9rem;
+  animation: ribbonSlide 0.2s ease-out;
+}
+
+@keyframes ribbonSlide {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ribbon-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--color-action);
+}
+
+.ribbon-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ribbon-btn {
+  background: var(--color-bg);
+  border: 1px solid var(--color-bg-accent);
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: inherit;
+}
+
+.ribbon-btn:hover {
+  background: var(--color-bg-accent);
+}
+
+.ribbon-btn--active {
+  background: var(--color-action);
+  color: white;
+  border-color: var(--color-action);
+}
+
+.ribbon-btn--share {
+  color: var(--color-action);
+  border-color: var(--color-action);
+}
+
 /* Contact form */
 .form-view {
   height: 100dvh;
@@ -869,9 +929,9 @@ body {
 .trunk-btn {
   display: block;
   width: 100%;
-  background: var(--color-action);
-  color: white;
-  border: none;
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  border: 1px solid var(--color-bg-accent);
   border-radius: 8px;
   padding: 0.75rem;
   font-size: 1rem;
@@ -880,11 +940,36 @@ body {
   margin-bottom: 0.5rem;
   text-align: center;
   text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.trunk-btn:hover {
+  background: var(--color-bg-accent);
+}
+
+.trunk-btn--primary {
+  background: var(--color-action);
+  color: white;
+  border-color: var(--color-action);
+  font-weight: 500;
+}
+
+.trunk-btn--primary:hover {
+  filter: brightness(1.1);
+  background: var(--color-action);
 }
 
 .trunk-btn--secondary {
-  background: var(--color-bg-accent);
-  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-action), transparent 94%);
+  border: 1px solid color-mix(in srgb, var(--color-action), transparent 80%);
+  color: var(--color-action);
+  font-weight: 600;
+}
+
+.trunk-btn--secondary:hover {
+  background: color-mix(in srgb, var(--color-action), transparent 88%);
+  border-color: var(--color-action);
 }
 
 .trunk-import-label {
