@@ -378,42 +378,41 @@ export async function renderTrunk(db) {
   shareBtn.disabled = true;
 
   shareBtn.addEventListener('click', async () => {
-    const val = getShareValue();
-    if (!val) return;
-    
-    const recipientName = recipientInput.value.trim() || null;
-    let recipientEmail = null;
-    if (recipientName) {
-      const rec = allContacts.find(c => (c.n || '').toLowerCase() === recipientName.toLowerCase());
-      if (rec && rec.em) recipientEmail = rec.em;
-    }
-
-    let encoded, shareUrl, subject, body;
-    let groupEmails = [];
-
-    if (val.startsWith('group:')) {
-      const tag = val.slice(6);
-      const groupContacts = allContacts.filter(c =>
-        !(c.t || []).includes('&owner') && (c.t || []).includes(tag)
-      );
-      if (groupContacts.length === 0) return;
-      encoded = await encodeGroup(groupContacts, tag, senderName, recipientName);
-      const appRoot = (window.location.origin.startsWith('http') ? window.location.origin : 'https://greatuncle.app') + '/';
-      shareUrl = `${appRoot}#invite=${encodeURIComponent(encoded)}`;
-      subject = `Sharing Greatuncle Circle: ${tag}`;
-      body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n${formatWrappedLink(shareUrl)}`;
-      groupEmails = groupContacts.map(c => c.em).filter(Boolean);
+    const getLatestLinkData = async () => {
+      const val = getShareValue();
+      if (!val) return null;
       
-    } else if (val.startsWith('contact:')) {
-      const contactId = val.slice(8);
-      const contact = allContacts.find(c => c.id === contactId);
-      if (!contact) return;
-      encoded = await encodeInvite(contact, senderName, recipientName);
+      const recipientName = recipientInput.value.trim() || null;
+      let recipientEmail = null;
+      if (recipientName) {
+        const rec = allContacts.find(c => (c.n || '').toLowerCase() === recipientName.toLowerCase());
+        if (rec && rec.em) recipientEmail = rec.em;
+      }
+
+      let encoded, shareUrl, subject, body, groupEmails = [];
       const appRoot = (window.location.origin.startsWith('http') ? window.location.origin : 'https://greatuncle.app') + '/';
-      shareUrl = `${appRoot}#invite=${encodeURIComponent(encoded)}`;
-      subject = `Greatuncle Contact: ${contact.n}`;
-      body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n${formatWrappedLink(shareUrl)}`;
-    }
+
+      if (val.startsWith('group:')) {
+        const tag = val.slice(6);
+        const groupContacts = allContacts.filter(c => !(c.t || []).includes('&owner') && (c.t || []).includes(tag));
+        if (groupContacts.length === 0) return null;
+        encoded = await encodeGroup(groupContacts, tag, senderName, recipientName);
+        shareUrl = `${appRoot}#invite=${encodeURIComponent(encoded)}`;
+        subject = `Sharing Greatuncle Circle: ${tag}`;
+        body = `I'm using Greatuncle to stay connected with the people who matter most. When you click, you'll get instant access to the address book and shared birthday calendar for our (${tag}) group. No login, no cloud, just connection.\n\n${formatWrappedLink(shareUrl)}`;
+        groupEmails = groupContacts.map(c => c.em).filter(Boolean);
+      } else if (val.startsWith('contact:')) {
+        const contactId = val.slice(8);
+        const contact = allContacts.find(c => c.id === contactId);
+        if (!contact) return null;
+        encoded = await encodeInvite(contact, senderName, recipientName);
+        shareUrl = `${appRoot}#invite=${encodeURIComponent(encoded)}`;
+        subject = `Greatuncle Contact: ${contact.n}`;
+        body = `I'd like to share ${contact.n}'s contact info with you on Greatuncle. When you click, you'll get instant access to their details and milestones.\n\n${formatWrappedLink(shareUrl)}`;
+      }
+
+      return { shareUrl, subject, body, recipientEmail, groupEmails };
+    };
 
     // Handle Share Options
     const menu = document.createElement('div');
@@ -425,8 +424,10 @@ export async function renderTrunk(db) {
     systemBtn.style.flex = '1';
     systemBtn.textContent = 'Share via App';
     systemBtn.onclick = async () => {
+      const data = await getLatestLinkData();
+      if (!data) return;
       try {
-        await navigator.share({ title: subject, text: body + '\n\n' + shareUrl });
+        await navigator.share({ title: data.subject, text: data.body + '\n\n' + data.shareUrl });
       } catch (err) {
         if (err.name !== 'AbortError') alert('System share failed. Try Email or Copy Link.');
       }
@@ -436,9 +437,11 @@ export async function renderTrunk(db) {
     emailBtn.className = 'trunk-btn trunk-btn--secondary';
     emailBtn.style.flex = '1';
     emailBtn.textContent = 'Email';
-    emailBtn.onclick = () => {
-      const toField = recipientEmail ? recipientEmail : groupEmails.join(',');
-      const mailtoUrl = `mailto:${toField}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body + '\n\n' + shareUrl)}`;
+    emailBtn.onclick = async () => {
+      const data = await getLatestLinkData();
+      if (!data) return;
+      const toField = data.recipientEmail ? data.recipientEmail : data.groupEmails.join(',');
+      const mailtoUrl = `mailto:${toField}?subject=${encodeURIComponent(data.subject)}&body=${encodeURIComponent(data.body + '\n\n' + data.shareUrl)}`;
       if (mailtoUrl.length > 2000) {
         alert('This update is too large for a direct email link. Please use "Copy Link" and paste it into your email instead.');
       } else {
@@ -451,7 +454,9 @@ export async function renderTrunk(db) {
     copyBtn.style.flex = '1';
     copyBtn.textContent = 'Copy Link';
     copyBtn.onclick = async () => {
-      await navigator.clipboard.writeText(shareUrl);
+      const data = await getLatestLinkData();
+      if (!data) return;
+      await navigator.clipboard.writeText(data.shareUrl);
       copyBtn.textContent = 'Copied!';
       setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 2000);
     };
