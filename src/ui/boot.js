@@ -4,6 +4,7 @@ import { setPendingImportNudge } from '../storage/settings.js';
 import { decodeShareParam, ingestContacts } from '../core/seedling.js';
 import { parseHashForInvite, isHashMangled } from '../core/parser.js';
 import { normalizePhone } from '../core/sanitizer.js';
+import { TAGS } from '../core/constants.js';
 
 async function parseAndWriteImport(db, params, hashParam) {
   // Prefer hash fragment (secure, not logged by server) over query string (legacy)
@@ -59,8 +60,8 @@ async function parseAndWriteImport(db, params, hashParam) {
   for (const payload of payloads) {
     if (!payload.sv || !payload.g) continue;  // Only process volunteer payloads
     const groupName = payload.g.replace(/^@/, '');  // "@family" -> "family"
-    const stewardTag = `&steward.${groupName}`;
-    const tombstoneTag = `&blocked-steward.${groupName}`;
+    const stewardTag = `${TAGS.STEWARDSHIP.PREFIX}${groupName}`;
+    const tombstoneTag = `${TAGS.STEWARDSHIP.BLOCKED}${groupName}`;
 
     // Find sender in local DB by phone or email
     const sender = allAfterSave.find(c => {

@@ -1,10 +1,11 @@
 import { saveContact, getAllContacts } from '../storage/contacts.js';
 import { generateId } from '../core/utils.js';
+import { TAGS } from '../core/constants.js';
 
 export async function renderOnboarding(db, onComplete) {
   const allContacts = await getAllContacts(db);
   // Filter out any contacts that are already Owners (though there shouldn't be any yet)
-  const availableContacts = allContacts.filter(c => !(c.t || []).includes('&owner'));
+  const availableContacts = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER));
 
   const app = document.getElementById('app');
   app.innerHTML = '';
@@ -264,7 +265,7 @@ function showConfirmationForm(db, contact, container, onComplete) {
       ...contact,
       n: nameInput.value.trim(),
       em: emailInput.value.trim() || null,
-      t: [...new Set([...(contact.t || []), '&owner'])],
+      t: [...new Set([...(contact.t || []), TAGS.SYSTEM.OWNER])],
       ua: now
     };
     await saveContact(db, updated);
@@ -327,7 +328,7 @@ function showManualEntry(db, container, onComplete) {
       bd: null,
       av: null,
       dp: null,
-      t: ['&owner'],
+      t: [TAGS.SYSTEM.OWNER],
       lc: null,
       su: null,
       no: null,

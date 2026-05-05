@@ -9,14 +9,15 @@ import { showToast } from './components/toast.js';
 import { encodeInvite, encodeGroup } from '../core/seedling.js';
 import { performStewardshipRitual } from './stewardship.js';
 import { getUpcomingMilestones, formatMilestoneDate } from '../core/milestone-engine.js';
+import { TAGS } from '../core/constants.js';
 
-const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
+const LEVEL_TAGS = [TAGS.LEVELS.L5, TAGS.LEVELS.L15, TAGS.LEVELS.L50, TAGS.LEVELS.L150];
 
 const LAYER_LABELS = {
-  '&level5':   'Weekly',
-  '&level15':  'Monthly',
-  '&level50':  'Quarterly',
-  '&level150': 'Annually',
+  [TAGS.LEVELS.L5]:   'Weekly',
+  [TAGS.LEVELS.L15]:  'Monthly',
+  [TAGS.LEVELS.L50]:  'Quarterly',
+  [TAGS.LEVELS.L150]: 'Annually',
 };
 
 // Module-level filter state — persists across in-session navigation
@@ -77,10 +78,10 @@ function applyFilterSort(contacts, state) {
 // Full definition including "None" for sorting
 const ALL_LAYERS = [
   { tag: null, label: 'Unsorted' },
-  { tag: '&level5', label: 'Level 5 (Weekly)' },
-  { tag: '&level15', label: 'Level 15 (Monthly)' },
-  { tag: '&level50', label: 'Level 50 (Quarterly)' },
-  { tag: '&level150', label: 'Level 150 (Annually)' },
+  { tag: TAGS.LEVELS.L5, label: 'Level 5 (Weekly)' },
+  { tag: TAGS.LEVELS.L15, label: 'Level 15 (Monthly)' },
+  { tag: TAGS.LEVELS.L50, label: 'Level 50 (Quarterly)' },
+  { tag: TAGS.LEVELS.L150, label: 'Level 150 (Annually)' },
 ];
 
 function getLayerTag(tags) {
@@ -164,7 +165,7 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
     const assignGroup = document.createElement('div');
     assignGroup.className = 'layer-assign-group';
     
-    const FREQUENCIES = { '&level5': '5', '&level15': '10', '&level50': '35', '&level150': '100' };
+    const FREQUENCIES = { [TAGS.LEVELS.L5]: '5', [TAGS.LEVELS.L15]: '10', [TAGS.LEVELS.L50]: '35', [TAGS.LEVELS.L150]: '100' };
     LEVEL_TAGS.forEach(tag => {
       const btn = document.createElement('button');
       btn.className = 'layer-assign-btn';
@@ -521,14 +522,14 @@ export async function renderPeople(db, params = {}) {
 
   const allContacts = await getAllContacts(db);
   const settings = await getSettings(db);
-  const ownerContact = allContacts.find(c => (c.t || []).includes('&owner'));
+  const ownerContact = allContacts.find(c => (c.t || []).includes(TAGS.SYSTEM.OWNER));
   document.body.setAttribute('data-is-owned', !!ownerContact);
 
   // Separate pending imports (tagged with &share) from live contacts
-  const liveContacts = allContacts.filter(c => !(c.t || []).includes('&share'));
-  const pendingImports = allContacts.filter(c => (c.t || []).includes('&share'));
+  const liveContacts = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.SHARE));
+  const pendingImports = allContacts.filter(c => (c.t || []).includes(TAGS.SYSTEM.SHARE));
   
-  const nonOwnerCount = liveContacts.filter(c => !(c.t || []).includes('&owner')).length;
+  const nonOwnerCount = liveContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER)).length;
   console.log('Architect status:', ownerContact ? 'Claimed' : 'Gallery mode');
 
   // Handle initial filters from params (e.g. from Vision page clicks)
@@ -727,7 +728,7 @@ export async function renderPeople(db, params = {}) {
   printBtn.textContent = '🖨️';
   printBtn.addEventListener('click', async () => {
     // Respect active filters (What You See Is What You Get)
-    const contactsToPrint = currentContacts.filter(c => !(c.t || []).includes('&owner'));
+    const contactsToPrint = currentContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER));
 
     const printEl = document.createElement('div');
     printEl.className = 'print-contact-list';
@@ -770,7 +771,7 @@ export async function renderPeople(db, params = {}) {
   // Sharing helper
   const shareAction = async () => {
     const base = `${window.location.origin}${window.location.pathname}`;
-    const allNonOwners = allContacts.filter(c => !(c.t || []).includes('&owner'));
+    const allNonOwners = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER));
     const isFiltering = isFilterActive(filterState);
     const isSingleGroup = filterState.groups.length === 1;
 
@@ -780,7 +781,7 @@ export async function renderPeople(db, params = {}) {
     if (isSingleGroup && ownerContact) {
       const groupTag = filterState.groups[0];  // e.g. "@family"
       const groupName = groupTag.replace(/^@/, '');  // "family"
-      const stewardTag = `&steward.${groupName}`;
+      const stewardTag = `${TAGS.STEWARDSHIP.PREFIX}${groupName}`;
 
       const alreadyHasSteward = allContacts.some(c => (c.t || []).includes(stewardTag));
 
@@ -960,7 +961,7 @@ export async function renderPeople(db, params = {}) {
     shareBtn.innerHTML = `<span>⬆️</span> Share`;
     shareBtn.onclick = async () => {
       // Direct share logic for the filtered set
-      const allNonOwners = currentContacts.filter(c => !(c.t || []).includes('&owner'));
+      const allNonOwners = currentContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER));
       if (allNonOwners.length === 0) {
         alert('Nothing to share in this view.');
         return;

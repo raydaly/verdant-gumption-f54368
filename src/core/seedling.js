@@ -1,3 +1,5 @@
+import { TAGS } from './constants.js';
+
 export function exportSeedling(contacts, logs) {
   const activeContacts = (contacts || []);
   const activeIds = new Set(activeContacts.map(c => c.id));
@@ -97,7 +99,7 @@ import { generateId } from './utils.js';
 
 export function findMatch(incoming, existingContacts) {
   // Never match against pending imports
-  const pool = existingContacts.filter(c => !(c.t || []).includes('&share'));
+  const pool = existingContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.SHARE));
 
   // 1. Email Match (highest confidence)
   if (incoming.em) {
@@ -119,8 +121,8 @@ export function findMatch(incoming, existingContacts) {
   }
 
   // 4. Owner match (Safety catch for the primary user)
-  if (incoming.t && incoming.t.includes('&owner')) {
-    const owner = pool.find(c => (c.t || []).includes('&owner'));
+  if (incoming.t && incoming.t.includes(TAGS.SYSTEM.OWNER)) {
+    const owner = pool.find(c => (c.t || []).includes(TAGS.SYSTEM.OWNER));
     if (owner) return owner;
   }
 
@@ -152,7 +154,7 @@ export function ingestContacts(payload, existingContacts, isFreshInstall = false
     // Check if this contact is already in the pending queue (&share).
     // findMatch() intentionally excludes &share contacts from its pool, so we
     // must do a direct check here to avoid duplicates on repeated imports.
-    const pendingPool = existingContacts.filter(e => (e.t || []).includes('&share'));
+    const pendingPool = existingContacts.filter(e => (e.t || []).includes(TAGS.SYSTEM.SHARE));
     const isAlreadyPending = pendingPool.some(e => {
       if (safe.em && e.em && safe.em.toLowerCase().trim() === e.em.toLowerCase().trim()) return true;
       if (safe.ph && e.ph) {
@@ -181,13 +183,13 @@ export function ingestContacts(payload, existingContacts, isFreshInstall = false
     if (isAlreadyPending) continue;
 
     // Prepare the record for the review queue
-    const finalTags = [...(safe.t || []), '&dirty', '&share'];
+    const finalTags = [...(safe.t || []), TAGS.SYSTEM.DIRTY, TAGS.SYSTEM.SHARE];
     if (batchTag && !finalTags.includes(batchTag)) finalTags.push(batchTag);
     
     // Default to @level50 (Neighborhood) if no level is assigned yet.
     // This ensures new imports show up in the checkup rotation.
-    const hasLevel = finalTags.some(t => t.startsWith('&level'));
-    if (!hasLevel) finalTags.push('&level50');
+    const hasLevel = finalTags.some(t => t.startsWith(TAGS.LEVELS.PREFIX));
+    if (!hasLevel) finalTags.push(TAGS.LEVELS.L50);
 
     const record = {
       ...safe,
@@ -200,7 +202,7 @@ export function ingestContacts(payload, existingContacts, isFreshInstall = false
     };
 
     if (match) {
-      record.t.push('&duplicate');
+      record.t.push(TAGS.SYSTEM.DUPLICATE);
       record.matchedId = match.id;
     }
 

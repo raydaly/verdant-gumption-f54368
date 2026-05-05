@@ -1,8 +1,10 @@
+import { TAGS } from '../core/constants.js';
+
 const LEVELS = [
-  { display: '5',   tag: '&level5',   sublabel: 'Weekly'    },
-  { display: '10',  tag: '&level15',  sublabel: 'Monthly'   },
-  { display: '35',  tag: '&level50',  sublabel: 'Quarterly' },
-  { display: '100', tag: '&level150', sublabel: 'Annually'  },
+  { display: '5',   tag: TAGS.LEVELS.L5,   sublabel: 'Weekly'    },
+  { display: '10',  tag: TAGS.LEVELS.L15,  sublabel: 'Monthly'   },
+  { display: '35',  tag: TAGS.LEVELS.L50,  sublabel: 'Quarterly' },
+  { display: '100', tag: TAGS.LEVELS.L150, sublabel: 'Annually'  },
 ];
 
 export function createLevelSelector(currentTag, onChange) {

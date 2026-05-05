@@ -2,6 +2,7 @@ import { getAllContacts } from '../storage/contacts.js';
 import { getFullYearMilestones, formatMilestoneDate } from '../core/milestone-engine.js';
 import { navigate } from './router.js';
 import { getSettings } from '../storage/settings.js';
+import { TAGS } from '../core/constants.js';
 
 /**
  * Renders the full 12-month milestone calendar.
@@ -14,7 +15,7 @@ export async function renderMilestoneCalendar(db) {
     getAllContacts(db),
     getSettings(db)
   ]);
-  const nonOwnerContacts = allContacts.filter(c => !(c.t || []).includes('&owner'));
+  const nonOwnerContacts = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER));
   const milestonesByMonth = getFullYearMilestones(nonOwnerContacts);
 
   app.innerHTML = '';

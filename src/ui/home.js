@@ -4,7 +4,9 @@ import { getSettings } from '../storage/settings.js';
 import { getMonthDay } from '../core/milestone-engine.js';
 import { getDueContacts, getAnchorEvents, getConnectionHealth, getSnoozeMs, checkGatheringRules } from '../core/outreach-engine.js';
 import { navigate } from './router.js';
+import { TAGS } from '../core/constants.js';
 import { showConnectedSheet } from './components/connected-sheet.js';
+import { showLaterSheet } from './components/later-sheet.js';
 import { showBottomSheet } from './components/bottom-sheet.js';
 import { showContactProfile } from './components/contact-profile.js';
 
@@ -190,8 +192,8 @@ export async function renderHome(db, version = currentVersion) {
   const stewardMap = new Map(); // groupTag -> stewardName
   allContacts.forEach(c => {
     (c.t || []).forEach(tag => {
-      if (tag.startsWith('&steward.')) {
-        const group = `@${tag.replace('&steward.', '')}`;
+      if (tag.startsWith(TAGS.STEWARDSHIP.PREFIX)) {
+        const group = `@${tag.replace(TAGS.STEWARDSHIP.PREFIX, '')}`;
         if (!stewardMap.has(group)) stewardMap.set(group, c.n);
       }
     });
@@ -299,7 +301,7 @@ export async function renderHome(db, version = currentVersion) {
     empty.textContent = 'No one is due for a check-in. Your smart reminders will appear here when it is time to stay in touch.';
     dueSection.appendChild(empty);
   } else {
-    due.forEach(({ contact, daysOverdue }) => {
+    due.forEach(({ contact, daysOverdue, isPlanned, targetDateMs }) => {
       const row = document.createElement('div');
       row.className = 'due-row';
 
@@ -335,7 +337,19 @@ export async function renderHome(db, version = currentVersion) {
       meta.className = 'due-row-meta';
       
       const metaText = document.createElement('span');
-      metaText.textContent = formatDaysOverdue(daysOverdue);
+      
+      const d = new Date(targetDateMs);
+      const formattedDate = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const prefix = isPlanned ? 'Planned for' : 'Suggested for';
+      
+      let overdueSuffix = '';
+      if (daysOverdue >= 1) {
+        overdueSuffix = ` (${Math.floor(daysOverdue)} ${Math.floor(daysOverdue) === 1 ? 'day' : 'days'} ago)`;
+      } else if (daysOverdue < 0) {
+        overdueSuffix = ` (soon)`;
+      }
+      
+      metaText.textContent = `${prefix} ${formattedDate}${overdueSuffix}`;
       meta.appendChild(metaText);
 
       const visibleTags = (contact.t || []).filter(t => t.startsWith('@') || t.startsWith('#')).sort();
@@ -378,19 +392,17 @@ export async function renderHome(db, version = currentVersion) {
         showConnectedSheet(db, contact.id, () => renderHome(db));
       });
 
-      const snoozeBtn = document.createElement('button');
-      snoozeBtn.type = 'button';
-      snoozeBtn.className = 'due-row-snooze-btn';
-      snoozeBtn.textContent = 'Snooze';
-      snoozeBtn.addEventListener('click', async (e) => {
+      const laterBtn = document.createElement('button');
+      laterBtn.type = 'button';
+      laterBtn.className = 'due-row-snooze-btn'; // Reuse snooze styling
+      laterBtn.textContent = 'Later';
+      laterBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const snoozeUntil = Date.now() + getSnoozeMs(settings);
-        await saveContact(db, { ...contact, su: snoozeUntil, ua: Date.now() });
-        renderHome(db);
+        showLaterSheet(db, contact, () => renderHome(db));
       });
 
       rowBtns.appendChild(logBtn);
-      rowBtns.appendChild(snoozeBtn);
+      rowBtns.appendChild(laterBtn);
       row.appendChild(info);
       row.appendChild(rowBtns);
       row.addEventListener('click', () => showContactProfile(db, contact, () => renderHome(db)));

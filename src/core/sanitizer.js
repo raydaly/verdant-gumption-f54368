@@ -65,7 +65,7 @@ export function sanitizeContact(c, isImport = false) {
       .filter(tag => {
         if (!tag) return false;
         // Defense in Depth: Treat the '&' namespace as strictly local.
-        // Never allow a remote payload to define system tags like &owner or &steward.
+        // Never allow a remote payload to define internal state markers (TAGS.SYSTEM).
         if (isImport && tag.startsWith('&')) return false;
         return (tag.startsWith('@') || tag.startsWith('#') || tag.startsWith('&') || tag.startsWith('!'));
       })

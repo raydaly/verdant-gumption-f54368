@@ -9,6 +9,7 @@ import { getSnoozeMs } from '../../core/outreach-engine.js';
 
 import { getMonthDay } from '../../core/milestone-engine.js';
 import { getSettings } from '../../storage/settings.js';
+import { TAGS } from '../../core/constants.js';
 
 /**
  * Renders the Connection Sheet (Contact Profile) for a specific contact.
@@ -259,7 +260,7 @@ export async function showContactProfile(db, contact, onRefresh) {
   // --- Phase 4: Stewardship Transparency ---
   // If this contact holds &steward.* tags, show which groups they curate
   // and let the user toggle the role off (with a tombstone to prevent silent reinstatement).
-  const stewardTags = (contact.t || []).filter(t => t.startsWith('&steward.'));
+  const stewardTags = (contact.t || []).filter(t => t.startsWith(TAGS.STEWARDSHIP.PREFIX));
   if (stewardTags.length > 0) {
     const stewardBox = document.createElement('div');
     stewardBox.className = 'profile-journal-box';
@@ -276,7 +277,7 @@ export async function showContactProfile(db, contact, onRefresh) {
     stewardBox.appendChild(stewardDesc);
 
     for (const stewardTag of stewardTags) {
-      const groupName = stewardTag.replace('&steward.', '');
+      const groupName = stewardTag.replace(TAGS.STEWARDSHIP.PREFIX, '');
       const groupLabel = `@${groupName}`;
 
       const row = document.createElement('label');
@@ -296,7 +297,7 @@ export async function showContactProfile(db, contact, onRefresh) {
 
       checkbox.addEventListener('change', async () => {
         const updatedTags = (contact.t || []).filter(t => t !== stewardTag);
-        const tombstoneTag = `&blocked-steward.${groupName}`;
+        const tombstoneTag = `${TAGS.STEWARDSHIP.BLOCKED}${groupName}`;
         if (!updatedTags.includes(tombstoneTag)) {
           updatedTags.push(tombstoneTag); // Tombstone — prevents silent reinstatement
         }

@@ -1,5 +1,6 @@
 import { getAllContacts, saveContact, deleteContact, saveContactsBatch } from '../storage/contacts.js';
 import { navigate } from './router.js';
+import { TAGS } from '../core/constants.js';
 
 const DIFF_FIELDS = ['ph', 'em', 'ad', 'zp', 'bd', 'av'];
 
@@ -17,7 +18,7 @@ export async function renderShareReview(db) {
   app.innerHTML = '';
 
   const allContacts = await getAllContacts(db);
-  const pending = allContacts.filter(c => (c.t || []).includes('&share'));
+  const pending = allContacts.filter(c => (c.t || []).includes(TAGS.SYSTEM.SHARE));
 
   if (pending.length === 0) {
     navigate('people');
@@ -72,7 +73,7 @@ export async function renderShareReview(db) {
         }
 
         if (!hasConflict) {
-          const merged = { ...match, ...updates, t: [...updates.t, '&dirty'], ua: Date.now() };
+          const merged = { ...match, ...updates, t: [...updates.t, TAGS.SYSTEM.DIRTY], ua: Date.now() };
           toSave.push(merged);
         }
       }
@@ -98,9 +99,9 @@ export async function renderShareReview(db) {
       const toSave = [];
       for (const p of newOnes) {
         // Only strip specific internal sync tags, preserve levels and owner status
-        const tags = new Set((p.t || []).filter(t => t !== '&share' && t !== '&duplicate'));
+        const tags = new Set((p.t || []).filter(t => t !== TAGS.SYSTEM.SHARE && t !== TAGS.SYSTEM.DUPLICATE));
         if (suggestedTag) tags.add(suggestedTag);
-        tags.add('&dirty');
+        tags.add(TAGS.SYSTEM.DIRTY);
         
         const saved = { ...p, t: [...tags], ua: Date.now() };
         delete saved.matchedId;
@@ -176,7 +177,7 @@ export async function renderShareReview(db) {
   for (const pendingContact of pending) {
     const matchedId = pendingContact.matchedId;
     const existingContact = matchedId ? allContacts.find(c => c.id === matchedId) : null;
-    const isDuplicate = (pendingContact.t || []).includes('&duplicate');
+    const isDuplicate = (pendingContact.t || []).includes(TAGS.SYSTEM.DUPLICATE);
 
     const card = document.createElement('div');
     card.className = 'share-review-card';
@@ -334,7 +335,7 @@ export async function renderShareReview(db) {
           const finalTag = userTag.startsWith('@') ? userTag : `@${userTag}`;
           tags.add(finalTag);
         }
-        if (!tags.has('&dirty')) tags.add('&dirty');
+        if (!tags.has(TAGS.SYSTEM.DIRTY)) tags.add(TAGS.SYSTEM.DIRTY);
         updated.t = [...tags];
 
         await saveContact(db, updated);
@@ -347,13 +348,13 @@ export async function renderShareReview(db) {
       actionBtn.onclick = async () => {
         const userTag = tagInput.value.trim();
         // Only strip specific internal sync tags, preserve levels and owner status
-        const tags = new Set((pendingContact.t || []).filter(t => t !== '&share' && t !== '&duplicate'));
+        const tags = new Set((pendingContact.t || []).filter(t => t !== TAGS.SYSTEM.SHARE && t !== TAGS.SYSTEM.DUPLICATE));
         
         if (userTag) {
           const finalTag = userTag.startsWith('@') ? userTag : `@${userTag}`;
           tags.add(finalTag);
         }
-        tags.add('&dirty');
+        tags.add(TAGS.SYSTEM.DIRTY);
 
         const saved = { ...pendingContact, t: [...tags], ua: Date.now() };
         delete saved.matchedId;
@@ -379,7 +380,7 @@ export async function renderShareReview(db) {
 
   async function checkEmpty(db) {
     const remaining = await getAllContacts(db);
-    const stillPending = remaining.filter(c => (c.t || []).includes('&share'));
+    const stillPending = remaining.filter(c => (c.t || []).includes(TAGS.SYSTEM.SHARE));
     if (stillPending.length === 0) {
       navigate('people');
     }

@@ -6,6 +6,7 @@ import { getSettings } from '../storage/settings.js';
 import { getAllContacts, saveContact, saveContactsBatch } from '../storage/contacts.js';
 import { updateHorizonBar } from './components/horizon-bar.js';
 import { parseAnyInput, IMPORT_TYPE } from '../core/parser.js';
+import { TAGS } from '../core/constants.js';
 
 let appVersion = 'v-app-start';
 
@@ -160,9 +161,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const all = await getAllContacts(db);
         const updates = [];
         for (const c of all) {
-          if ((c.t || []).includes('&share')) {
-            const newTags = c.t.filter(t => t !== '&share' && t !== '&dirty');
-            newTags.push('&dirty');
+          if ((c.t || []).includes(TAGS.SYSTEM.SHARE)) {
+            const newTags = c.t.filter(t => t !== TAGS.SYSTEM.SHARE && t !== TAGS.SYSTEM.DIRTY);
+            newTags.push(TAGS.SYSTEM.DIRTY);
             updates.push({ ...c, t: newTags, ua: Date.now() });
           }
         }

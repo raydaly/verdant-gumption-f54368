@@ -1,5 +1,6 @@
 import { getAllContacts } from '../../storage/contacts.js';
 import { getLastExportedAt, getDeletedSinceExport } from '../../storage/settings.js';
+import { TAGS } from '../../core/constants.js';
 
 /**
  * Updates the global #horizon-bar based on "vulnerability score":
@@ -21,7 +22,7 @@ export async function updateHorizonBar(db) {
   
   // Count dirty contacts efficiently-ish 
   // (We could use the index, but for < 150 contacts, filter is fine)
-  const dirtyCount = allContacts.filter(c => (c.t || []).includes('&dirty')).length;
+  const dirtyCount = allContacts.filter(c => (c.t || []).includes(TAGS.SYSTEM.DIRTY)).length;
   const totalVolatility = dirtyCount + deletedSinceExport.length;
 
   const daysSinceExport = lastExport 

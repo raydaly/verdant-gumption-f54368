@@ -3,8 +3,9 @@ import { getSettings, saveSettings } from '../storage/settings.js';
 import { clearAllLogs, deleteLogsForContact } from '../storage/logs.js';
 import { goBack, navigate } from './router.js';
 import { showConfirmDialog } from './components/confirm-dialog.js';
+import { TAGS } from '../core/constants.js';
 
-const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
+const LEVEL_TAGS = [TAGS.LEVELS.L5, TAGS.LEVELS.L15, TAGS.LEVELS.L50, TAGS.LEVELS.L150];
 
 export function applyTheme(theme) {
   if (theme === 'system') {
@@ -415,7 +416,7 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
  * Tab 2: Vision (The Dunbar Bars and Magic Mike spirit)
  */
 function renderVisionTab(db, container, allContacts) {
-  const nonOwners = allContacts.filter(c => !(c.t || []).includes('&owner'));
+  const nonOwners = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER));
   const totalLimit = 150;
 
   const intro = document.createElement('div');
@@ -431,10 +432,10 @@ function renderVisionTab(db, container, allContacts) {
 
   const layers = [
     { tag: null,        label: 'Awaiting Stewardship', limit: null, desc: 'Not assigned a frequency' },
-    { tag: '&level5',   label: 'Weekly',             limit: 5,   desc: 'Keep them close' },
-    { tag: '&level15',  label: 'Monthly',            limit: 10,  desc: 'Regular roots' },
-    { tag: '&level50',  label: 'Quarterly',          limit: 35,  desc: 'Steady connection' },
-    { tag: '&level150', label: 'Annually',           limit: 100, desc: 'Yearly hello' },
+    { tag: TAGS.LEVELS.L5,   label: 'Weekly',             limit: 5,   desc: 'Keep them close' },
+    { tag: TAGS.LEVELS.L15,  label: 'Monthly',            limit: 10,  desc: 'Regular roots' },
+    { tag: TAGS.LEVELS.L50,  label: 'Quarterly',          limit: 35,  desc: 'Steady connection' },
+    { tag: TAGS.LEVELS.L150, label: 'Annually',           limit: 100, desc: 'Yearly hello' },
   ];
 
   layers.forEach(layer => {
@@ -497,8 +498,8 @@ function renderVisionTab(db, container, allContacts) {
     (contact.t || []).forEach(tag => {
       if (!tag.startsWith('&')) {
         tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-      } else if (tag.startsWith('&steward.')) {
-        const tagName = tag.replace('&steward.', '');
+      } else if (tag.startsWith(TAGS.STEWARDSHIP.PREFIX)) {
+        const tagName = tag.replace(TAGS.STEWARDSHIP.PREFIX, '');
         if (!stewardMap.has(tagName)) stewardMap.set(tagName, []);
         stewardMap.get(tagName).push(contact.n || contact.ph || contact.em || 'Unnamed');
       }

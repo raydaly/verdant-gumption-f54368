@@ -1,18 +1,28 @@
+import { TAGS } from './constants.js';
+
 // Frequency in days between contacts for each level tag.
 // These match the `display` values in the LEVELS array (level-selector.js).
 const LEVEL_DAYS = {
-  '&level5':   5,
-  '&level15':  10,
-  '&level50':  35,
-  '&level150': 100,
+  [TAGS.LEVELS.L5]:   5,
+  [TAGS.LEVELS.L15]:  10,
+  [TAGS.LEVELS.L50]:  35,
+  [TAGS.LEVELS.L150]: 100,
 };
 
 function isOwner(contact) {
-  return (contact.t || []).includes('&owner');
+  return (contact.t || []).includes(TAGS.SYSTEM.OWNER);
 }
 
 function getLevelTag(tags) {
   return Object.keys(LEVEL_DAYS).find(t => (tags || []).includes(t)) || null;
+}
+
+export function calculateNextTarget(contact, now = Date.now()) {
+  const levelTag = getLevelTag(contact.t);
+  if (!levelTag) return null;
+  const frequency = LEVEL_DAYS[levelTag];
+  const lastMs = contact.lc || contact.ca || now;
+  return lastMs + (frequency * 86400000);
 }
 
 export function getDueContacts(contacts, today = new Date()) {
@@ -28,17 +38,31 @@ export function getDueContacts(contacts, today = new Date()) {
     if (c.su && c.su > now) continue;
 
     const frequency = LEVEL_DAYS[levelTag];
-    const lastMs = c.lc || c.ca || now;
-    const daysSince = (now - lastMs) / 86400000;
-    const daysOverdue = daysSince - frequency;
-    const urgency = daysOverdue / frequency;
+    const isPlanned = !!c.nd;
+    const targetDateMs = c.nd || calculateNextTarget(c, now);
+    
+    const daysOverdue = (now - targetDateMs) / 86400000;
+    
+    let urgency;
+    let shouldShow = false;
 
-    if (urgency > -0.2) {
+    if (isPlanned) {
+      // For planned dates, show if within 24 hours or overdue
+      shouldShow = daysOverdue > -1;
+      urgency = daysOverdue >= 0 ? 1 + daysOverdue : 0.5;
+    } else {
+      // For calculated dates, show if 80% of the way there
+      urgency = daysOverdue / frequency;
+      shouldShow = urgency > -0.2;
+    }
+
+    if (shouldShow) {
       results.push({
         contact: c,
         levelTag,
         frequency,
-        daysSince: Math.round(daysSince),
+        targetDateMs,
+        isPlanned,
         daysOverdue: Math.round(daysOverdue),
         urgency,
       });
@@ -122,9 +146,9 @@ export function getConnectionHealth(contacts) {
   let upToDate = 0;
 
   for (const c of eligible) {
-    const freq = LEVEL_DAYS[getLevelTag(c.t)];
-    const lastMs = c.lc || 0;
-    if ((now - lastMs) / 86400000 <= freq) upToDate++;
+    const isPlanned = !!c.nd;
+    const targetDateMs = c.nd || calculateNextTarget(c, now);
+    if (now <= targetDateMs) upToDate++;
   }
 
   const overdue = eligible.length - upToDate;

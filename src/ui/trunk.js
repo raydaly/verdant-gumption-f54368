@@ -11,7 +11,7 @@ import {
 } from '../storage/settings.js';
 import { exportSeedling, parseSeedling, encodeInvite, encodeGroup, buildPayload, ingestContacts, decodeShareParam } from '../core/seedling.js';
 import { parseAnyInput, IMPORT_TYPE, compressPayload } from '../core/parser.js';
-import { APP_CONSTANTS } from '../core/constants.js';
+import { APP_CONSTANTS, TAGS } from '../core/constants.js';
 import { navigate } from './router.js';
 import { updateHorizonBar } from './components/horizon-bar.js';
 import { sanitizeContact } from '../core/sanitizer.js';
@@ -100,7 +100,7 @@ export async function renderTrunk(db) {
 
   const shareMeta = document.createElement('div');
   shareMeta.className = 'trunk-section-meta';
-  const heritageCount = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
+  const heritageCount = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER)).length;
   shareMeta.innerHTML = `
     Become the Source: You've nourished your world with <strong>${heritageCount} people</strong>. 
     Create a connection code to pass on the legacy of belonging. For your privacy, private notes and interaction history are NEVER sent through the bridge.
@@ -116,7 +116,7 @@ export async function renderTrunk(db) {
   });
   groupTags.sort();
 
-  const ownerRecord = allContacts.find(c => (c.t || []).includes('&owner'));
+  const ownerRecord = allContacts.find(c => (c.t || []).includes(TAGS.SYSTEM.OWNER));
   const senderName = ownerRecord ? ownerRecord.n : 'Someone';
 
   const shareRow = document.createElement('div');
@@ -171,7 +171,7 @@ export async function renderTrunk(db) {
 
   const personList = document.createElement('datalist');
   personList.id = 'share-people-list';
-  const nonOwners = allContacts.filter(c => !(c.t || []).includes('&owner'));
+  const nonOwners = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER));
   nonOwners.sort((a, b) => (a.n || '').localeCompare(b.n || ''));
   nonOwners.forEach(c => {
     const opt = document.createElement('option');
@@ -260,7 +260,7 @@ export async function renderTrunk(db) {
     if (val.startsWith('group:')) {
       const tag = val.slice(6);
       const groupContacts = allContacts.filter(c =>
-        !(c.t || []).includes('&owner') && (c.t || []).includes(tag)
+        !(c.t || []).includes(TAGS.SYSTEM.OWNER) && (c.t || []).includes(tag)
       );
       if (groupContacts.length === 0) return;
       payload = buildPayload('group', { groupTag: tag, contacts: groupContacts }, senderName, recipientName);
@@ -313,7 +313,7 @@ export async function renderTrunk(db) {
 
     if (val.startsWith('group:')) {
       const tag = val.slice(6);
-      suggestedMembers = allContacts.filter(c => !(c.t || []).includes('&owner') && (c.t || []).includes(tag));
+      suggestedMembers = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER) && (c.t || []).includes(tag));
       
       if (suggestedMembers.length > 40) {
         sizeWarning.style.display = 'block';
@@ -394,7 +394,7 @@ export async function renderTrunk(db) {
 
       if (val.startsWith('group:')) {
         const tag = val.slice(6);
-        const groupContacts = allContacts.filter(c => !(c.t || []).includes('&owner') && (c.t || []).includes(tag));
+        const groupContacts = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER) && (c.t || []).includes(tag));
         if (groupContacts.length === 0) return null;
         encoded = await encodeGroup(groupContacts, tag, senderName, recipientName);
         shareUrl = `${appRoot}#invite=${encodeURIComponent(encoded)}`;
@@ -539,7 +539,7 @@ export async function renderTrunk(db) {
   const stewardedGroups = [];
   if (ownerRecord) {
     (ownerRecord.t || []).forEach(tag => {
-      if (tag.startsWith('&steward.')) {
+      if (tag.startsWith(TAGS.STEWARDSHIP.PREFIX)) {
         stewardedGroups.push(tag);
       }
     });
@@ -560,10 +560,10 @@ export async function renderTrunk(db) {
     publishSection.appendChild(publishMeta);
 
     stewardedGroups.sort().forEach(stewardTag => {
-      const groupName = stewardTag.replace('&steward.', '');
+      const groupName = stewardTag.replace(TAGS.STEWARDSHIP.PREFIX, '');
       const groupTag = `@${groupName}`;
       const groupContacts = allContacts.filter(c =>
-        !(c.t || []).includes('&owner') && (c.t || []).includes(groupTag)
+        !(c.t || []).includes(TAGS.SYSTEM.OWNER) && (c.t || []).includes(groupTag)
       );
 
       const row = document.createElement('div');
@@ -770,7 +770,7 @@ export async function renderTrunk(db) {
   printBtn.onclick = async () => {
     const contacts = await getAllContacts(db);
     const nonOwners = contacts
-      .filter(c => !(c.t || []).includes('&owner'))
+      .filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER))
       .sort((a, b) => (a.n || '').toLowerCase().localeCompare((b.n || '').toLowerCase()));
 
     const printEl = document.createElement('div');
@@ -1082,7 +1082,7 @@ Here is my contact data:
 
     if (result.type === IMPORT_TYPE.FULL_BACKUP) {
       const existingContacts = await getAllContacts(db);
-      const hasExisting = existingContacts.filter(c => !(c.t || []).includes('&owner')).length > 0;
+      const hasExisting = existingContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER)).length > 0;
 
       auditBox.style.display = 'block';
       pendingImportRecords = result.payload.c || result.payload.contacts || [];
@@ -1221,9 +1221,9 @@ Here is my contact data:
   diagDetail.className = 'trunk-diagnostics diag-detail';
   diagDetail.hidden = true;
 
-  const dirtyCount = allContacts.filter(c => (c.t || []).includes('&dirty')).length;
+  const dirtyCount = allContacts.filter(c => (c.t || []).includes(TAGS.SYSTEM.DIRTY)).length;
   const deletedIds = getDeletedSinceExport();
-  const totalNonOwners = allContacts.filter(c => !(c.t || []).includes('&owner')).length;
+  const totalNonOwners = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER)).length;
   diagDetail.innerHTML =
     `Claim status: ${ownerRecord ? 'Active' : 'Awaiting claim'}<br>` +
     `Non-owner contacts: ${totalNonOwners}<br>` +

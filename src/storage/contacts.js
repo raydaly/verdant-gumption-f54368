@@ -1,4 +1,4 @@
-import { APP_CONSTANTS } from '../core/constants.js';
+import { APP_CONSTANTS, TAGS } from '../core/constants.js';
 
 function promisifyRequest(req) {
   return new Promise((resolve, reject) => {
@@ -58,7 +58,7 @@ export function getOwner(db) {
     const tx = db.transaction(APP_CONSTANTS.STORE_CONTACTS, 'readonly');
     const store = tx.objectStore(APP_CONSTANTS.STORE_CONTACTS);
     const index = store.index('t');
-    const req = index.openCursor(IDBKeyRange.only(APP_CONSTANTS.OWNER_TAG));
+    const req = index.openCursor(IDBKeyRange.only(TAGS.SYSTEM.OWNER));
     req.onsuccess = (event) => {
       const cursor = event.target.result;
       resolve(cursor ? cursor.value : undefined);

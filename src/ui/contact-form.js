@@ -8,10 +8,11 @@ import { showConfirmDialog } from './components/confirm-dialog.js';
 import { showBottomSheet } from './components/bottom-sheet.js';
 import { goBack, navigate } from './router.js';
 import { sanitizeString } from '../core/sanitizer.js';
+import { TAGS } from '../core/constants.js';
 import { generateId } from '../core/utils.js';
 import { encodeInvite } from '../core/seedling.js';
 
-const LEVEL_TAGS = ['&level5', '&level15', '&level50', '&level150'];
+const LEVEL_TAGS = [TAGS.LEVELS.L5, TAGS.LEVELS.L15, TAGS.LEVELS.L50, TAGS.LEVELS.L150];
 
 const MONTHS = [
   { value: '01', label: 'January' },
@@ -167,7 +168,7 @@ export async function renderContactForm(db, contactId) {
     .map(e => e[0]);
 
   const isEdit = !!existingContact;
-  const isOwner = isEdit && (existingContact.t || []).includes('&owner');
+  const isOwner = isEdit && (existingContact.t || []).includes(TAGS.SYSTEM.OWNER);
   const title = isEdit ? `Edit: ${existingContact.n}` : 'New Contact';
   const settings = await getSettings(db);
 
@@ -419,7 +420,7 @@ export async function renderContactForm(db, contactId) {
     const nonLevelSystemTags = systemTags.filter(t => !LEVEL_TAGS.includes(t));
     const newSystemTags = [...nonLevelSystemTags];
     if (currentLevelTag) newSystemTags.push(currentLevelTag);
-    if (!newSystemTags.includes('&dirty')) newSystemTags.push('&dirty');
+    if (!newSystemTags.includes(TAGS.SYSTEM.DIRTY)) newSystemTags.push(TAGS.SYSTEM.DIRTY);
 
     const safeUserTags = userTags
       .map(t => sanitizeString(t, 50))
@@ -459,7 +460,7 @@ export async function renderContactForm(db, contactId) {
         const stewards = [];
         groupTags.forEach(groupTag => {
           const groupName = groupTag.replace(/^@/, '');
-          const stewardTag = `&steward.${groupName}`;
+          const stewardTag = `${TAGS.STEWARDSHIP.PREFIX}${groupName}`;
           freshContacts.forEach(c => {
             if (
               (c.t || []).includes(stewardTag) &&
@@ -550,7 +551,7 @@ export async function renderContactForm(db, contactId) {
         if (confirmed) {
           for (const c of candidates) {
             const updatedTags = [...(c.t || [])];
-            if (!updatedTags.includes('&dirty')) updatedTags.push('&dirty');
+            if (!updatedTags.includes(TAGS.SYSTEM.DIRTY)) updatedTags.push(TAGS.SYSTEM.DIRTY);
             await saveContact(db, { ...c, ad: newAddress, t: updatedTags, ua: Date.now() });
           }
         }

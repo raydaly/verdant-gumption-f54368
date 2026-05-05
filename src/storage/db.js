@@ -7,22 +7,25 @@ export function openDB() {
     req.onupgradeneeded = (event) => {
       const db = event.target.result;
 
-      // Wipe old stores if they exist (fresh start)
-      for (const name of db.objectStoreNames) {
-        db.deleteObjectStore(name);
+      // Additive Upgrade Logic: Create stores and indexes ONLY if they don't exist.
+      // This prevents data loss during version bumps.
+      if (!db.objectStoreNames.contains(APP_CONSTANTS.STORE_CONTACTS)) {
+        const contacts = db.createObjectStore(APP_CONSTANTS.STORE_CONTACTS, { keyPath: 'id' });
+        contacts.createIndex('em', 'em', { unique: false });
+        contacts.createIndex('t', 't', { multiEntry: true });
+        contacts.createIndex('lc', 'lc');
+        contacts.createIndex('su', 'su');
       }
 
-      const contacts = db.createObjectStore(APP_CONSTANTS.STORE_CONTACTS, { keyPath: 'id' });
-      contacts.createIndex('em', 'em', { unique: false });
-      contacts.createIndex('t', 't', { multiEntry: true });
-      contacts.createIndex('lc', 'lc');
-      contacts.createIndex('su', 'su');
+      if (!db.objectStoreNames.contains(APP_CONSTANTS.STORE_LOGS)) {
+        const logs = db.createObjectStore(APP_CONSTANTS.STORE_LOGS, { autoIncrement: true });
+        logs.createIndex('contactId', 'contactId');
+        logs.createIndex('timestamp', 'timestamp');
+      }
 
-      const logs = db.createObjectStore(APP_CONSTANTS.STORE_LOGS, { autoIncrement: true });
-      logs.createIndex('contactId', 'contactId');
-      logs.createIndex('timestamp', 'timestamp');
-
-      db.createObjectStore(APP_CONSTANTS.STORE_SETTINGS, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(APP_CONSTANTS.STORE_SETTINGS)) {
+        db.createObjectStore(APP_CONSTANTS.STORE_SETTINGS, { keyPath: 'id' });
+      }
     };
 
     req.onsuccess = (event) => resolve(event.target.result);
