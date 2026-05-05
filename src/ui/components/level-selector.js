@@ -1,4 +1,4 @@
-import { TAGS } from '../core/constants.js';
+import { TAGS } from '../../core/constants.js';
 
 const LEVELS = [
   { display: '5',   tag: TAGS.LEVELS.L5,   sublabel: 'Weekly'    },
