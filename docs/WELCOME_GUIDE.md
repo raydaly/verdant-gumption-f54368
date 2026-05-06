@@ -93,12 +93,21 @@ The journey comes full circle when the Steward shares their work back with the f
 - **The Magic**: This creates a "Gallery" for the next recipient, starting the cycle over again.
 - **The Stewardship Legacy**: By passing on the gift, you ensure the "source of truth" survives. You aren't just sharing an address; you're sharing the work of connection you've already done.
 
+### Phase 5: The Publishing Ritual (Micro Newsletters)
+*Actual Implementation: `trunk.js` / "Draft a Micro Newsletter"*
+The ultimate expression of stewardship is the "Micro Newsletter"—a lightweight, data-driven update for a specific circle.
+- **The Engine**: Greatuncle automatically scans your group for upcoming birthdays (The Radar) and recent address book changes.
+- **The Voice**: It combines these automated facts with your "Personal Note" and "General News" to create a warm, intentional update.
+- **The Delivery**: Instead of complex mailing lists, you "Self-Send" the draft to yourself and BCC your circle. It keeps you in control and keeps the data private.
+- **The Outcome**: You become the "Pulse" of your family, ensuring that no birthday goes unnoticed and every move is recorded.
+
 ### The Steward’s Quick-Start Checklist
 1. **The Ritual**: Save your first backup to unlock editing.
 2. **Name your Circle**: Give your group a name that resonates (e.g., The Gardner Clan).
 3. **Assign Layers**: Move your "Hearth" members (the core 5) into the inner circle.
 4. **Tag for Context**: Use the @ symbol to tag people by side of family or city.
 5. **Pass on the Gift**: Share a group link to see the "Aha!" moment from the other side.
+6. **Publish the Pulse**: Draft your first Micro Newsletter to stay top-of-mind without being intrusive.
 
 ## 5. The Long Horizon: Benefits of Extended Use
 
