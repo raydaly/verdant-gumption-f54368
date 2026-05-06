@@ -242,6 +242,26 @@ export async function renderTrunk(db) {
   durationField.appendChild(durationSelect);
   deskGrid.appendChild(durationField);
 
+  // Subject Line
+  const subjectField = document.createElement('div');
+  subjectField.className = 'form-field';
+  const subjectLabel = document.createElement('label');
+  subjectLabel.textContent = 'Email Subject';
+  const subjectInput = document.createElement('input');
+  subjectInput.type = 'text';
+  subjectInput.className = 'form-input';
+  subjectField.appendChild(subjectLabel);
+  subjectField.appendChild(subjectInput);
+  deskGrid.appendChild(subjectField);
+
+  // Helper to update default subject
+  const updateDefaultSubject = () => {
+    const group = groupSelect.value || '(group)';
+    const date = new Date(dateInput.value);
+    const month = date.toLocaleString('default', { month: 'long' });
+    subjectInput.value = `${month} updates for Greatuncle.app @${group}`;
+  };
+
   // Personal Note
   const noteField = document.createElement('div');
   noteField.className = 'form-field';
@@ -323,16 +343,20 @@ export async function renderTrunk(db) {
       bridgeLink: currentEncoded ? `https://greatuncle.app/#invite=${currentEncoded}` : '(Link pending selection)'
     });
     
-    newsletterPreview.textContent = draft;
+    newsletterPreview.textContent = `SUBJECT: ${subjectInput.value}\n\n${draft}`;
     return draft;
   };
 
-  [dateInput, durationSelect, noteInput, newsInput].forEach(el => el.addEventListener('input', updateNewsletterPreview));
+  [dateInput, durationSelect, noteInput, newsInput, subjectInput].forEach(el => el.addEventListener('input', updateNewsletterPreview));
   
+  // Update subject when group or date changes
+  groupSelect.addEventListener('change', updateDefaultSubject);
+  dateInput.addEventListener('change', updateDefaultSubject);
+
   emailBtn.addEventListener('click', () => {
     const draft = updateNewsletterPreview();
     const owner = allContacts.find(c => (c.t || []).includes(TAGS.SYSTEM.OWNER)) || { em: '' };
-    const subject = encodeURIComponent(`Circle Update: ${groupSelect.value}`);
+    const subject = encodeURIComponent(subjectInput.value);
     const body = encodeURIComponent(draft);
     window.location.href = `mailto:${owner.em}?subject=${subject}&body=${body}`;
     
@@ -473,7 +497,10 @@ export async function renderTrunk(db) {
     groupSelect.value = '';
     personSearch.value = '';
     updateRecipientUI();
-    if (mode === 'newsletter') updateNewsletterPreview();
+    if (mode === 'newsletter') {
+      updateDefaultSubject();
+      updateNewsletterPreview();
+    }
   });
 
   groupSelect.addEventListener('change', () => {

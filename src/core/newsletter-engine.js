@@ -33,9 +33,7 @@ export function generateNewsletterDraft({
     draft += `${personalNote}\n\n`;
   }
   
-  // 2. Privacy Handshake
-  draft += `---\n`;
-  draft += `About this update: This is a personal update from ${owner.n} to the ${groupName} circle. To ensure you receive these updates, please add ${owner.em || 'my email address'} to your contacts.\n\n`;
+  draft += `This is a personal update from ${owner.n} for the ${groupName} circle.\n\n`;
 
   // 3. Radar: Upcoming Events
   const events = getAnchorEvents(contacts, start, lookahead);
