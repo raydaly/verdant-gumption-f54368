@@ -1,5 +1,5 @@
 export const APP_CONSTANTS = Object.freeze({
-  APP_VERSION: 'v87',
+  APP_VERSION: 'v88',
   DB_NAME: 'greatuncle',
   DB_VERSION: 5,
   STORE_CONTACTS: 'contacts',
