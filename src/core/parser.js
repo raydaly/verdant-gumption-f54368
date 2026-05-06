@@ -169,22 +169,34 @@ export async function parseAnyInput(text) {
   const trimmed = (text || '').trim();
   if (!trimmed) return { type: IMPORT_TYPE.UNKNOWN, payload: null, raw: null, contactCount: 0 };
 
-  // ── 1. Extract from delimited block first ──────────────────────────────
   const emojiStart = '🌿 Greatuncle Update 🌿';
   const emojiEnd = '🌱 End of Update 🌱';
+  const legacyStart = '--- START GREATUNCLE LINK ---';
+  const legacyEnd = '--- END GREATUNCLE LINK ---';
 
   let searchText = trimmed;
   
-  if (trimmed.includes(emojiStart)) {
-    const startIdx = trimmed.indexOf(emojiStart) + emojiStart.length;
-    const endIdx = trimmed.includes(emojiEnd)
-      ? trimmed.indexOf(emojiEnd)
+  if (trimmed.includes(emojiStart) || trimmed.includes(legacyStart)) {
+    const isEmoji = trimmed.includes(emojiStart);
+    const startStr = isEmoji ? emojiStart : legacyStart;
+    const endStr = isEmoji ? emojiEnd : legacyEnd;
+
+    const startIdx = trimmed.indexOf(startStr) + startStr.length;
+    const endIdx = trimmed.includes(endStr)
+      ? trimmed.indexOf(endStr)
       : trimmed.length;
     const block = trimmed.slice(startIdx, endIdx).trim();
-    // Filter out metadata lines like "Rooted: ..." to find the actual code/URL
+
+    // Filter out metadata lines like "Rooted: ..." or "Date: ..."
     searchText = block.split('\n')
       .map(line => line.trim())
-      .filter(line => line.length > 0 && !line.startsWith('Rooted:'))
+      .filter(line => {
+        const l = line.toLowerCase();
+        return line.length > 0 && 
+               !l.startsWith('rooted:') && 
+               !l.startsWith('date:') && 
+               !l.startsWith('sent:');
+      })
       .join('\n')
       .trim();
   }
