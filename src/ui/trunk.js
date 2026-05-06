@@ -16,6 +16,7 @@ import { navigate } from './router.js';
 import { updateHorizonBar } from './components/horizon-bar.js';
 import { sanitizeContact } from '../core/sanitizer.js';
 import { renderOnboarding } from './onboarding.js';
+import { generateNewsletterDraft, getNearestFirstOfMonth } from '../core/newsletter-engine.js';
 
 function formatExportDate(ts) {
   if (!ts) return 'Never';
@@ -134,6 +135,11 @@ export async function renderTrunk(db) {
   modeOpt0.textContent = '1. Pick what to share...';
   shareModeSelect.appendChild(modeOpt0);
 
+  const modeOptN = document.createElement('option');
+  modeOptN.value = 'newsletter';
+  modeOptN.textContent = 'Draft a Micro Newsletter (for a @group)';
+  shareModeSelect.appendChild(modeOptN);
+
   const modeOpt1 = document.createElement('option');
   modeOpt1.value = 'group';
   modeOpt1.textContent = 'Share a Group (@tag)';
@@ -177,6 +183,176 @@ export async function renderTrunk(db) {
     const opt = document.createElement('option');
     opt.value = c.n;
     personList.appendChild(opt);
+  });
+
+  // --- NEWSLETTER DESK ---
+  const newsletterDesk = document.createElement('div');
+  newsletterDesk.style.display = 'none';
+  newsletterDesk.style.marginTop = '1rem';
+  newsletterDesk.style.padding = '1rem';
+  newsletterDesk.style.background = 'var(--color-bg-accent)';
+  newsletterDesk.style.borderRadius = 'var(--radius-m)';
+  newsletterDesk.style.border = '1px solid var(--color-border)';
+
+  const newsletterTitle = document.createElement('div');
+  newsletterTitle.textContent = '📜 Newsletter Desk';
+  newsletterTitle.style.fontWeight = '600';
+  newsletterTitle.style.marginBottom = '1rem';
+  newsletterDesk.appendChild(newsletterTitle);
+
+  const deskGrid = document.createElement('div');
+  deskGrid.style.display = 'grid';
+  deskGrid.style.gap = '1rem';
+  
+  // Date Picker
+  const dateField = document.createElement('div');
+  dateField.className = 'form-field';
+  const dateLabel = document.createElement('label');
+  dateLabel.textContent = 'Start Date';
+  const dateInput = document.createElement('input');
+  dateInput.type = 'date';
+  dateInput.className = 'form-input';
+  dateInput.value = getNearestFirstOfMonth().toISOString().split('T')[0];
+  dateField.appendChild(dateLabel);
+  dateField.appendChild(dateInput);
+  deskGrid.appendChild(dateField);
+
+  // Duration Toggle
+  const durationField = document.createElement('div');
+  durationField.className = 'form-field';
+  const durationLabel = document.createElement('label');
+  durationLabel.textContent = 'Timeframe';
+  const durationSelect = document.createElement('select');
+  durationSelect.className = 'form-input';
+  const durOpt1 = document.createElement('option');
+  durOpt1.value = 'monthly';
+  durOpt1.textContent = 'Monthly (31 days)';
+  const durOpt2 = document.createElement('option');
+  durOpt2.value = 'quarterly';
+  durOpt2.textContent = 'Quarterly (92 days)';
+  durationSelect.appendChild(durOpt1);
+  durationSelect.appendChild(durOpt2);
+  
+  // Remember duration choice
+  const savedDuration = localStorage.getItem('newsletter_duration') || 'monthly';
+  durationSelect.value = savedDuration;
+  durationSelect.addEventListener('change', () => localStorage.setItem('newsletter_duration', durationSelect.value));
+
+  durationField.appendChild(durationLabel);
+  durationField.appendChild(durationSelect);
+  deskGrid.appendChild(durationField);
+
+  // Personal Note
+  const noteField = document.createElement('div');
+  noteField.className = 'form-field';
+  const noteLabel = document.createElement('label');
+  noteLabel.textContent = 'Personal Note';
+  const noteInput = document.createElement('textarea');
+  noteInput.className = 'form-input';
+  noteInput.rows = 3;
+  noteInput.placeholder = 'A warm greeting for the circle...';
+  noteField.appendChild(noteLabel);
+  noteField.appendChild(noteInput);
+  deskGrid.appendChild(noteField);
+
+  // General News
+  const newsField = document.createElement('div');
+  newsField.className = 'form-field';
+  const newsLabel = document.createElement('label');
+  newsLabel.textContent = 'General News';
+  const newsInput = document.createElement('textarea');
+  newsInput.className = 'form-input';
+  newsInput.rows = 3;
+  newsInput.placeholder = 'Other stories or shout-outs...';
+  newsField.appendChild(newsLabel);
+  newsField.appendChild(newsInput);
+  deskGrid.appendChild(newsField);
+
+  newsletterDesk.appendChild(deskGrid);
+
+  const newsletterPreview = document.createElement('pre');
+  newsletterPreview.style.marginTop = '1rem';
+  newsletterPreview.style.padding = '0.75rem';
+  newsletterPreview.style.background = 'var(--color-bg)';
+  newsletterPreview.style.fontSize = '0.8rem';
+  newsletterPreview.style.whiteSpace = 'pre-wrap';
+  newsletterPreview.style.border = '1px dashed var(--color-border)';
+  newsletterPreview.style.maxHeight = '200px';
+  newsletterPreview.style.overflowY = 'auto';
+  newsletterDesk.appendChild(newsletterPreview);
+
+  const newsletterActions = document.createElement('div');
+  newsletterActions.style.display = 'grid';
+  newsletterActions.style.gridTemplateColumns = '1fr 1fr';
+  newsletterActions.style.gap = '0.5rem';
+  newsletterActions.style.marginTop = '1rem';
+
+  const emailBtn = document.createElement('button');
+  emailBtn.className = 'trunk-btn trunk-btn--primary';
+  emailBtn.textContent = '✉️ Prepare Email';
+  
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'trunk-btn trunk-btn--secondary';
+  copyBtn.textContent = '📋 Copy Body';
+
+  const copyRecipientsBtn = document.createElement('button');
+  copyRecipientsBtn.className = 'trunk-btn trunk-btn--secondary';
+  copyRecipientsBtn.style.gridColumn = 'span 2';
+  copyRecipientsBtn.textContent = '👥 Copy Recipient Emails';
+
+  newsletterActions.appendChild(emailBtn);
+  newsletterActions.appendChild(copyBtn);
+  newsletterActions.appendChild(copyRecipientsBtn);
+  newsletterDesk.appendChild(newsletterActions);
+
+  const updateNewsletterPreview = () => {
+    const group = groupSelect.value;
+    if (!group) return;
+    
+    const groupContacts = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER) && (c.t || []).includes(group));
+    const owner = allContacts.find(c => (c.t || []).includes(TAGS.SYSTEM.OWNER)) || { n: 'Owner', em: '' };
+    
+    const draft = generateNewsletterDraft({
+      groupName: group,
+      contacts: groupContacts,
+      owner,
+      startDate: dateInput.value,
+      duration: durationSelect.value,
+      personalNote: noteInput.value,
+      generalNews: newsInput.value,
+      bridgeLink: currentEncoded ? `https://greatuncle.app/#invite=${currentEncoded}` : '(Link pending selection)'
+    });
+    
+    newsletterPreview.textContent = draft;
+    return draft;
+  };
+
+  [dateInput, durationSelect, noteInput, newsInput].forEach(el => el.addEventListener('input', updateNewsletterPreview));
+  
+  emailBtn.addEventListener('click', () => {
+    const draft = updateNewsletterPreview();
+    const owner = allContacts.find(c => (c.t || []).includes(TAGS.SYSTEM.OWNER)) || { em: '' };
+    const subject = encodeURIComponent(`Circle Update: ${groupSelect.value}`);
+    const body = encodeURIComponent(draft);
+    window.location.href = `mailto:${owner.em}?subject=${subject}&body=${body}`;
+    
+    // Also copy to clipboard as a backup
+    navigator.clipboard.writeText(draft);
+  });
+
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(updateNewsletterPreview());
+    copyBtn.textContent = '✅ Copied Body';
+    setTimeout(() => copyBtn.textContent = '📋 Copy Body', 2000);
+  });
+
+  copyRecipientsBtn.addEventListener('click', () => {
+    const group = groupSelect.value;
+    const groupContacts = allContacts.filter(c => (c.t || []).includes(group) && c.em);
+    const emails = groupContacts.map(c => c.em).join(', ');
+    navigator.clipboard.writeText(emails);
+    copyRecipientsBtn.textContent = `✅ Copied ${groupContacts.length} Emails`;
+    setTimeout(() => copyRecipientsBtn.textContent = '👥 Copy Recipient Emails', 2000);
   });
 
   const sizeWarning = document.createElement('div');
@@ -230,6 +406,7 @@ export async function renderTrunk(db) {
   // Helper to get active selection
   const getShareValue = () => {
     const mode = shareModeSelect.value;
+    if (mode === 'newsletter' && groupSelect.value) return 'group:' + groupSelect.value;
     if (mode === 'group' && groupSelect.value) return 'group:' + groupSelect.value;
     if (mode === 'person' && personSearch.value) {
       const p = nonOwners.find(c => (c.n || '').toLowerCase() === personSearch.value.toLowerCase());
@@ -289,11 +466,19 @@ export async function renderTrunk(db) {
 
   shareModeSelect.addEventListener('change', () => {
     const mode = shareModeSelect.value;
-    groupSelect.style.display = mode === 'group' ? 'block' : 'none';
+    groupSelect.style.display = (mode === 'group' || mode === 'newsletter') ? 'block' : 'none';
     personSearch.style.display = mode === 'person' ? 'block' : 'none';
+    newsletterDesk.style.display = mode === 'newsletter' ? 'block' : 'none';
+    shareBtn.style.display = (mode === 'newsletter' || !mode) ? 'none' : 'block';
     groupSelect.value = '';
     personSearch.value = '';
     updateRecipientUI();
+    if (mode === 'newsletter') updateNewsletterPreview();
+  });
+
+  groupSelect.addEventListener('change', () => {
+    updateCodeGen();
+    if (shareModeSelect.value === 'newsletter') updateNewsletterPreview();
   });
 
   const updateRecipientUI = () => {
@@ -479,6 +664,7 @@ export async function renderTrunk(db) {
 
   if (ownerRecord) {
     shareSection.appendChild(shareRow);
+    shareSection.appendChild(newsletterDesk);
     shareSection.appendChild(shareBtn);
 
     codePreviewContainer = document.createElement('div');
