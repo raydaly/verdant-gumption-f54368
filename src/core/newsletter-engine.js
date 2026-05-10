@@ -27,8 +27,8 @@ export function generateNewsletterDraft({
   const lookahead = duration === 'quarterly' ? 92 : 31;
   const start = new Date(startDate);
   
-  // 1. Header & Personal Note
-  let draft = `A Circle Update from ${owner.n}\n\n`;
+  // 1. Personal Note
+  let draft = '';
   if (personalNote) {
     draft += `${personalNote}\n\n`;
   }
@@ -48,9 +48,10 @@ export function generateNewsletterDraft({
     draft += `\n`;
   }
 
-  // 4. Circle Updates (Changes in last 31 days)
-  const thirtyDaysAgo = start.getTime() - (31 * 86400000);
-  const changed = contacts.filter(c => c.ua && c.ua > thirtyDaysAgo && !(c.t || []).includes('&owner'));
+  // 4. Circle Updates (Changes since the lookback period)
+  const lookback = duration === 'quarterly' ? 92 : 31;
+  const threshold = start.getTime() - (lookback * 86400000);
+  const changed = contacts.filter(c => c.ua && c.ua > threshold && !(c.t || []).includes('&owner'));
   
   if (changed.length > 0) {
     draft += `CIRCLE UPDATES\n`;
