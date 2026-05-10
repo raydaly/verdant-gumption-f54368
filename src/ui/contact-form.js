@@ -214,9 +214,7 @@ export async function renderContactForm(db, contactId) {
   relLabel.textContent = 'Relationship';
   relationshipSection.appendChild(relLabel);
 
-  const explainer = document.createElement('p');
-  explainer.className = 'form-explainer';
-  explainer.textContent = 'Choose your target for staying in touch, and tag them by community.';
+  explainer.textContent = 'Choose your target for staying in touch (private to you), and tag them by community.';
   relationshipSection.appendChild(explainer);
 
   // Connection
@@ -336,7 +334,7 @@ export async function renderContactForm(db, contactId) {
 
   const notesLabel = document.createElement('div');
   notesLabel.className = 'form-section-label';
-  notesLabel.textContent = 'Notes';
+  notesLabel.innerHTML = 'Notes <span style="font-weight: normal; opacity: 0.6; font-size: 0.85rem; margin-left: 0.5rem;">(not shared with others)</span>';
   notesSection.appendChild(notesLabel);
 
   const notesField = document.createElement('div');
