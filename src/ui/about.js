@@ -1,4 +1,5 @@
 import { goBack } from './router.js';
+import { APP_CONSTANTS } from '../core/constants.js';
 
 export function renderAbout() {
   const app = document.getElementById('app');
@@ -90,7 +91,7 @@ export function renderAbout() {
 
   const versionText = document.createElement('p');
   versionText.className = 'about-version';
-  versionText.textContent = 'Version 1.0 · Built with care, no cloud required.';
+  versionText.textContent = `Version ${APP_CONSTANTS.APP_VERSION} · Built with care, no cloud required.`;
 
   versionSection.appendChild(versionText);
 
