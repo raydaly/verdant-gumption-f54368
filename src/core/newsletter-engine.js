@@ -1,12 +1,20 @@
 import { getAnchorEvents } from './outreach-engine.js';
+import { TAGS } from './constants.js';
 
 /**
  * Stewardship Window Logic:
  * Early in month (1-15) -> 1st of current month
  * Late in month (16+)   -> 1st of next month
  */
-export function getNearestFirstOfMonth(date = new Date()) {
-  const d = new Date(date);
+export function getNearestFirstOfMonth(dateInput = new Date()) {
+  let d;
+  if (typeof dateInput === 'string' && dateInput.includes('-')) {
+    const [y, m, d_part] = dateInput.split('-').map(Number);
+    d = new Date(y, m - 1, d_part);
+  } else {
+    d = new Date(dateInput);
+  }
+
   if (d.getDate() > 15) {
     return new Date(d.getFullYear(), d.getMonth() + 1, 1);
   } else {
@@ -25,7 +33,15 @@ export function generateNewsletterDraft({
   bridgeLink
 }) {
   const lookahead = duration === 'quarterly' ? 92 : 31;
-  const start = new Date(startDate);
+  
+  // Parse startDate (YYYY-MM-DD) as local time to avoid UTC shifts
+  let start;
+  if (typeof startDate === 'string' && startDate.includes('-')) {
+    const [y, m, d] = startDate.split('-').map(Number);
+    start = new Date(y, m - 1, d);
+  } else {
+    start = new Date(startDate);
+  }
   
   // 1. Personal Note
   let draft = '';
@@ -51,7 +67,7 @@ export function generateNewsletterDraft({
   // 4. Circle Updates (Changes since the lookback period)
   const lookback = duration === 'quarterly' ? 92 : 31;
   const threshold = start.getTime() - (lookback * 86400000);
-  const changed = contacts.filter(c => c.ua && c.ua > threshold && !(c.t || []).includes('&owner'));
+  const changed = contacts.filter(c => c.ua && c.ua > threshold && !(c.t || []).includes(TAGS.SYSTEM.OWNER));
   
   if (changed.length > 0) {
     draft += `CIRCLE UPDATES\n`;

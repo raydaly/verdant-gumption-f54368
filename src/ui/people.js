@@ -991,6 +991,19 @@ export async function renderPeople(db, params = {}) {
 
     if (filterState.groups.length > 0) {
       actions.appendChild(shareBtn);
+
+      const newsletterBtn = document.createElement('button');
+      newsletterBtn.type = 'button';
+      newsletterBtn.className = 'ribbon-btn ribbon-btn--share';
+      newsletterBtn.style.marginLeft = '0.5rem';
+      newsletterBtn.innerHTML = `<span>📜</span> Draft`;
+      newsletterBtn.onclick = async () => {
+        const { showNewsletterSheet } = await import('./components/newsletter-sheet.js');
+        await showNewsletterSheet(db, filterState.groups[0], allContacts, ownerContact, () => {
+          onRefresh();
+        });
+      };
+      actions.appendChild(newsletterBtn);
     }
     
     ribbon.appendChild(info);

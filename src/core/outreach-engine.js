@@ -85,10 +85,23 @@ export function getAnchorEvents(contacts, today = new Date(), lookAheadDays = 30
       if (!stored) continue;
 
       let month, day;
-      if (typeof stored === 'string' && stored.startsWith('0000-')) {
+      if (typeof stored === 'string') {
         const parts = stored.split('-');
-        month = parseInt(parts[1], 10) - 1;
-        day = parseInt(parts[2], 10);
+        if (parts.length === 3) {
+          // YYYY-MM-DD or 0000-MM-DD
+          month = parseInt(parts[1], 10) - 1;
+          day = parseInt(parts[2], 10);
+        } else if (parts.length === 2) {
+          // MM-DD
+          month = parseInt(parts[0], 10) - 1;
+          day = parseInt(parts[1], 10);
+        } else {
+          // Fallback to Date object if string is weird
+          const d = new Date(stored);
+          if (isNaN(d.getTime())) continue;
+          month = d.getMonth();
+          day = d.getDate();
+        }
       } else {
         const d = new Date(stored);
         if (isNaN(d.getTime())) continue;
