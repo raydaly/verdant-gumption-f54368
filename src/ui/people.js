@@ -1097,14 +1097,7 @@ export async function renderPeople(db, params = {}) {
   // Filter button handler
   filterBtn.addEventListener('click', () => {
     showFilterSheet(allContacts, filterBtn, ul, ownerContact, () => {
-      const active = isFilterActive(filterState);
-      filterBtn.className = 'filter-btn' + (active ? ' filter-btn--active' : '');
-      if (shareBtn) {
-        shareBtn.hidden = filterState.groups.length === 0;
-        shareBtn.textContent = filterState.groups.length > 0 ? `⬆️ Share Selected` : '⬆️ Share';
-      }
-      currentContacts = applyFilterSort(allContacts, filterState);
-      renderList(ul, currentContacts, ownerContact, db, onRefresh);
+      onRefresh();
     });
   });
 

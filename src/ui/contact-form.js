@@ -214,6 +214,8 @@ export async function renderContactForm(db, contactId) {
   relLabel.textContent = 'Relationship';
   relationshipSection.appendChild(relLabel);
 
+  const explainer = document.createElement('div');
+  explainer.className = 'form-explainer';
   explainer.textContent = 'Choose your target for staying in touch (private to you), and tag them by community.';
   relationshipSection.appendChild(explainer);
 

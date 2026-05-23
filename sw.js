@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v88.0.0';
+var CACHE_NAME = 'greatuncle-v88.0.1';
 
 
 
@@ -41,12 +41,13 @@ var STATIC_ASSETS = [
   '/src/ui/components/confirm-dialog.js',
   '/src/core/parser.js',
   '/src/ui/components/later-sheet.js',
+  '/src/ui/components/newsletter-sheet.js',
   '/src/core/newsletter-engine.js',
   '/src/core/utils.js',
 ];
 
 self.addEventListener('install', event => {
-  console.log('SW: Installing v88.0.0...');
+  console.log('SW: Installing v88.0.1...');
 
 
 
@@ -57,7 +58,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', function (event) {
-  console.log('SW: Activated v88.0.0');
+  console.log('SW: Activated v88.0.1');
 
 
 

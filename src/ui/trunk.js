@@ -200,8 +200,21 @@ export async function renderTrunk(db) {
   newsletterTitle.style.marginBottom = '1rem';
   newsletterDesk.appendChild(newsletterTitle);
 
+  if (groupTags.length === 0) {
+    const warning = document.createElement('div');
+    warning.style.color = '#B45309'; // Amber
+    warning.style.background = '#FFFBEB';
+    warning.style.border = '1px solid #FCD34D';
+    warning.style.padding = '0.75rem';
+    warning.style.borderRadius = 'var(--radius-s)';
+    warning.style.fontSize = '0.85rem';
+    warning.style.lineHeight = '1.4';
+    warning.innerHTML = `⚠️ <strong>No groups found!</strong> To draft a newsletter, you must first assign a group tag starting with <strong>@</strong> (e.g. <strong>@family</strong>) to one or more of your contacts.`;
+    newsletterDesk.appendChild(warning);
+  }
+
   const deskGrid = document.createElement('div');
-  deskGrid.style.display = 'grid';
+  deskGrid.style.display = groupTags.length === 0 ? 'none' : 'grid';
   deskGrid.style.gap = '1rem';
   
   // Date Picker
@@ -299,10 +312,11 @@ export async function renderTrunk(db) {
   newsletterPreview.style.border = '1px dashed var(--color-border)';
   newsletterPreview.style.maxHeight = '200px';
   newsletterPreview.style.overflowY = 'auto';
+  newsletterPreview.style.display = groupTags.length === 0 ? 'none' : 'block';
   newsletterDesk.appendChild(newsletterPreview);
 
   const newsletterActions = document.createElement('div');
-  newsletterActions.style.display = 'grid';
+  newsletterActions.style.display = groupTags.length === 0 ? 'none' : 'grid';
   newsletterActions.style.gridTemplateColumns = '1fr 1fr';
   newsletterActions.style.gap = '0.5rem';
   newsletterActions.style.marginTop = '1rem';
