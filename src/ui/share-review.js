@@ -247,11 +247,11 @@ export async function renderShareReview(db) {
 
             const optMine = document.createElement('div');
             optMine.className = 'conflict-option conflict-option--selected';
-            optMine.innerHTML = `<span class="conflict-val-label">Keep Mine</span><span class="conflict-val">${mine}</span>`;
+            optMine.innerHTML = `<span class="conflict-val-label">Keep Mine</span><span class="conflict-val">${localValStr}</span>`;
             
             const optTheirs = document.createElement('div');
             optTheirs.className = 'conflict-option';
-            optTheirs.innerHTML = `<span class="conflict-val-label">Use Shared</span><span class="conflict-val">${theirs}</span>`;
+            optTheirs.innerHTML = `<span class="conflict-val-label">Use Shared</span><span class="conflict-val">${incomingValStr}</span>`;
 
             optMine.onclick = () => {
               optMine.classList.add('conflict-option--selected');

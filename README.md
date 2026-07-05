@@ -26,7 +26,7 @@ Each owner will use Greatuncle differently, but underneath this flexibility, the
 By organizing your network into scientifically-backed layers, the app helps you consciously manage your limited social energy. The engine uses four specific target frequencies:
 
 - **Level 5: Your Inner Circle** - These are your closest connections. Because you naturally interact with these people so often, this layer largely takes care of itself, and the app remains quiet.
-- **Level 15 (Monthly)**: Your good friends and "Sympathy Group" who need a touchpoint roughly every 30 days.
+- **Level 10 (Monthly)**: Your good friends and "Sympathy Group" who need a touchpoint roughly every 30 days.
 - **Level 50 (Quarterly)**: Your active community of close friends and neighbors.
 - **Level 150 (Annually)**: The outer horizon of your casual but stable relationships that require at least a yearly connection.
 
