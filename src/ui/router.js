@@ -66,7 +66,7 @@ async function render(view, params) {
       await renderShareReview(_db);
       break;
     case 'milestone-calendar':
-      await renderMilestoneCalendar(_db);
+      await renderMilestoneCalendar(_db, params);
       break;
     default:
       break;

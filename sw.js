@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v88.0.1';
+var CACHE_NAME = 'greatuncle-v88.0.2';
 
 
 
@@ -47,7 +47,7 @@ var STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('SW: Installing v88.0.1...');
+  console.log('SW: Installing v88.0.2...');
 
 
 
@@ -58,7 +58,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', function (event) {
-  console.log('SW: Activated v88.0.1');
+  console.log('SW: Activated v88.0.2');
 
 
 

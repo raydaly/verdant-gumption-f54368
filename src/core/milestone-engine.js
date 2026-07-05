@@ -175,7 +175,7 @@ export function getFullYearMilestones(contacts) {
           icon: e.icon,
           month: md.month,
           day: md.day,
-          age: getAgeAtEvent(md.year, md.month, md.day)
+          age: md.year ? (new Date().getFullYear() - md.year) : null
         });
       }
     });

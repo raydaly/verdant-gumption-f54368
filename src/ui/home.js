@@ -258,9 +258,10 @@ export async function renderHome(db, version = currentVersion) {
         const md = getMonthDay(dateVal);
         if (md && md.year) {
           const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
           const currentYear = now.getFullYear();
           let eventThisYear = new Date(currentYear, md.month, md.day);
-          let targetYear = (eventThisYear < now) ? currentYear + 1 : currentYear;
+          let targetYear = (eventThisYear < today) ? currentYear + 1 : currentYear;
           const a = targetYear - md.year;
           if (a > 0) {
             const suffix = (a % 10 === 1 && a !== 11) ? 'st' : 

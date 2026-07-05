@@ -38,9 +38,10 @@ export async function showContactProfile(db, contact, onRefresh) {
     // Calculate milestone number if year exists (and is not 0)
     if (md.year && !isNaN(md.year) && settings.showAge !== false) {
       const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const currentYear = now.getFullYear();
       let eventThisYear = new Date(currentYear, md.month, md.day);
-      let targetYear = (eventThisYear < now) ? currentYear + 1 : currentYear;
+      let targetYear = (eventThisYear < today) ? currentYear + 1 : currentYear;
       
       const milestoneNum = targetYear - md.year;
       if (milestoneNum > 0) {

@@ -7,7 +7,7 @@ import { TAGS } from '../core/constants.js';
 /**
  * Renders the full 12-month milestone calendar.
  */
-export async function renderMilestoneCalendar(db) {
+export async function renderMilestoneCalendar(db, params = {}) {
   const app = document.getElementById('app');
   app.innerHTML = '<div class="view-loading"><div class="view-loading-spinner"></div><span>Opening the calendar...</span></div>';
 
@@ -15,8 +15,51 @@ export async function renderMilestoneCalendar(db) {
     getAllContacts(db),
     getSettings(db)
   ]);
-  const nonOwnerContacts = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER));
-  const milestonesByMonth = getFullYearMilestones(nonOwnerContacts);
+  
+  // Filter out the owner contact
+  let targetContacts = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER));
+
+  // Extract filterState from params
+  const filterState = params.filterState || { sort: 'az', layers: [], groups: [], stewardshipMode: false };
+  const activeFilters = [];
+
+  const LAYER_LABELS = {
+    [TAGS.LEVELS.L5]:   'Weekly',
+    [TAGS.LEVELS.L15]:  'Monthly',
+    [TAGS.LEVELS.L50]:  'Quarterly',
+    [TAGS.LEVELS.L150]: 'Annually',
+  };
+  
+  function getLayerTag(tags) {
+    const LEVEL_TAGS = [TAGS.LEVELS.L5, TAGS.LEVELS.L15, TAGS.LEVELS.L50, TAGS.LEVELS.L150];
+    return (tags || []).find(t => LEVEL_TAGS.includes(t)) || null;
+  }
+
+  // Apply layer and group filters if present in filterState
+  let isFiltered = false;
+  if (filterState.layers && filterState.layers.length > 0) {
+    isFiltered = true;
+    targetContacts = targetContacts.filter(c => {
+      const cTag = getLayerTag(c.t);
+      if (filterState.layers.includes('none') && !cTag) return true;
+      return filterState.layers.includes(cTag);
+    });
+    filterState.layers.forEach(tag => {
+      if (tag === 'none') activeFilters.push('Unsorted');
+      else if (LAYER_LABELS[tag]) activeFilters.push(LAYER_LABELS[tag]);
+    });
+  }
+
+  if (filterState.groups && filterState.groups.length > 0) {
+    isFiltered = true;
+    targetContacts = targetContacts.filter(c => {
+      const tags = c.t || [];
+      return filterState.groups.some(g => tags.includes(g));
+    });
+    filterState.groups.forEach(g => activeFilters.push(g));
+  }
+
+  const milestonesByMonth = getFullYearMilestones(targetContacts);
 
   app.innerHTML = '';
   
@@ -51,7 +94,7 @@ export async function renderMilestoneCalendar(db) {
     printEl.className = 'print-contact-list'; // Reuse styling
     
     const title = document.createElement('h1');
-    title.textContent = 'Our Milestones';
+    title.textContent = isFiltered ? `Our Milestones: ${activeFilters.join(', ')}` : 'Our Milestones';
     printEl.appendChild(title);
 
     milestonesByMonth.forEach(m => {
@@ -80,6 +123,33 @@ export async function renderMilestoneCalendar(db) {
   // Content
   const content = document.createElement('div');
   content.className = 'view-content';
+
+  // Ribbon for filter status
+  if (isFiltered) {
+    const ribbon = document.createElement('div');
+    ribbon.className = 'contextual-ribbon';
+    ribbon.style.marginBottom = '16px';
+
+    const info = document.createElement('div');
+    info.className = 'ribbon-info';
+    info.innerHTML = `Filtering by: <strong>${activeFilters.join(', ')}</strong> <span style="opacity:0.6; font-size:0.8rem; font-weight:400;">(${targetContacts.length} people)</span>`;
+
+    const actions = document.createElement('div');
+    actions.className = 'ribbon-actions';
+
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'ribbon-btn';
+    clearBtn.textContent = 'Show all';
+    clearBtn.onclick = () => {
+      navigate('milestone-calendar', { filterState: { sort: 'az', layers: [], groups: [], stewardshipMode: false } });
+    };
+
+    actions.appendChild(clearBtn);
+    ribbon.appendChild(info);
+    ribbon.appendChild(actions);
+    content.appendChild(ribbon);
+  }
 
   if (milestonesByMonth.length === 0) {
     const empty = document.createElement('div');

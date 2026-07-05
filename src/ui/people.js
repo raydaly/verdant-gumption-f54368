@@ -889,7 +889,7 @@ export async function renderPeople(db, params = {}) {
   calBtn.className = 'header-icon-btn';
   calBtn.setAttribute('aria-label', 'View milestone calendar');
   calBtn.textContent = '📅';
-  calBtn.addEventListener('click', () => navigate('milestone-calendar'));
+  calBtn.addEventListener('click', () => navigate('milestone-calendar', { filterState }));
 
   headerRight.appendChild(calBtn);
   headerRight.appendChild(printBtn);
