@@ -68,3 +68,11 @@ export function getPendingImportNudge() {
 export function setPendingImportNudge(bool) {
   localStorage.setItem(APP_CONSTANTS.LS_PENDING_IMPORT_NUDGE, String(bool));
 }
+
+export function getInstallHintDismissed() {
+  return localStorage.getItem(APP_CONSTANTS.LS_INSTALL_HINT_DISMISSED) === 'true';
+}
+
+export function setInstallHintDismissed() {
+  localStorage.setItem(APP_CONSTANTS.LS_INSTALL_HINT_DISMISSED, 'true');
+}

@@ -41,7 +41,7 @@ function buildTimeline(logs, nameMap, container) {
       <div style="font-size: 2.5rem; margin-bottom: 1rem;">📓</div>
       <p><strong>Your connection story starts here.</strong></p>
       <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 0.5rem;">
-        Log your first interaction from the <b>Home</b> or <b>People</b> tab <br>to see your history grow.
+        Log your first connection from the <b>Home</b> or <b>Circle</b> tab <br>to see your history grow.
       </p>
     `;
     container.appendChild(empty);
@@ -162,7 +162,7 @@ export async function renderJournal(db, params = {}) {
   statsGrid.className = 'stats-grid';
 
   const stats = [
-    { value: logs.length, label: 'Total interactions' },
+    { value: logs.length, label: 'Total connections' },
     { value: logsThisWeek, label: 'This week' },
     { value: logsThisMonth, label: 'This month' },
     { value: mostContactedName, label: 'Most contacted' },

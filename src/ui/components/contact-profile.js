@@ -116,14 +116,14 @@ export async function showContactProfile(db, contact, onRefresh) {
   
   const journalLabel = document.createElement('div');
   journalLabel.className = 'profile-section-label';
-  journalLabel.textContent = 'Last Interaction';
+  journalLabel.textContent = 'Last Connection';
   journalBox.appendChild(journalLabel);
 
   if (!isArchitectOrBeta) {
     // Gallery mode — show teaser instead of empty journal
     const teaser = document.createElement('div');
     teaser.className = 'profile-log-empty';
-    teaser.innerHTML = `🔒 <a href="#" class="btn-link" style="text-decoration:underline;">Save a backup</a> to log interactions and track your connection history.`;
+    teaser.innerHTML = `🔒 <a href="#" class="btn-link" style="text-decoration:underline;">Save a backup</a> to log connections and track your history.`;
     teaser.querySelector('a').addEventListener('click', async (e) => {
       e.preventDefault();
       await performStewardshipRitual(db);
@@ -134,19 +134,19 @@ export async function showContactProfile(db, contact, onRefresh) {
     const inputRow = document.createElement('div');
     inputRow.className = 'profile-journal-input';
     const input = document.createElement('textarea');
-    input.placeholder = 'Add a private note to this interaction...';
+    input.placeholder = 'Add a private note (optional)…';
     input.rows = 2;
     inputRow.appendChild(input);
 
     const logBtn = document.createElement('button');
     logBtn.className = 'trunk-btn';
     logBtn.style.marginTop = '0.5rem';
-    logBtn.textContent = 'Log Recent Connection';
+    logBtn.textContent = 'Log a connection';
     logBtn.onclick = async () => {
       const comment = input.value.trim();
       const { addLog } = await import('../../storage/logs.js');
       await addLog(db, contact.id, Date.now(), comment);
-      showToast('Interaction logged!');
+      showToast('Connection logged!');
       input.value = '';
       showContactProfile(db, contact, onRefresh);
     };
@@ -160,7 +160,7 @@ export async function showContactProfile(db, contact, onRefresh) {
       logEntry.style.marginTop = '1rem';
       logEntry.innerHTML = `
         <div class="profile-log-meta">${logDate}</div>
-        <div class="profile-log-comment">${lastLog.comment || 'Interacted (no note)'}</div>
+        <div class="profile-log-comment">${lastLog.comment || 'Connected (no note)'}</div>
       `;
       journalBox.appendChild(logEntry);
 
@@ -177,7 +177,7 @@ export async function showContactProfile(db, contact, onRefresh) {
       const emptyLog = document.createElement('div');
       emptyLog.className = 'profile-log-empty';
       emptyLog.style.marginTop = '1rem';
-      emptyLog.textContent = 'No interactions logged yet.';
+      emptyLog.textContent = 'No connections logged yet.';
       journalBox.appendChild(emptyLog);
     }
   }

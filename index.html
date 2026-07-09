@@ -7,10 +7,10 @@
   <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
   <title>Greatuncle</title>
   <link rel="manifest" href="/manifest.json" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600&family=Caveat:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Greatuncle" />
 
   <link rel="stylesheet" href="/src/styles/main.css" />
 </head>
@@ -33,9 +33,9 @@
       <span>🏠</span>
       <span>Home</span>
     </button>
-    <button class="tab-btn" data-tab="people" aria-label="People">
+    <button class="tab-btn" data-tab="people" aria-label="Circle">
       <span>👥</span>
-      <span>People</span>
+      <span>Circle</span>
     </button>
     <button class="tab-btn" data-tab="journal" aria-label="Journal">
       <span>📓</span>
@@ -59,6 +59,12 @@
       `;
       document.body.appendChild(errDiv);
     };
+    // Stash the browser's install prompt so the in-app install hint can trigger it
+    window.deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      window.deferredInstallPrompt = e;
+    });
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then(function (registration) {
         registration.addEventListener('updatefound', function () {

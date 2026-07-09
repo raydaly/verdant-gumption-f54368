@@ -1,6 +1,6 @@
 import { getAllContacts, saveContact } from '../storage/contacts.js';
 import { addLog } from '../storage/logs.js';
-import { getSettings } from '../storage/settings.js';
+import { getSettings, getInstallHintDismissed, setInstallHintDismissed } from '../storage/settings.js';
 import { getMonthDay } from '../core/milestone-engine.js';
 import { getDueContacts, getAnchorEvents, getConnectionHealth, getSnoozeMs, checkGatheringRules } from '../core/outreach-engine.js';
 import { navigate } from './router.js';
@@ -122,7 +122,7 @@ export async function renderHome(db, version = currentVersion) {
   header.className = 'view-header';
 
   const h1 = document.createElement('h1');
-  h1.innerHTML = `Home <small class="version-tag">${currentVersion}</small>`;
+  h1.textContent = 'Home';
 
   const headerRight = document.createElement('div');
   headerRight.className = 'view-header-right';
@@ -287,19 +287,56 @@ export async function renderHome(db, version = currentVersion) {
     content.appendChild(section);
   }
 
+  // Empty circle — guide the brand-new user to their first action instead of
+  // showing engine copy about a circle that doesn't exist yet.
+  const circleSize = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER)).length;
+  if (circleSize === 0) {
+    const startCard = document.createElement('div');
+    startCard.className = 'home-section start-circle-card';
+
+    const startTitle = document.createElement('h2');
+    startTitle.className = 'start-circle-title';
+    startTitle.textContent = 'Start your circle';
+
+    const startCopy = document.createElement('p');
+    startCopy.className = 'start-circle-copy';
+    startCopy.textContent = 'Add the people you want to stay close to. Even two or three names is a great start.';
+
+    const startBtn = document.createElement('button');
+    startBtn.type = 'button';
+    startBtn.className = 'start-circle-btn';
+    startBtn.textContent = 'Add your first person';
+    startBtn.addEventListener('click', () => navigate('contact-form'));
+
+    const inviteLink = document.createElement('button');
+    inviteLink.type = 'button';
+    inviteLink.className = 'start-circle-link';
+    inviteLink.textContent = 'Have an invite link? Import it here';
+    inviteLink.addEventListener('click', () => navigate('backup'));
+
+    startCard.appendChild(startTitle);
+    startCard.appendChild(startCopy);
+    startCard.appendChild(startBtn);
+    startCard.appendChild(inviteLink);
+    content.appendChild(startCard);
+
+    app.appendChild(content);
+    return;
+  }
+
   // Due contacts
   const dueSection = document.createElement('div');
   dueSection.className = 'home-section';
 
   const dueSectionLabel = document.createElement('div');
   dueSectionLabel.className = 'home-section-label';
-  dueSectionLabel.textContent = due.length > 0 ? 'Tending your circle' : 'Circle is nourished';
+  dueSectionLabel.textContent = due.length > 0 ? 'Tending your circle' : 'All caught up';
   dueSection.appendChild(dueSectionLabel);
 
   if (due.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'empty-state';
-    empty.textContent = 'No one is due for a check-in. Your smart reminders will appear here when it is time to stay in touch.';
+    empty.textContent = 'No one is due right now. Your reminders will appear here when it is time to stay in touch.';
     dueSection.appendChild(empty);
   } else {
     due.forEach(({ contact, daysOverdue, isPlanned, targetDateMs }) => {
@@ -420,5 +457,55 @@ export async function renderHome(db, version = currentVersion) {
   }
 
   content.appendChild(dueSection);
+
+  // PWA install hint — shown once the circle is established, only in a browser
+  // tab (not the installed app), until the user installs or dismisses it.
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const canPromptInstall = !!window.deferredInstallPrompt;
+  if (!isStandalone && circleSize >= 3 && !getInstallHintDismissed() && (canPromptInstall || isIOS)) {
+    const hint = document.createElement('div');
+    hint.className = 'install-hint';
+
+    const hintText = document.createElement('p');
+    hintText.className = 'install-hint-text';
+    hintText.textContent = isIOS && !canPromptInstall
+      ? 'Keep Greatuncle one tap away: open the Share menu and choose “Add to Home Screen”.'
+      : 'Keep Greatuncle one tap away — install it on your device.';
+    hint.appendChild(hintText);
+
+    const hintActions = document.createElement('div');
+    hintActions.className = 'install-hint-actions';
+
+    if (canPromptInstall) {
+      const installBtn = document.createElement('button');
+      installBtn.type = 'button';
+      installBtn.className = 'install-hint-btn';
+      installBtn.textContent = 'Install app';
+      installBtn.addEventListener('click', async () => {
+        const prompt = window.deferredInstallPrompt;
+        if (!prompt) return;
+        prompt.prompt();
+        await prompt.userChoice;
+        window.deferredInstallPrompt = null;
+        hint.remove();
+      });
+      hintActions.appendChild(installBtn);
+    }
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.type = 'button';
+    dismissBtn.className = 'install-hint-dismiss';
+    dismissBtn.textContent = 'No thanks';
+    dismissBtn.addEventListener('click', () => {
+      setInstallHintDismissed();
+      hint.remove();
+    });
+    hintActions.appendChild(dismissBtn);
+
+    hint.appendChild(hintActions);
+    content.appendChild(hint);
+  }
+
   app.appendChild(content);
 }

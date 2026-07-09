@@ -71,7 +71,7 @@ export async function renderSettings(db) {
 
   const visionTab = document.createElement('button');
   visionTab.className = `settings-tab-btn ${activeTab === 'vision' ? 'settings-tab-btn--active' : ''}`;
-  visionTab.textContent = 'Vision';
+  visionTab.textContent = 'Health';
   visionTab.onclick = () => { activeTab = 'vision'; renderSettings(db); };
 
   tabs.appendChild(settingsTab);
@@ -301,7 +301,7 @@ async function renderSettingsTab(db, container, owner, settings, allContacts) {
 
   const updateMeta = document.createElement('div');
   updateMeta.className = 'settings-section-meta';
-  updateMeta.textContent = 'Manually check for the latest Antigravity improvements and fixes.';
+  updateMeta.textContent = 'Manually check for the latest Greatuncle improvements and fixes.';
   updateSection.appendChild(updateMeta);
 
   const updateBtn = document.createElement('button');
@@ -431,11 +431,11 @@ function renderVisionTab(db, container, allContacts) {
   chartsContainer.className = 'dunbar-charts';
 
   const layers = [
-    { tag: null,        label: 'Awaiting Stewardship', limit: null, desc: 'Not assigned a frequency' },
-    { tag: TAGS.LEVELS.L5,   label: 'Weekly',             limit: 5,   desc: 'Keep them close' },
-    { tag: TAGS.LEVELS.L15,  label: 'Monthly',            limit: 10,  desc: 'Regular roots' },
-    { tag: TAGS.LEVELS.L50,  label: 'Quarterly',          limit: 35,  desc: 'Steady connection' },
-    { tag: TAGS.LEVELS.L150, label: 'Annually',           limit: 100, desc: 'Yearly hello' },
+    { tag: null,        label: 'Unsorted',  limit: null, desc: 'Not assigned a frequency yet' },
+    { tag: TAGS.LEVELS.L5,   label: 'Weekly',    limit: 5,   desc: 'Keep them close' },
+    { tag: TAGS.LEVELS.L15,  label: 'Monthly',   limit: 10,  desc: 'Regular roots' },
+    { tag: TAGS.LEVELS.L50,  label: 'Quarterly', limit: 35,  desc: 'Steady connection' },
+    { tag: TAGS.LEVELS.L150, label: 'Annually',  limit: 100, desc: 'Yearly hello' },
   ];
 
   layers.forEach(layer => {
@@ -443,10 +443,12 @@ function renderVisionTab(db, container, allContacts) {
     if (layer.tag === null) {
       // Unassigned: has no level tag
       count = nonOwners.filter(c => !LEVEL_TAGS.some(t => (c.t || []).includes(t))).length;
+      // Only surface the unsorted row when unsorted contacts actually exist
+      if (count === 0) return;
     } else {
       count = nonOwners.filter(c => (c.t || []).includes(layer.tag)).length;
     }
-    
+
     const limit = layer.limit || nonOwners.length || 1;
     const percent = Math.min(100, (count / limit) * 100);
     const isOver = layer.limit && count > layer.limit;

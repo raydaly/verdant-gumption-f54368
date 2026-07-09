@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v88.0.2';
+var CACHE_NAME = 'greatuncle-v88.2.0';
 
 
 
@@ -6,6 +6,9 @@ var STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/apple-touch-icon.png',
   '/src/core/constants.js',
   '/src/storage/db.js',
   '/src/storage/settings.js',
@@ -31,6 +34,7 @@ var STATIC_ASSETS = [
   '/src/ui/trunk.js',
   '/src/ui/settings.js',
   '/src/ui/onboarding.js',
+  '/src/ui/landing.js',
   '/src/ui/stewardship.js',
   '/src/ui/milestone-calendar.js',
   '/src/ui/share-review.js',
@@ -47,7 +51,7 @@ var STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('SW: Installing v88.0.2...');
+  console.log('SW: Installing v88.2.0...');
 
 
 
@@ -58,7 +62,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', function (event) {
-  console.log('SW: Activated v88.0.2');
+  console.log('SW: Activated v88.2.0');
 
 
 

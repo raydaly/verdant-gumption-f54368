@@ -1,5 +1,13 @@
 # Greatuncle: Product Manifesto & UX Specification
 
+## 0. Core Identity — The Four Rings
+
+**Greatuncle is a generosity engine: one person runs it, and its value radiates outward to people who may never touch the app.** The Engine (proactive outreach suggestions) is the core identity; the Keeper (shared address book + milestone calendar) is the front door. Most people first meet Greatuncle not as software but as **correspondence** — a newsletter or group link from their family's greatuncle, with the circle pre-populated as a gift.
+
+Value radiates through four rings: the **Steward** (runs the Engine, daily), the **Keepers** (hold the shared circle, occasionally), the **Readers** (receive the newsletter, maybe never install), and the **Beneficiaries** (never touch the app — they just get more calls and remembered birthdays). Everything in rings 2–4 exists because one person in ring 1 runs the engine.
+
+Full reasoning, the feature test, and what this identity is *not*: see [CORE_IDENTITY.md](CORE_IDENTITY.md). Every feature below must name the ring it serves.
+
 ## 1. The Core Constraints (The "Antigravity" Guardrails)
 
 To maintain the Greatuncle brand, the following technical constraints are non-negotiable. Every feature build must pass this "friction check":
@@ -11,10 +19,10 @@ To maintain the Greatuncle brand, the following technical constraints are non-ne
 
 ## 2. The Steward/Guest Dichotomy
 
-The app logic must distinguish between two roles without requiring a login system:
+The app logic must distinguish between two roles without requiring a login system. These are the in-app faces of rings 1 and 2 (see Core Identity above):
 
-- **The Steward**: Has "Write" access. They are the guardian of the record. They manage the backup/export and "own" the integrity of the data.
-- **The Guest**: Has "Read-only" access. They are the beneficiaries of the Steward’s work. They can view, but not alter, the master list.
+- **The Steward** (ring 1): Has "Write" access. They are the guardian of the record. They manage the backup/export and "own" the integrity of the data. Their attention is the scarcest resource in the system — design for them first.
+- **The Guest** (ring 2, a Keeper): Has "Read-only" access. They are the beneficiaries of the Steward's work. They can view, but not alter, the master list. A Guest becomes a Steward of their own circle via the Stewardship Ritual (saving a backup) — this graduation is the growth loop.
 
 ## 3. UI/UX "Voice" Requirements
 
@@ -22,7 +30,8 @@ The interface should feel like a utility that turned into a heirloom.
 
 - **Typography**: Clear, legible, and warm. Avoid "tech-heavy" or overly modern aesthetics.
 - **State Management**: Use the "Steward's Pledge" logic to confirm high-stakes actions (like creating a group or resetting data).
-- **Empty States**: The app must be **Adaptive**. When a Steward first opens the app, advanced features (The Vault, The Bridge) are hidden to reduce cognitive load. The UI should focus entirely on the "Universal Doorway"—inviting the user to bring their people in via a link, a backup, or an AI-assisted import.
+- **Empty States**: The app must be **Adaptive**. When a Steward first opens the app, advanced features (Complete Backup, Share your circle) are hidden to reduce cognitive load. The UI should focus entirely on the "Universal Doorway"—inviting the user to bring their people in via a link, a backup, or an AI-assisted import.
+- **Vocabulary**: One term per concept, everywhere — "backup"/"Seedling" (never Vault), "Share your circle" (never Bridge/Gift/Source), "Owner"/"Steward" (never Architect), "connection" as the logging noun (never interaction). Internal level tag numbers (15/50/150) never appear in the UI; tiers display as the frequency word plus display capacity (e.g. "Monthly · 10").
 
 ## 4. Feature Implementation Specs (Derived from Marketing)
 

@@ -1,6 +1,7 @@
 import { boot } from './boot.js';
 import { initRouter, navigate } from './router.js';
 import { renderOnboarding } from './onboarding.js';
+import { renderLanding } from './landing.js';
 import { applyTheme } from './settings.js';
 import { getSettings } from '../storage/settings.js';
 import { getAllContacts, saveContact, saveContactsBatch } from '../storage/contacts.js';
@@ -36,7 +37,7 @@ function showClipboardNudge() {
   const btn = document.createElement('button');
   btn.textContent = 'Review Import';
   btn.style.cssText = 'background:var(--color-primary,#7c6af7);color:#fff;border:none;border-radius:8px;padding:0.4rem 0.75rem;cursor:pointer;font-size:0.85rem;white-space:nowrap;';
-  btn.onclick = () => { navigate('trunk'); nudge.remove(); };
+  btn.onclick = () => { navigate('backup'); nudge.remove(); };
 
   const dismiss = document.createElement('button');
   dismiss.textContent = '✕';
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // If boot detected a mangled link, take the user straight to the Backup/Import page
     if (redirectToRepair) {
-      initApp(db, 'trunk', !hasOwner && hasContacts);
+      initApp(db, 'backup', !hasOwner && hasContacts);
       // Show a repair banner after a brief delay so the page has rendered
       setTimeout(() => {
         const repairBanner = document.createElement('div');
@@ -183,7 +184,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     if (!hasOwner && !hasContacts && !redirectToRepair) {
-      renderOnboarding(db, () => initApp(db, 'home', false));
+      // Cold visitor: no import link, no local data. The only audience that
+      // sees the landing page — everyone else was routed before this branch.
+      renderLanding(db, () => initApp(db, 'home', false));
       return;
     }
 

@@ -96,15 +96,15 @@ export async function renderTrunk(db) {
 
   const shareTitle = document.createElement('div');
   shareTitle.className = 'trunk-section-title';
-  shareTitle.textContent = '🎁 The Bridge: Pass on the Gift';
+  shareTitle.textContent = 'Share your circle';
   shareSection.appendChild(shareTitle);
 
   const shareMeta = document.createElement('div');
   shareMeta.className = 'trunk-section-meta';
   const heritageCount = allContacts.filter(c => !(c.t || []).includes(TAGS.SYSTEM.OWNER)).length;
   shareMeta.innerHTML = `
-    Become the Source: You've nourished your world with <strong>${heritageCount} people</strong>. 
-    Create a connection code to pass on the legacy of belonging. For your privacy, private notes and interaction history are NEVER sent through the bridge.
+    Share a group of contacts — or just your own details — with someone you trust.
+    For your privacy, your notes and connection history are never included.
   `;
   shareSection.appendChild(shareMeta);
 
@@ -889,14 +889,14 @@ export async function renderTrunk(db) {
 
   const vaultTitle = document.createElement('div');
   vaultTitle.className = 'trunk-section-title';
-  vaultTitle.textContent = ownerRecord ? 'The Vault (Complete Backup)' : 'Save your Backup';
+  vaultTitle.textContent = 'Complete Backup';
   vaultSection.appendChild(vaultTitle);
 
   const vaultMeta = document.createElement('div');
   vaultMeta.className = 'trunk-section-meta';
   vaultMeta.textContent = lastExport
-    ? 'Last rooted in vault: ' + formatExportDate(lastExport)
-    : (ownerRecord ? 'You have not rooted your circle yet. Keep a complete seedling backup for safety.' : 'Save your backup to claim this circle and unlock smart connections.');
+    ? 'Last backup: ' + formatExportDate(lastExport)
+    : (ownerRecord ? 'You have not saved a backup yet. Keep a complete Seedling backup for safety.' : 'Save your backup to claim this circle and unlock smart connections.');
   vaultSection.appendChild(vaultMeta);
 
   // Storage Persistence Status (Nested in Vault for context)
@@ -917,7 +917,7 @@ export async function renderTrunk(db) {
         const persistBtn = document.createElement('button');
         persistBtn.className = 'trunk-btn trunk-btn--secondary';
         persistBtn.style.marginTop = '0.5rem';
-        persistBtn.textContent = 'Protect this Circle';
+        persistBtn.textContent = 'Ask browser to keep my data';
         persistBtn.onclick = async () => {
           const granted = await navigator.storage.persist();
           if (granted) {
@@ -969,7 +969,7 @@ export async function renderTrunk(db) {
   const copyBackupBtn = document.createElement('button');
   copyBackupBtn.className = 'trunk-btn trunk-btn--secondary';
   copyBackupBtn.style.width = '100%';
-  copyBackupBtn.textContent = 'Copy Vault Text (to Notes/Notion)';
+  copyBackupBtn.textContent = 'Copy Backup Text (for a notes app)';
   copyBackupBtn.addEventListener('click', async () => {
     const contacts = await getAllContacts(db);
     const logs = await getAllLogs(db);
@@ -1042,7 +1042,7 @@ export async function renderTrunk(db) {
 
   const importTitle = document.createElement('div');
   importTitle.className = 'trunk-section-title';
-  importTitle.textContent = 'Nourish your Circle (Import)';
+  importTitle.textContent = 'Import contacts';
 
   const importMeta = document.createElement('div');
   importMeta.className = 'trunk-section-meta';
@@ -1184,7 +1184,7 @@ export async function renderTrunk(db) {
   nourishBtn.style.marginTop = '1rem';
   nourishBtn.style.width = '100%';
   nourishBtn.style.display = 'none'; // Hidden until valid input
-  nourishBtn.textContent = 'Nourish your Circle with these People';
+  nourishBtn.textContent = 'Add these people to my circle';
   importSection.appendChild(nourishBtn);
 
   let pendingImportRecords = [];
@@ -1378,7 +1378,7 @@ Here is my contact data:
       auditBox.style.display = 'block';
       nourishBtn.style.display = contacts.length > 0 ? 'block' : 'none';
       if (contacts.length > 0) nourishBtn.className = 'trunk-btn trunk-btn--primary';
-      nourishBtn.textContent = 'Nourish your Circle with these People';
+      nourishBtn.textContent = 'Add these people to my circle';
 
       const names = contacts.map(c => c.n).join(', ');
       auditBox.innerHTML = contacts.length > 0
@@ -1440,9 +1440,9 @@ Here is my contact data:
   const diagBasic = document.createElement('div');
   diagBasic.className = 'trunk-diagnostics';
   diagBasic.innerHTML =
-    `Architect: ${ownerRecord ? ownerRecord.n : '<b>Not Claimed (Gallery Mode)</b>'}<br>` +
+    `Owner: ${ownerRecord ? ownerRecord.n : '<b>Not Claimed (Gallery Mode)</b>'}<br>` +
     `Contacts: ${allContacts.length}<br>` +
-    `Interactions logged: ${allLogs.length}`;
+    `Connections logged: ${allLogs.length}`;
 
   const diagDetail = document.createElement('div');
   diagDetail.className = 'trunk-diagnostics diag-detail';

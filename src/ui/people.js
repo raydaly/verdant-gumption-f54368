@@ -20,6 +20,15 @@ const LAYER_LABELS = {
   [TAGS.LEVELS.L150]: 'Annually',
 };
 
+// Friendly capacity number shown in the UI (never the internal tag number).
+// Always paired with the frequency word — a bare number means nothing on its own.
+const LAYER_NUMS = {
+  [TAGS.LEVELS.L5]:   '5',
+  [TAGS.LEVELS.L15]:  '10',
+  [TAGS.LEVELS.L50]:  '35',
+  [TAGS.LEVELS.L150]: '100',
+};
+
 // Module-level filter state — persists across in-session navigation
 let filterState = { 
   sort: 'az', 
@@ -75,13 +84,15 @@ function applyFilterSort(contacts, state) {
   return result;
 }
 
-// Full definition including "None" for sorting
+// Full definition including "None" for sorting.
+// Labels use the frequency word + display capacity (5/10/35/100) — the internal
+// tag numbers (15/50/150) must never appear in the UI.
 const ALL_LAYERS = [
-  { tag: null, label: 'Unsorted' },
-  { tag: TAGS.LEVELS.L5, label: 'Level 5 (Weekly)' },
-  { tag: TAGS.LEVELS.L15, label: 'Level 15 (Monthly)' },
-  { tag: TAGS.LEVELS.L50, label: 'Level 50 (Quarterly)' },
-  { tag: TAGS.LEVELS.L150, label: 'Level 150 (Annually)' },
+  { tag: null, label: 'Unsorted', capacity: null },
+  { tag: TAGS.LEVELS.L5, label: 'Weekly', capacity: 5 },
+  { tag: TAGS.LEVELS.L15, label: 'Monthly', capacity: 10 },
+  { tag: TAGS.LEVELS.L50, label: 'Quarterly', capacity: 35 },
+  { tag: TAGS.LEVELS.L150, label: 'Annually', capacity: 100 },
 ];
 
 function getLayerTag(tags) {
@@ -152,7 +163,7 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
         const layerBadge = document.createElement('span');
         layerBadge.className = 'layer-badge';
         layerBadge.style.borderColor = 'var(--color-action)';
-        layerBadge.textContent = LAYER_LABELS[currentTag];
+        layerBadge.textContent = `${LAYER_NUMS[currentTag]} · ${LAYER_LABELS[currentTag]}`;
         meta.appendChild(layerBadge);
      }
   }
@@ -165,12 +176,15 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
     const assignGroup = document.createElement('div');
     assignGroup.className = 'layer-assign-group';
     
-    const FREQUENCIES = { [TAGS.LEVELS.L5]: '5', [TAGS.LEVELS.L15]: '10', [TAGS.LEVELS.L50]: '35', [TAGS.LEVELS.L150]: '100' };
     LEVEL_TAGS.forEach(tag => {
       const btn = document.createElement('button');
       btn.className = 'layer-assign-btn';
       if ((contact.t || []).includes(tag)) btn.classList.add('layer-assign-btn--active');
-      btn.textContent = FREQUENCIES[tag];
+      // Number + frequency word together — a bare number is meaningless on its own
+      btn.innerHTML =
+        `<span class="layer-assign-num">${LAYER_NUMS[tag]}</span>` +
+        `<span class="layer-assign-word">${LAYER_LABELS[tag]}</span>`;
+      btn.setAttribute('aria-label', `${LAYER_NUMS[tag]}, ${LAYER_LABELS[tag]}`);
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const oldTags = [...(contact.t || [])];
@@ -179,9 +193,7 @@ function buildContactRow(contact, isOwner, db, onRefresh, hasAppOwner) {
           tags.push(tag);
         }
         await saveContact(db, { ...contact, t: tags, ua: Date.now() });
-        const numStr = FREQUENCIES[tag];
-        const levelLabel = numStr === '100' ? 'Annually' : numStr === '35' ? 'Quarterly' : (numStr === '10' ? 'Monthly' : 'Weekly');
-        showToast(`Moved ${contact.n} to ${levelLabel}`, async () => {
+        showToast(`Moved ${contact.n} to ${LAYER_LABELS[tag]}`, async () => {
           await saveContact(db, { ...contact, t: oldTags, ua: Date.now() });
           onRefresh();
         });
@@ -291,6 +303,8 @@ function renderList(ul, contacts, ownerContact, db, onRefresh) {
   if (shouldGroup) {
     ALL_LAYERS.forEach(layer => {
       const layerContacts = contacts.filter(c => {
+        // The owner never gets a frequency — keep them off the sorting board
+        if (ownerContact && c.id === ownerContact.id) return false;
         const cTag = getLayerTag(c.t);
         return cTag === layer.tag;
       });
@@ -301,7 +315,7 @@ function renderList(ul, contacts, ownerContact, db, onRefresh) {
       header.className = 'group-header';
       header.innerHTML = `
         <span>${layer.label}</span>
-        <span class="group-header-count">${layerContacts.length}</span>
+        <span class="group-header-count">${layerContacts.length}${layer.capacity ? ' / ' + layer.capacity : ''}</span>
       `;
 
       // Drag and Drop Targets
@@ -661,17 +675,17 @@ export async function renderPeople(db, params = {}) {
 
       content.innerHTML = `
         <div style="font-size: 3.5rem; margin-bottom: 1rem;">🎊</div>
-        <h2 style="margin-top: 0; margin-bottom: 1rem; font-family: var(--font-serif); color: var(--color-action);">Welcome to New Owner</h2>
+        <h2 style="margin-top: 0; margin-bottom: 1rem; font-family: var(--font-serif); color: var(--color-action);">This circle is yours now</h2>
         <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem;">
-          You've taken stewardship of your private circle. You are now the <strong>sovereign owner</strong> of your data.
+          Your backup is saved and your circle lives entirely on your device.
         </p>
-        
+
         <div style="text-align: left; background: var(--color-bg-accent); padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem;">
-          <h3 style="margin-top: 0; font-size: 0.9rem; text-transform: uppercase; opacity: 0.7;">New Powers Unlocked:</h3>
+          <h3 style="margin-top: 0; font-size: 0.9rem; text-transform: uppercase; opacity: 0.7;">You can now:</h3>
           <ul style="margin: 0.5rem 0; padding-left: 1.25rem; line-height: 1.6;">
-            <li><strong>Sustaining</strong>: Add, edit, or remove any record.</li>
-            <li><strong>Architecting</strong>: Create and share your own groups.</li>
-            <li><strong>Privacy</strong>: Everything stays 100% on your device.</li>
+            <li><strong>Edit</strong>: Add, change, or remove any contact.</li>
+            <li><strong>Share</strong>: Create and share your own groups.</li>
+            <li><strong>Stay private</strong>: Everything stays 100% on your device.</li>
           </ul>
         </div>
 
@@ -921,8 +935,8 @@ export async function renderPeople(db, params = {}) {
   stewBtn = document.createElement('button');
   stewBtn.type = 'button';
   stewBtn.className = 'filter-btn' + (filterState.stewardshipMode ? ' filter-btn--active' : '');
-  stewBtn.innerHTML = '🗝️';
-  stewBtn.title = 'Stewardship Mode (Sort into levels)';
+  stewBtn.textContent = filterState.stewardshipMode ? 'Done' : 'Levels';
+  stewBtn.setAttribute('aria-label', 'Sort contacts into frequency levels');
   stewBtn.onclick = () => {
     filterState.stewardshipMode = !filterState.stewardshipMode;
     if (filterState.stewardshipMode) filterState.layers = []; 
@@ -946,7 +960,7 @@ export async function renderPeople(db, params = {}) {
     if (filterState.groups.length > 0) {
       info.innerHTML = `<strong>${filterState.groups.join(', ')}</strong> <span style="opacity:0.6; font-size:0.8rem; font-weight:400;">(${currentContacts.length})</span>`;
     } else if (filterState.stewardshipMode) {
-      info.innerHTML = `<span>Stewardship Levels</span>`;
+      info.innerHTML = `<span>Sorting levels — drag a person onto a frequency, or tap a number on their row</span>`;
     } else {
       info.innerHTML = `<span>Filtered View</span>`;
     }
