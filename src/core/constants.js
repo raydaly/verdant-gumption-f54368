@@ -1,11 +1,11 @@
 export const APP_CONSTANTS = Object.freeze({
-  APP_VERSION: 'v88.2.0',
+  APP_VERSION: 'v88.2.1',
   DB_NAME: 'greatuncle',
   DB_VERSION: 5,
   STORE_CONTACTS: 'contacts',
   STORE_LOGS: 'logs',
   STORE_SETTINGS: 'settings',
-  CACHE_NAME: 'greatuncle-v88.2.0',
+  CACHE_NAME: 'greatuncle-v88.2.1',
   STATIC_ASSETS: ['/', '/index.html', '/manifest.json', '/src/core/constants.js', '/src/storage/db.js', '/src/storage/settings.js', '/src/storage/contacts.js', '/src/storage/logs.js', '/src/ui/boot.js', '/src/ui/app.js', '/src/styles/main.css', '/src/ui/router.js', '/src/ui/people.js', '/src/ui/contact-form.js', '/src/ui/components/level-selector.js', '/src/ui/components/tag-input.js', '/src/core/outreach-engine.js', '/src/core/seedling.js', '/src/core/parser.js', '/src/core/milestone-engine.js', '/src/ui/home.js', '/src/ui/journal.js', '/src/ui/trunk.js', '/src/ui/settings.js', '/src/ui/onboarding.js', '/src/ui/landing.js', '/src/ui/stewardship.js', '/src/ui/milestone-calendar.js', '/src/ui/components/bottom-sheet.js', '/src/ui/components/toast.js', '/src/ui/components/connected-sheet.js', '/src/ui/components/confirm-dialog.js', '/src/ui/components/later-sheet.js', '/src/ui/about.js'],
   LS_LAST_EXPORTED_AT: 'lastExportedAt',
   LS_DELETED_SINCE_EXPORT: 'deletedSinceExport',

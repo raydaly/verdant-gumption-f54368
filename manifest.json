@@ -7,7 +7,7 @@
   "display": "standalone",
   "background_color": "#F9F7F2",
   "theme_color": "#F9F7F2",
-  "version": "88.2.0",
+  "version": "88.2.1",
   "icons": [
     {
       "src": "/icons/icon-192.png",

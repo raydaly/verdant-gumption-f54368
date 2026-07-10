@@ -1,4 +1,4 @@
-var CACHE_NAME = 'greatuncle-v88.2.0';
+var CACHE_NAME = 'greatuncle-v88.2.1';
 
 
 
@@ -51,18 +51,22 @@ var STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('SW: Installing v88.2.0...');
+  console.log('SW: Installing v88.2.1...');
 
 
 
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+    // cache: 'reload' bypasses the browser HTTP cache so the precache is
+    // always filled from the network, never from stale HTTP-cached copies.
+    caches.open(CACHE_NAME).then(cache =>
+      cache.addAll(STATIC_ASSETS.map(url => new Request(url, { cache: 'reload' })))
+    )
   );
 });
 
 self.addEventListener('activate', function (event) {
-  console.log('SW: Activated v88.2.0');
+  console.log('SW: Activated v88.2.1');
 
 
 
